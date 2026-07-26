@@ -58,7 +58,7 @@ export default async function LoginPage({
         </CardContent>
         <CardFooter>
           <p className="text-xs text-muted-foreground">
-            New accounts require email confirmation before you can log in.
+            If your project requires email confirmation, check your inbox after signing up.
           </p>
         </CardFooter>
       </Card>
