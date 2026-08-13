@@ -13,7 +13,6 @@ export async function getPluggyConnectToken() {
 
   const { accessToken } = await pluggyClient.createConnectToken(undefined, {
     clientUserId: user.id,
-    avoidDuplicates: true,
   });
 
   return accessToken;

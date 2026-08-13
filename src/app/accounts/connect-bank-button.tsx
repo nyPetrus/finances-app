@@ -39,13 +39,19 @@ export function ConnectBankButton() {
           includeSandbox
           onSuccess={({ item }) => {
             startTransition(async () => {
-              await syncPluggyItem(item.id);
-              setConnectToken(null);
-              router.refresh();
+              try {
+                await syncPluggyItem(item.id);
+                setConnectToken(null);
+                router.refresh();
+              } catch (err) {
+                setError(err instanceof Error ? err.message : "Failed to sync the connected bank.");
+                setConnectToken(null);
+              }
             });
           }}
-          onError={(error) => {
-            console.error("Pluggy Connect error:", error);
+          onError={(err) => {
+            console.error("Pluggy Connect error:", err);
+            setError(err.message ?? "Failed to connect bank.");
             setConnectToken(null);
           }}
         />
