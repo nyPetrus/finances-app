@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import type { Account, BudgetItem, Category, Transaction } from "@/lib/supabase/types";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BudgetVsActualChart } from "./budget-vs-actual-chart";
 import { SpendingByCategoryChart } from "./spending-by-category-chart";
@@ -12,23 +14,24 @@ const MONTH_LABELS = Array.from({ length: 12 }, (_, i) =>
   new Intl.DateTimeFormat("pt-BR", { month: "short" }).format(new Date(2000, i, 1)),
 );
 
-export default async function Home() {
-  const supabase = await createClient();
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ year?: string }>;
+}) {
+  const { year: yearParam } = await searchParams;
   const now = new Date();
-  const year = now.getFullYear();
-  const monthStart = `${year}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
-  const nextMonth = new Date(year, now.getMonth() + 1, 1);
-  const monthEnd = nextMonth.toISOString().slice(0, 10);
+  const year = Number(yearParam) || now.getFullYear();
+
+  const supabase = await createClient();
 
   const [
     { data: accounts, error: accError },
-    { data: monthTransactions, error: txError },
     { data: categories, error: catError },
     { data: budgetItems, error: budgetError },
     { data: yearTransactions, error: yearTxError },
   ] = await Promise.all([
     supabase.from("accounts").select("*"),
-    supabase.from("transactions").select("*").gte("date", monthStart).lt("date", monthEnd),
     supabase.from("categories").select("*"),
     supabase.from("budget_items").select("*").eq("year", year),
     supabase
@@ -39,7 +42,6 @@ export default async function Home() {
   ]);
 
   if (accError) throw new Error(accError.message);
-  if (txError) throw new Error(txError.message);
   if (catError) throw new Error(catError.message);
   if (budgetError) throw new Error(budgetError.message);
   if (yearTxError) throw new Error(yearTxError.message);
@@ -54,20 +56,20 @@ export default async function Home() {
 
   const totalBalance = allAccounts.reduce((sum, a) => sum + a.current_balance, 0);
 
-  const nonTransferMonthTransactions = ((monthTransactions ?? []) as Transaction[]).filter(
+  const nonTransferYearTransactions = ((yearTransactions ?? []) as Transaction[]).filter(
     (t) => !isTransfer(t),
   );
 
-  const income = nonTransferMonthTransactions
+  const income = nonTransferYearTransactions
     .filter((t) => t.amount > 0)
     .reduce((sum, t) => sum + t.amount, 0);
-  const expenses = nonTransferMonthTransactions
+  const expenses = nonTransferYearTransactions
     .filter((t) => t.amount < 0)
     .reduce((sum, t) => sum + t.amount, 0);
   const net = income + expenses;
 
   const spendingByCategory = new Map<string, number>();
-  for (const t of nonTransferMonthTransactions) {
+  for (const t of nonTransferYearTransactions) {
     if (t.amount >= 0 || !t.category_id) continue;
     spendingByCategory.set(t.category_id, (spendingByCategory.get(t.category_id) ?? 0) + -t.amount);
   }
@@ -97,7 +99,18 @@ export default async function Home() {
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-6">
-      <h1 className="text-2xl font-semibold">Dashboard</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Dashboard</h1>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" render={<Link href={`/?year=${year - 1}`} />}>
+            ← {year - 1}
+          </Button>
+          <span className="w-16 text-center font-medium">{year}</span>
+          <Button variant="outline" size="sm" render={<Link href={`/?year=${year + 1}`} />}>
+            {year + 1} →
+          </Button>
+        </div>
+      </div>
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <Card>
@@ -113,7 +126,7 @@ export default async function Home() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-normal text-muted-foreground">
-              Income (this month)
+              Income ({year})
             </CardTitle>
           </CardHeader>
           <CardContent className="text-xl font-semibold text-emerald-600">
@@ -123,7 +136,7 @@ export default async function Home() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-normal text-muted-foreground">
-              Expenses (this month)
+              Expenses ({year})
             </CardTitle>
           </CardHeader>
           <CardContent className="text-xl font-semibold text-destructive">
@@ -133,7 +146,7 @@ export default async function Home() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-normal text-muted-foreground">
-              Net (this month)
+              Net ({year})
             </CardTitle>
           </CardHeader>
           <CardContent
@@ -155,11 +168,11 @@ export default async function Home() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Spending by category — this month</CardTitle>
+          <CardTitle>Spending by category — {year}</CardTitle>
         </CardHeader>
         <CardContent>
           {spendingChartData.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No categorized expenses yet this month.</p>
+            <p className="text-sm text-muted-foreground">No categorized expenses yet in {year}.</p>
           ) : (
             <SpendingByCategoryChart data={spendingChartData} />
           )}
