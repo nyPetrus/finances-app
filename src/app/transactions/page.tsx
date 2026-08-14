@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import type { Account, Category, Transaction } from "@/lib/supabase/types";
@@ -20,6 +21,46 @@ function formatCurrency(value: number) {
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("pt-BR").format(new Date(`${value}T00:00:00`));
+}
+
+function formatMonthLabel(monthKey: string) {
+  const [year, month] = monthKey.split("-").map(Number);
+  const label = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" }).format(
+    new Date(year, month - 1, 1),
+  );
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+type MonthGroup = {
+  key: string;
+  label: string;
+  income: number;
+  expense: number;
+  transactions: Transaction[];
+};
+
+function groupByMonth(transactions: Transaction[], categoriesById: Map<string, Category>) {
+  const groups: MonthGroup[] = [];
+  const groupsByKey = new Map<string, MonthGroup>();
+
+  for (const transaction of transactions) {
+    const key = transaction.date.slice(0, 7);
+    let group = groupsByKey.get(key);
+    if (!group) {
+      group = { key, label: formatMonthLabel(key), income: 0, expense: 0, transactions: [] };
+      groupsByKey.set(key, group);
+      groups.push(group);
+    }
+    group.transactions.push(transaction);
+
+    const category = transaction.category_id ? categoriesById.get(transaction.category_id) : null;
+    if (category?.kind !== "transfer") {
+      if (transaction.amount >= 0) group.income += transaction.amount;
+      else group.expense += transaction.amount;
+    }
+  }
+
+  return groups;
 }
 
 export default async function TransactionsPage() {
@@ -46,6 +87,7 @@ export default async function TransactionsPage() {
 
   const accountsById = new Map(allAccounts.map((a) => [a.id, a]));
   const categoriesById = new Map(allCategories.map((c) => [c.id, c]));
+  const monthGroups = groupByMonth(allTransactions, categoriesById);
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-6">
@@ -84,52 +126,68 @@ export default async function TransactionsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {allTransactions.map((transaction) => {
-              const category = transaction.category_id ? categoriesById.get(transaction.category_id) : null;
-              const account = accountsById.get(transaction.account_id);
-              return (
-                <TableRow key={transaction.id}>
-                  <TableCell>{formatDate(transaction.date)}</TableCell>
-                  <TableCell className="truncate font-medium" title={transaction.description}>
-                    {transaction.description}
-                  </TableCell>
-                  <TableCell className="truncate" title={account?.name}>
-                    {account?.name ?? "—"}
-                  </TableCell>
-                  <TableCell className="overflow-hidden">
-                    {category ? (
-                      <Badge
-                        variant="secondary"
-                        className="max-w-full truncate"
-                        style={{ backgroundColor: `${category.color}22`, color: category.color }}
-                      >
-                        {category.name}
-                      </Badge>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">Uncategorized</span>
-                    )}
-                  </TableCell>
-                  <TableCell
-                    className={`text-right ${
-                      category?.kind === "transfer"
-                        ? "text-muted-foreground"
-                        : transaction.amount < 0
-                          ? "text-destructive"
-                          : "text-emerald-600"
-                    }`}
-                  >
-                    {formatCurrency(transaction.amount)}
-                  </TableCell>
-                  <TableCell>
-                    <TransactionRowActions
-                      transaction={transaction}
-                      accounts={allAccounts}
-                      categories={allCategories}
-                    />
+            {monthGroups.map((group) => (
+              <Fragment key={group.key}>
+                <TableRow className="bg-muted/50 hover:bg-muted/50">
+                  <TableCell colSpan={6} className="py-2">
+                    <div className="flex items-center justify-between text-sm font-medium">
+                      <span>{group.label}</span>
+                      <span>
+                        <span className="text-emerald-600">+{formatCurrency(group.income)}</span>
+                        {" / "}
+                        <span className="text-destructive">{formatCurrency(group.expense)}</span>
+                      </span>
+                    </div>
                   </TableCell>
                 </TableRow>
-              );
-            })}
+                {group.transactions.map((transaction) => {
+                  const category = transaction.category_id ? categoriesById.get(transaction.category_id) : null;
+                  const account = accountsById.get(transaction.account_id);
+                  return (
+                    <TableRow key={transaction.id}>
+                      <TableCell>{formatDate(transaction.date)}</TableCell>
+                      <TableCell className="truncate font-medium" title={transaction.description}>
+                        {transaction.description}
+                      </TableCell>
+                      <TableCell className="truncate" title={account?.name}>
+                        {account?.name ?? "—"}
+                      </TableCell>
+                      <TableCell className="overflow-hidden">
+                        {category ? (
+                          <Badge
+                            variant="secondary"
+                            className="max-w-full truncate"
+                            style={{ backgroundColor: `${category.color}22`, color: category.color }}
+                          >
+                            {category.name}
+                          </Badge>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">Uncategorized</span>
+                        )}
+                      </TableCell>
+                      <TableCell
+                        className={`text-right ${
+                          category?.kind === "transfer"
+                            ? "text-muted-foreground"
+                            : transaction.amount < 0
+                              ? "text-destructive"
+                              : "text-emerald-600"
+                        }`}
+                      >
+                        {formatCurrency(transaction.amount)}
+                      </TableCell>
+                      <TableCell>
+                        <TransactionRowActions
+                          transaction={transaction}
+                          accounts={allAccounts}
+                          categories={allCategories}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </Fragment>
+            ))}
           </TableBody>
         </Table>
       )}
