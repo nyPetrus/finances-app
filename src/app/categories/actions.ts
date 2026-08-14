@@ -23,6 +23,7 @@ export async function addCategory(formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/categories");
+  revalidatePath("/transactions");
 }
 
 export async function updateCategory(formData: FormData) {
@@ -34,19 +35,21 @@ export async function updateCategory(formData: FormData) {
 
   const id = formData.get("id") as string;
   const name = (formData.get("name") as string).trim();
+  const kind = formData.get("kind") as string;
   const color = formData.get("color") as string;
 
   if (!name) return;
 
   const { error } = await supabase
     .from("categories")
-    .update({ name, color })
+    .update({ name, kind, color })
     .eq("id", id)
     .eq("user_id", user.id);
 
   if (error) throw new Error(error.message);
 
   revalidatePath("/categories");
+  revalidatePath("/transactions");
 }
 
 export async function deleteCategory(formData: FormData) {
@@ -67,4 +70,5 @@ export async function deleteCategory(formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/categories");
+  revalidatePath("/transactions");
 }

@@ -12,6 +12,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { Category } from "@/lib/supabase/types";
 import { updateCategory, deleteCategory } from "./actions";
 
@@ -40,6 +47,19 @@ export function CategoryRowActions({ category }: { category: Category }) {
             <div className="flex flex-col gap-2">
               <Label htmlFor={`name-${category.id}`}>Name</Label>
               <Input id={`name-${category.id}`} name="name" defaultValue={category.name} required />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor={`kind-${category.id}`}>Type</Label>
+              <Select name="kind" defaultValue={category.kind}>
+                <SelectTrigger id={`kind-${category.id}`}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="expense">Expense</SelectItem>
+                  <SelectItem value="income">Income</SelectItem>
+                  <SelectItem value="transfer">Transfer</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor={`color-${category.id}`}>Color</Label>

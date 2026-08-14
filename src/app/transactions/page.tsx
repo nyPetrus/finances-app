@@ -110,7 +110,13 @@ export default async function TransactionsPage() {
                     )}
                   </TableCell>
                   <TableCell
-                    className={`text-right ${transaction.amount < 0 ? "text-destructive" : "text-emerald-600"}`}
+                    className={`text-right ${
+                      category?.kind === "transfer"
+                        ? "text-muted-foreground"
+                        : transaction.amount < 0
+                          ? "text-destructive"
+                          : "text-emerald-600"
+                    }`}
                   >
                     {formatCurrency(transaction.amount)}
                   </TableCell>
