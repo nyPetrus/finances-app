@@ -12,6 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { AddTransactionDialog } from "./add-transaction-dialog";
+import { MonthPicker } from "./month-picker";
 import { TransactionRowActions } from "./transaction-row-actions";
 
 function formatCurrency(value: number) {
@@ -113,13 +114,16 @@ export default async function TransactionsPage({
         <Button variant="outline" size="sm" render={<Link href={`/transactions?month=${previousMonthKey}`} />}>
           ← {formatMonthShort(previousMonthKey)}
         </Button>
-        <div className="flex flex-col items-center">
-          <span className="font-medium">{formatMonthLabel(monthKey)}</span>
-          <span className="text-sm text-muted-foreground">
-            <span className="text-emerald-600">+{formatCurrency(income)}</span>
-            {" / "}
-            <span className="text-destructive">{formatCurrency(expense)}</span>
-          </span>
+        <div className="flex items-center gap-2">
+          <div className="flex flex-col items-center">
+            <span className="font-medium">{formatMonthLabel(monthKey)}</span>
+            <span className="text-sm text-muted-foreground">
+              <span className="text-emerald-600">+{formatCurrency(income)}</span>
+              {" / "}
+              <span className="text-destructive">{formatCurrency(expense)}</span>
+            </span>
+          </div>
+          <MonthPicker selectedMonth={monthKey} />
         </div>
         <Button variant="outline" size="sm" render={<Link href={`/transactions?month=${nextMonthKey}`} />}>
           {formatMonthShort(nextMonthKey)} →
