@@ -32,16 +32,23 @@ export function YearlyGrid({
     <form action={saveBudgetYear} className="flex flex-col gap-4">
       <input type="hidden" name="year" value={year} />
       <div className="overflow-x-auto rounded-md border">
-        <table className="w-full min-w-[900px] border-collapse text-sm">
+        <table className="w-full table-fixed border-collapse text-sm">
+          <colgroup>
+            <col className="w-[15%]" />
+            {MONTH_LABELS.map((label) => (
+              <col key={label} className="w-[6%]" />
+            ))}
+            <col className="w-[13%]" />
+          </colgroup>
           <thead>
             <tr className="border-b bg-muted/50">
-              <th className="sticky left-0 bg-muted/50 px-3 py-2 text-left font-medium">Category</th>
+              <th className="bg-muted/50 px-2 py-2 text-left text-xs font-medium">Category</th>
               {MONTH_LABELS.map((label) => (
-                <th key={label} className="px-1 py-2 text-center font-medium capitalize">
+                <th key={label} className="px-0.5 py-2 text-center text-xs font-medium capitalize">
                   {label}
                 </th>
               ))}
-              <th className="px-3 py-2 text-right font-medium">Total</th>
+              <th className="px-2 py-2 text-right text-xs font-medium">Total</th>
             </tr>
           </thead>
           <tbody>
@@ -50,37 +57,41 @@ export function YearlyGrid({
               const total = months.reduce((a, b) => a + b, 0);
               return (
                 <tr key={category.id} className="border-b last:border-0">
-                  <td className="sticky left-0 flex items-center gap-2 bg-background px-3 py-2">
-                    <span
-                      className="h-2.5 w-2.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: category.color }}
-                    />
-                    {category.name}
+                  <td className="overflow-hidden bg-background px-2 py-2">
+                    <div className="flex items-center gap-2 truncate" title={category.name}>
+                      <span
+                        className="h-2.5 w-2.5 shrink-0 rounded-full"
+                        style={{ backgroundColor: category.color }}
+                      />
+                      <span className="truncate">{category.name}</span>
+                    </div>
                   </td>
                   {months.map((amount, month) => (
-                    <td key={month} className="px-1 py-1">
+                    <td key={month} className="px-0.5 py-1">
                       <Input
                         type="number"
                         step="0.01"
                         name={`amount__${category.id}__${month + 1}`}
                         defaultValue={amount || ""}
                         placeholder="0"
-                        className="h-8 w-20 text-right"
+                        className="h-8 w-full px-1 text-right text-xs"
                       />
                     </td>
                   ))}
-                  <td className="px-3 py-2 text-right font-medium">{formatCurrency(total)}</td>
+                  <td className="truncate px-2 py-2 text-right text-xs font-medium">
+                    {formatCurrency(total)}
+                  </td>
                 </tr>
               );
             })}
             <tr className="bg-muted/30 font-medium">
-              <td className="sticky left-0 bg-muted/30 px-3 py-2">Total</td>
+              <td className="bg-muted/30 px-2 py-2 text-xs">Total</td>
               {monthTotals.map((total, month) => (
-                <td key={month} className="px-1 py-2 text-center">
+                <td key={month} className="truncate px-0.5 py-2 text-center text-xs">
                   {formatCurrency(total)}
                 </td>
               ))}
-              <td className="px-3 py-2 text-right">
+              <td className="truncate px-2 py-2 text-right text-xs">
                 {formatCurrency(monthTotals.reduce((a, b) => a + b, 0))}
               </td>
             </tr>

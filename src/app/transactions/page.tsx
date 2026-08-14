@@ -64,7 +64,15 @@ export default async function TransactionsPage() {
           {allAccounts.length > 0 ? "Add your first one above." : "Create an account, then add a transaction."}
         </p>
       ) : (
-        <Table>
+        <Table className="table-fixed">
+          <colgroup>
+            <col className="w-[10%]" />
+            <col className="w-[28%]" />
+            <col className="w-[14%]" />
+            <col className="w-[14%]" />
+            <col className="w-[16%]" />
+            <col className="w-[18%]" />
+          </colgroup>
           <TableHeader>
             <TableRow>
               <TableHead>Date</TableHead>
@@ -82,12 +90,17 @@ export default async function TransactionsPage() {
               return (
                 <TableRow key={transaction.id}>
                   <TableCell>{formatDate(transaction.date)}</TableCell>
-                  <TableCell className="font-medium">{transaction.description}</TableCell>
-                  <TableCell>{account?.name ?? "—"}</TableCell>
-                  <TableCell>
+                  <TableCell className="truncate font-medium" title={transaction.description}>
+                    {transaction.description}
+                  </TableCell>
+                  <TableCell className="truncate" title={account?.name}>
+                    {account?.name ?? "—"}
+                  </TableCell>
+                  <TableCell className="overflow-hidden">
                     {category ? (
                       <Badge
                         variant="secondary"
+                        className="max-w-full truncate"
                         style={{ backgroundColor: `${category.color}22`, color: category.color }}
                       >
                         {category.name}
