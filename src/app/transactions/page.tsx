@@ -1,4 +1,3 @@
-import { Fragment } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import type { Account, Category, Transaction } from "@/lib/supabase/types";
@@ -31,39 +30,39 @@ function formatMonthLabel(monthKey: string) {
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
-type MonthGroup = {
-  key: string;
-  label: string;
-  income: number;
-  expense: number;
-  transactions: Transaction[];
-};
+const MONTH_ABBREVIATIONS = [
+  "jan", "fev", "mar", "abr", "mai", "jun",
+  "jul", "ago", "set", "out", "nov", "dez",
+];
 
-function groupByMonth(transactions: Transaction[], categoriesById: Map<string, Category>) {
-  const groups: MonthGroup[] = [];
-  const groupsByKey = new Map<string, MonthGroup>();
-
-  for (const transaction of transactions) {
-    const key = transaction.date.slice(0, 7);
-    let group = groupsByKey.get(key);
-    if (!group) {
-      group = { key, label: formatMonthLabel(key), income: 0, expense: 0, transactions: [] };
-      groupsByKey.set(key, group);
-      groups.push(group);
-    }
-    group.transactions.push(transaction);
-
-    const category = transaction.category_id ? categoriesById.get(transaction.category_id) : null;
-    if (category?.kind !== "transfer") {
-      if (transaction.amount >= 0) group.income += transaction.amount;
-      else group.expense += transaction.amount;
-    }
-  }
-
-  return groups;
+function formatMonthShort(monthKey: string) {
+  const [year, month] = monthKey.split("-").map(Number);
+  return `${MONTH_ABBREVIATIONS[month - 1]}/${year}`;
 }
 
-export default async function TransactionsPage() {
+function shiftMonth(monthKey: string, delta: number) {
+  const [year, month] = monthKey.split("-").map(Number);
+  const date = new Date(year, month - 1 + delta, 1);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function currentMonthKey() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
+export default async function TransactionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ month?: string }>;
+}) {
+  const { month: monthParam } = await searchParams;
+  const monthKey = monthParam && /^\d{4}-\d{2}$/.test(monthParam) ? monthParam : currentMonthKey();
+  const monthStart = `${monthKey}-01`;
+  const monthEnd = `${shiftMonth(monthKey, 1)}-01`;
+  const previousMonthKey = shiftMonth(monthKey, -1);
+  const nextMonthKey = shiftMonth(monthKey, 1);
+
   const supabase = await createClient();
 
   const [{ data: transactions, error: txError }, { data: accounts, error: accError }, { data: categories, error: catError }] =
@@ -71,8 +70,9 @@ export default async function TransactionsPage() {
       supabase
         .from("transactions")
         .select("*")
-        .order("date", { ascending: false })
-        .limit(200),
+        .gte("date", monthStart)
+        .lt("date", monthEnd)
+        .order("date", { ascending: false }),
       supabase.from("accounts").select("*").order("name"),
       supabase.from("categories").select("*").order("name"),
     ]);
@@ -83,11 +83,20 @@ export default async function TransactionsPage() {
 
   const allAccounts = (accounts ?? []) as Account[];
   const allCategories = (categories ?? []) as Category[];
-  const allTransactions = (transactions ?? []) as Transaction[];
+  const monthTransactions = (transactions ?? []) as Transaction[];
 
   const accountsById = new Map(allAccounts.map((a) => [a.id, a]));
   const categoriesById = new Map(allCategories.map((c) => [c.id, c]));
-  const monthGroups = groupByMonth(allTransactions, categoriesById);
+
+  let income = 0;
+  let expense = 0;
+  for (const transaction of monthTransactions) {
+    const category = transaction.category_id ? categoriesById.get(transaction.category_id) : null;
+    if (category?.kind !== "transfer") {
+      if (transaction.amount >= 0) income += transaction.amount;
+      else expense += transaction.amount;
+    }
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-6">
@@ -100,10 +109,27 @@ export default async function TransactionsPage() {
         )}
       </div>
 
-      {allTransactions.length === 0 ? (
+      <div className="flex items-center justify-between">
+        <Button variant="outline" size="sm" render={<Link href={`/transactions?month=${previousMonthKey}`} />}>
+          ← {formatMonthShort(previousMonthKey)}
+        </Button>
+        <div className="flex flex-col items-center">
+          <span className="font-medium">{formatMonthLabel(monthKey)}</span>
+          <span className="text-sm text-muted-foreground">
+            <span className="text-emerald-600">+{formatCurrency(income)}</span>
+            {" / "}
+            <span className="text-destructive">{formatCurrency(expense)}</span>
+          </span>
+        </div>
+        <Button variant="outline" size="sm" render={<Link href={`/transactions?month=${nextMonthKey}`} />}>
+          {formatMonthShort(nextMonthKey)} →
+        </Button>
+      </div>
+
+      {monthTransactions.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          No transactions yet.{" "}
-          {allAccounts.length > 0 ? "Add your first one above." : "Create an account, then add a transaction."}
+          No transactions in {formatMonthLabel(monthKey)}.{" "}
+          {allAccounts.length > 0 ? "Add one above." : "Create an account, then add a transaction."}
         </p>
       ) : (
         <Table className="table-fixed">
@@ -126,68 +152,52 @@ export default async function TransactionsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {monthGroups.map((group) => (
-              <Fragment key={group.key}>
-                <TableRow className="bg-muted/50 hover:bg-muted/50">
-                  <TableCell colSpan={6} className="py-2">
-                    <div className="flex items-center justify-between text-sm font-medium">
-                      <span>{group.label}</span>
-                      <span>
-                        <span className="text-emerald-600">+{formatCurrency(group.income)}</span>
-                        {" / "}
-                        <span className="text-destructive">{formatCurrency(group.expense)}</span>
-                      </span>
-                    </div>
+            {monthTransactions.map((transaction) => {
+              const category = transaction.category_id ? categoriesById.get(transaction.category_id) : null;
+              const account = accountsById.get(transaction.account_id);
+              return (
+                <TableRow key={transaction.id}>
+                  <TableCell>{formatDate(transaction.date)}</TableCell>
+                  <TableCell className="truncate font-medium" title={transaction.description}>
+                    {transaction.description}
+                  </TableCell>
+                  <TableCell className="truncate" title={account?.name}>
+                    {account?.name ?? "—"}
+                  </TableCell>
+                  <TableCell className="overflow-hidden">
+                    {category ? (
+                      <Badge
+                        variant="secondary"
+                        className="max-w-full truncate"
+                        style={{ backgroundColor: `${category.color}22`, color: category.color }}
+                      >
+                        {category.name}
+                      </Badge>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">Uncategorized</span>
+                    )}
+                  </TableCell>
+                  <TableCell
+                    className={`text-right ${
+                      category?.kind === "transfer"
+                        ? "text-muted-foreground"
+                        : transaction.amount < 0
+                          ? "text-destructive"
+                          : "text-emerald-600"
+                    }`}
+                  >
+                    {formatCurrency(transaction.amount)}
+                  </TableCell>
+                  <TableCell>
+                    <TransactionRowActions
+                      transaction={transaction}
+                      accounts={allAccounts}
+                      categories={allCategories}
+                    />
                   </TableCell>
                 </TableRow>
-                {group.transactions.map((transaction) => {
-                  const category = transaction.category_id ? categoriesById.get(transaction.category_id) : null;
-                  const account = accountsById.get(transaction.account_id);
-                  return (
-                    <TableRow key={transaction.id}>
-                      <TableCell>{formatDate(transaction.date)}</TableCell>
-                      <TableCell className="truncate font-medium" title={transaction.description}>
-                        {transaction.description}
-                      </TableCell>
-                      <TableCell className="truncate" title={account?.name}>
-                        {account?.name ?? "—"}
-                      </TableCell>
-                      <TableCell className="overflow-hidden">
-                        {category ? (
-                          <Badge
-                            variant="secondary"
-                            className="max-w-full truncate"
-                            style={{ backgroundColor: `${category.color}22`, color: category.color }}
-                          >
-                            {category.name}
-                          </Badge>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">Uncategorized</span>
-                        )}
-                      </TableCell>
-                      <TableCell
-                        className={`text-right ${
-                          category?.kind === "transfer"
-                            ? "text-muted-foreground"
-                            : transaction.amount < 0
-                              ? "text-destructive"
-                              : "text-emerald-600"
-                        }`}
-                      >
-                        {formatCurrency(transaction.amount)}
-                      </TableCell>
-                      <TableCell>
-                        <TransactionRowActions
-                          transaction={transaction}
-                          accounts={allAccounts}
-                          categories={allCategories}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </Fragment>
-            ))}
+              );
+            })}
           </TableBody>
         </Table>
       )}
