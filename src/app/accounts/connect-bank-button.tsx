@@ -1,10 +1,17 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { PluggyConnect } from "react-pluggy-connect";
 import { Button } from "@/components/ui/button";
 import { getPluggyConnectToken, syncPluggyItem } from "./pluggy-actions";
+
+// react-pluggy-connect touches `window` at module load time, which crashes
+// server-side rendering. Load it client-only.
+const PluggyConnect = dynamic(
+  () => import("react-pluggy-connect").then((mod) => mod.PluggyConnect),
+  { ssr: false },
+);
 
 export function ConnectBankButton() {
   const [connectToken, setConnectToken] = useState<string | null>(null);
