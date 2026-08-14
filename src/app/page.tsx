@@ -48,18 +48,26 @@ export default async function Home() {
   const allCategories = (categories ?? []) as Category[];
   const categoriesById = new Map(allCategories.map((c) => [c.id, c]));
 
+  function isTransfer(t: Transaction) {
+    return !!t.category_id && categoriesById.get(t.category_id)?.kind === "transfer";
+  }
+
   const totalBalance = allAccounts.reduce((sum, a) => sum + a.current_balance, 0);
 
-  const income = (monthTransactions ?? [])
+  const nonTransferMonthTransactions = ((monthTransactions ?? []) as Transaction[]).filter(
+    (t) => !isTransfer(t),
+  );
+
+  const income = nonTransferMonthTransactions
     .filter((t) => t.amount > 0)
     .reduce((sum, t) => sum + t.amount, 0);
-  const expenses = (monthTransactions ?? [])
+  const expenses = nonTransferMonthTransactions
     .filter((t) => t.amount < 0)
     .reduce((sum, t) => sum + t.amount, 0);
   const net = income + expenses;
 
   const spendingByCategory = new Map<string, number>();
-  for (const t of (monthTransactions ?? []) as Transaction[]) {
+  for (const t of nonTransferMonthTransactions) {
     if (t.amount >= 0 || !t.category_id) continue;
     spendingByCategory.set(t.category_id, (spendingByCategory.get(t.category_id) ?? 0) + -t.amount);
   }
@@ -77,7 +85,7 @@ export default async function Home() {
   }
   const actualByMonth = Array(12).fill(0);
   for (const t of (yearTransactions ?? []) as Transaction[]) {
-    if (t.amount >= 0) continue;
+    if (t.amount >= 0 || isTransfer(t)) continue;
     const month = Number(t.date.slice(5, 7));
     actualByMonth[month - 1] += -t.amount;
   }

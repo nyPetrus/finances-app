@@ -41,6 +41,7 @@ export default async function CategoriesPage() {
   const all = (categories ?? []) as Category[];
   const income = all.filter((c) => c.kind === "income");
   const expense = all.filter((c) => c.kind === "expense");
+  const transfer = all.filter((c) => c.kind === "transfer");
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-6">
@@ -50,6 +51,7 @@ export default async function CategoriesPage() {
       </div>
       <CategoryGroup title="Income" categories={income} />
       <CategoryGroup title="Expense" categories={expense} />
+      <CategoryGroup title="Transfer" categories={transfer} />
     </div>
   );
 }

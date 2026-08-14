@@ -32,7 +32,9 @@ export default async function BudgetPage({
   if (budgetError) throw new Error(budgetError.message);
   if (txError) throw new Error(txError.message);
 
-  const allCategories = (categories ?? []) as Category[];
+  // Transfers between the user's own accounts (e.g. a credit card bill
+  // payment) aren't income or expense, so they're excluded from budgeting.
+  const allCategories = (categories ?? []).filter((c) => c.kind !== "transfer") as Category[];
   const allBudgetItems = (budgetItems ?? []) as BudgetItem[];
   const allTransactions = (transactions ?? []) as Transaction[];
 

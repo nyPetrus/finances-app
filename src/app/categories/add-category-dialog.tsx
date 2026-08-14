@@ -23,9 +23,16 @@ import { addCategory } from "./actions";
 
 export function AddCategoryDialog() {
   const [open, setOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (next) setError(null);
+      }}
+    >
       <DialogTrigger render={<Button />}>Add category</DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -34,8 +41,12 @@ export function AddCategoryDialog() {
         <form
           id="add-category-form"
           action={async (formData) => {
-            await addCategory(formData);
-            setOpen(false);
+            try {
+              await addCategory(formData);
+              setOpen(false);
+            } catch (err) {
+              setError(err instanceof Error ? err.message : "Failed to create category.");
+            }
           }}
           className="flex flex-col gap-4"
         >
@@ -52,6 +63,7 @@ export function AddCategoryDialog() {
               <SelectContent>
                 <SelectItem value="expense">Expense</SelectItem>
                 <SelectItem value="income">Income</SelectItem>
+                <SelectItem value="transfer">Transfer</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -59,6 +71,7 @@ export function AddCategoryDialog() {
             <Label htmlFor="color">Color</Label>
             <Input id="color" name="color" type="color" defaultValue="#64748b" className="h-10 w-16 p-1" />
           </div>
+          {error && <p className="text-sm text-destructive">{error}</p>}
           <DialogFooter>
             <Button type="submit" form="add-category-form">
               Create
