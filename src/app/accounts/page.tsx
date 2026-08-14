@@ -18,6 +18,7 @@ const typeLabels: Record<Account["type"], string> = {
   investment: "Investment",
   fgts: "FGTS",
   manual: "Manual",
+  credit_card: "Credit card",
 };
 
 function formatCurrency(value: number) {

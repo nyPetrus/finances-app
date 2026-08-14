@@ -26,11 +26,11 @@ export async function syncPluggyItem(itemId: string) {
   if (!user) throw new Error("Unauthorized");
 
   const item = await pluggyClient.fetchItem(itemId);
-  // Only sync bank accounts (checking/savings) for now — credit cards use a
-  // different sign convention and aren't part of this app's scope yet.
-  const { results: pluggyAccounts } = await pluggyClient.fetchAccounts(itemId, "BANK");
+  // Fetch both BANK and CREDIT accounts for this item.
+  const { results: pluggyAccounts } = await pluggyClient.fetchAccounts(itemId);
 
   for (const pluggyAccount of pluggyAccounts) {
+    const isCreditCard = pluggyAccount.type === "CREDIT";
     const { data: account, error: upsertError } = await supabase
       .from("accounts")
       .upsert(
@@ -38,11 +38,14 @@ export async function syncPluggyItem(itemId: string) {
           user_id: user.id,
           name: pluggyAccount.name,
           institution: item.connector.name,
-          type: "checking",
+          type: isCreditCard ? "credit_card" : "checking",
           is_automatic: true,
           pluggy_item_id: itemId,
           pluggy_account_id: pluggyAccount.id,
-          current_balance: pluggyAccount.balance,
+          // Credit card balance from Pluggy is the amount owed; store it
+          // negative so it behaves like debt rather than an asset when
+          // summed with bank balances.
+          current_balance: isCreditCard ? -Math.abs(pluggyAccount.balance) : pluggyAccount.balance,
           updated_at: new Date().toISOString(),
         },
         { onConflict: "pluggy_account_id" },

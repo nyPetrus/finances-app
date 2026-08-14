@@ -13,7 +13,7 @@ export type Account = {
   user_id: string;
   name: string;
   institution: string | null;
-  type: "checking" | "investment" | "fgts" | "manual";
+  type: "checking" | "investment" | "fgts" | "manual" | "credit_card";
   is_automatic: boolean;
   pluggy_item_id: string | null;
   pluggy_account_id: string | null;
