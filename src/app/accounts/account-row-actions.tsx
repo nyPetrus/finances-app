@@ -20,24 +20,33 @@ import { syncPluggyItem } from "./pluggy-actions";
 export function AccountRowActions({ account }: { account: Account }) {
   const [open, setOpen] = useState(false);
   const [isSyncing, startSync] = useTransition();
+  const [syncError, setSyncError] = useState<string | null>(null);
   const router = useRouter();
 
   return (
     <div className="flex items-center gap-2">
       {account.is_automatic && account.pluggy_item_id && (
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={isSyncing}
-          onClick={() =>
-            startSync(async () => {
-              await syncPluggyItem(account.pluggy_item_id!);
-              router.refresh();
-            })
-          }
-        >
-          {isSyncing ? "Syncing…" : "Sync"}
-        </Button>
+        <div className="flex flex-col items-end gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={isSyncing}
+            onClick={() =>
+              startSync(async () => {
+                setSyncError(null);
+                try {
+                  await syncPluggyItem(account.pluggy_item_id!);
+                  router.refresh();
+                } catch (err) {
+                  setSyncError(err instanceof Error ? err.message : "Failed to sync.");
+                }
+              })
+            }
+          >
+            {isSyncing ? "Syncing…" : "Sync"}
+          </Button>
+          {syncError && <p className="text-xs text-destructive">{syncError}</p>}
+        </div>
       )}
 
       {!account.is_automatic && (
