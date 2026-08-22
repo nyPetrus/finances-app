@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import type { Account, Category, Transaction } from "@/lib/supabase/types";
+import type { Account, Category, Class, Transaction } from "@/lib/supabase/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -111,23 +111,31 @@ export default async function TransactionsPage({
     .order("date", { ascending: false });
   if (accountParam) transactionsQuery = transactionsQuery.eq("account_id", accountParam);
 
-  const [{ data: transactions, error: txError }, { data: accounts, error: accError }, { data: categories, error: catError }] =
-    await Promise.all([
-      transactionsQuery,
-      supabase.from("accounts").select("*").order("name"),
-      supabase.from("categories").select("*").order("name"),
-    ]);
+  const [
+    { data: transactions, error: txError },
+    { data: accounts, error: accError },
+    { data: categories, error: catError },
+    { data: classes, error: classError },
+  ] = await Promise.all([
+    transactionsQuery,
+    supabase.from("accounts").select("*").order("name"),
+    supabase.from("categories").select("*").order("name"),
+    supabase.from("classes").select("*").order("name"),
+  ]);
 
   if (txError) throw new Error(txError.message);
   if (accError) throw new Error(accError.message);
   if (catError) throw new Error(catError.message);
+  if (classError) throw new Error(classError.message);
 
   const allAccounts = (accounts ?? []) as Account[];
   const allCategories = (categories ?? []) as Category[];
+  const allClasses = (classes ?? []) as Class[];
   const monthTransactions = (transactions ?? []) as Transaction[];
 
   const accountsById = new Map(allAccounts.map((a) => [a.id, a]));
   const categoriesById = new Map(allCategories.map((c) => [c.id, c]));
+  const classesById = new Map(allClasses.map((c) => [c.id, c]));
 
   const sortedTransactions = [...monthTransactions].sort((a, b) => {
     let cmp = 0;
@@ -171,7 +179,7 @@ export default async function TransactionsPage({
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Transactions</h1>
         {allAccounts.length > 0 ? (
-          <AddTransactionDialog accounts={allAccounts} categories={allCategories} />
+          <AddTransactionDialog accounts={allAccounts} categories={allCategories} classes={allClasses} />
         ) : (
           <Button render={<Link href="/accounts" />}>Create an account first</Button>
         )}
@@ -278,6 +286,7 @@ export default async function TransactionsPage({
           <TableBody>
             {sortedTransactions.map((transaction) => {
               const category = transaction.category_id ? categoriesById.get(transaction.category_id) : null;
+              const transactionClass = transaction.class_id ? classesById.get(transaction.class_id) : null;
               const account = accountsById.get(transaction.account_id);
               return (
                 <TableRow key={transaction.id}>
@@ -290,13 +299,20 @@ export default async function TransactionsPage({
                   </TableCell>
                   <TableCell className="overflow-hidden">
                     {category ? (
-                      <Badge
-                        variant="secondary"
-                        className="max-w-full truncate"
-                        style={{ backgroundColor: `${category.color}22`, color: category.color }}
-                      >
-                        {category.name}
-                      </Badge>
+                      <div className="flex max-w-full items-center gap-1.5 truncate">
+                        <Badge
+                          variant="secondary"
+                          className="max-w-full truncate"
+                          style={{ backgroundColor: `${category.color}22`, color: category.color }}
+                        >
+                          {category.name}
+                        </Badge>
+                        {transactionClass && (
+                          <span className="truncate text-xs text-muted-foreground">
+                            › {transactionClass.name}
+                          </span>
+                        )}
+                      </div>
                     ) : (
                       <span className="text-sm text-muted-foreground">Uncategorized</span>
                     )}
@@ -317,6 +333,7 @@ export default async function TransactionsPage({
                       transaction={transaction}
                       accounts={allAccounts}
                       categories={allCategories}
+                      classes={allClasses}
                     />
                   </TableCell>
                 </TableRow>

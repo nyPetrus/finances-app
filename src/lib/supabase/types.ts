@@ -35,6 +35,7 @@ export type Transaction = {
   user_id: string;
   account_id: string;
   category_id: string | null;
+  class_id: string | null;
   date: string;
   description: string;
   amount: number;

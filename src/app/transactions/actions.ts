@@ -12,6 +12,7 @@ export async function addTransaction(formData: FormData) {
 
   const account_id = formData.get("account_id") as string;
   const category_id = (formData.get("category_id") as string) || null;
+  const class_id = (formData.get("class_id") as string) || null;
   const date = formData.get("date") as string;
   const description = (formData.get("description") as string).trim();
   const amount = Number(formData.get("amount"));
@@ -22,6 +23,7 @@ export async function addTransaction(formData: FormData) {
     user_id: user.id,
     account_id,
     category_id,
+    class_id,
     date,
     description,
     amount,
@@ -43,6 +45,7 @@ export async function updateTransaction(formData: FormData) {
   const id = formData.get("id") as string;
   const account_id = formData.get("account_id") as string;
   const category_id = (formData.get("category_id") as string) || null;
+  const class_id = (formData.get("class_id") as string) || null;
   const date = formData.get("date") as string;
   const description = (formData.get("description") as string).trim();
   const amount = Number(formData.get("amount"));
@@ -51,7 +54,7 @@ export async function updateTransaction(formData: FormData) {
 
   const { error } = await supabase
     .from("transactions")
-    .update({ account_id, category_id, date, description, amount })
+    .update({ account_id, category_id, class_id, date, description, amount })
     .eq("id", id)
     .eq("user_id", user.id);
 

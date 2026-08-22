@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Account, Category } from "@/lib/supabase/types";
+import type { Account, Category, Class } from "@/lib/supabase/types";
 import { addTransaction } from "./actions";
 
 function todayISO() {
@@ -29,14 +29,29 @@ function todayISO() {
 export function AddTransactionDialog({
   accounts,
   categories,
+  classes,
 }: {
   accounts: Account[];
   categories: Category[];
+  classes: Class[];
 }) {
   const [open, setOpen] = useState(false);
+  const [categoryId, setCategoryId] = useState<string | null>(null);
+  const [classId, setClassId] = useState<string | null>(null);
+
+  const classesForCategory = categoryId ? classes.filter((c) => c.category_id === categoryId) : [];
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (next) {
+          setCategoryId(null);
+          setClassId(null);
+        }
+      }}
+    >
       <DialogTrigger render={<Button />}>Add transaction</DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -89,20 +104,57 @@ export function AddTransactionDialog({
               </SelectContent>
             </Select>
           </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="category_id">Category</Label>
-            <Select name="category_id">
-              <SelectTrigger id="category_id">
-                <SelectValue placeholder="Uncategorized" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="category_id">Category</Label>
+              <Select
+                name="category_id"
+                value={categoryId}
+                onValueChange={(value) => {
+                  setCategoryId(value);
+                  setClassId(null);
+                }}
+              >
+                <SelectTrigger id="category_id">
+                  <SelectValue placeholder="Uncategorized" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="class_id">Class</Label>
+              <Select
+                name="class_id"
+                value={classId}
+                onValueChange={setClassId}
+                disabled={!categoryId || classesForCategory.length === 0}
+              >
+                <SelectTrigger id="class_id">
+                  <SelectValue
+                    placeholder={
+                      !categoryId
+                        ? "Pick a category first"
+                        : classesForCategory.length === 0
+                          ? "No classes"
+                          : "None"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {classesForCategory.map((classItem) => (
+                    <SelectItem key={classItem.id} value={classItem.id}>
+                      {classItem.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter>
             <Button type="submit" form="add-transaction-form">
