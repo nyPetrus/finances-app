@@ -22,7 +22,7 @@ export default async function LoginPage({
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Finance App</CardTitle>
+          <CardTitle>Finances</CardTitle>
           <CardDescription>Sign in or create an account to continue.</CardDescription>
         </CardHeader>
         <CardContent>

@@ -23,7 +23,7 @@ export async function NavBar() {
     <header className="border-b">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
         <nav className="flex items-center gap-4">
-          <span className="font-semibold">Finance App</span>
+          <span className="font-semibold">Finances</span>
           {links.map((link) => (
             <Link
               key={link.href}

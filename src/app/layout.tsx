@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Finance App",
+  title: "Finances",
   description: "Personal finance and budget tracker",
 };
 
