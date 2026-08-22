@@ -8,6 +8,14 @@ export type Category = {
   created_at: string;
 };
 
+export type Class = {
+  id: string;
+  user_id: string;
+  category_id: string;
+  name: string;
+  created_at: string;
+};
+
 export type Account = {
   id: string;
   user_id: string;
