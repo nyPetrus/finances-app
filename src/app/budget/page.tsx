@@ -25,7 +25,8 @@ export default async function BudgetPage({
         .from("transactions")
         .select("*")
         .gte("date", `${year}-01-01`)
-        .lte("date", `${year}-12-31`),
+        .lte("date", `${year}-12-31`)
+        .eq("is_hidden", false),
     ]);
 
   if (catError) throw new Error(catError.message);

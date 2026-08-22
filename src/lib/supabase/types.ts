@@ -32,6 +32,7 @@ export type Transaction = {
   amount: number;
   source: "manual" | "pluggy" | "csv";
   pluggy_transaction_id: string | null;
+  is_hidden: boolean;
   created_at: string;
 };
 

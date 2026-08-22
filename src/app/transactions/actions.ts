@@ -60,6 +60,26 @@ export async function updateTransaction(formData: FormData) {
   revalidatePath("/transactions");
 }
 
+export async function setTransactionHidden(id: string, hidden: boolean) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("transactions")
+    .update({ is_hidden: hidden })
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/transactions");
+  revalidatePath("/budget");
+  revalidatePath("/");
+}
+
 export async function deleteTransaction(formData: FormData) {
   const supabase = await createClient();
   const {

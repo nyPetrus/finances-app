@@ -61,9 +61,17 @@ export async function syncPluggyItem(itemId: string) {
 
     // Pending transactions are unsettled holds/forecasts (including
     // not-yet-billed future credit-card installments) that can still
-    // change, get reversed, or never actually clear, so they aren't
-    // synced until the institution posts them for real.
-    const postedTransactions = transactions.filter((transaction) => transaction.status !== "PENDING");
+    // change, get reversed, or never actually clear. Near-term ones
+    // (through tomorrow) are kept since they're likely to post as-is;
+    // anything further out is speculative and waits until it's posted.
+    const pendingCutoff = new Date();
+    pendingCutoff.setUTCDate(pendingCutoff.getUTCDate() + 1);
+    const pendingCutoffDate = pendingCutoff.toISOString().slice(0, 10);
+
+    const postedTransactions = transactions.filter((transaction) => {
+      if (transaction.status !== "PENDING") return true;
+      return transaction.date.toISOString().slice(0, 10) <= pendingCutoffDate;
+    });
 
     if (postedTransactions.length > 0) {
       const rows = postedTransactions.map((transaction) => ({

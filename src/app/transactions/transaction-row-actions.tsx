@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Account, Category, Transaction } from "@/lib/supabase/types";
-import { updateTransaction, deleteTransaction } from "./actions";
+import { updateTransaction, deleteTransaction, setTransactionHidden } from "./actions";
 
 export function TransactionRowActions({
   transaction,
@@ -122,6 +122,14 @@ export function TransactionRowActions({
           </form>
         </DialogContent>
       </Dialog>
+
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setTransactionHidden(transaction.id, !transaction.is_hidden)}
+      >
+        {transaction.is_hidden ? "Unhide" : "Hide"}
+      </Button>
 
       <form
         action={async (formData) => {
