@@ -78,15 +78,27 @@ export async function syncPluggyItem(itemId: string) {
     // Pluggy stops returning transactions that get canceled/reversed at the
     // source instead of flagging them, so anything previously synced for
     // this account that's no longer in the current fetch has to be removed.
-    const currentIds = transactions.map((transaction) => transaction.id);
-    const { error: deleteError } = await supabase
+    const currentIds = new Set(transactions.map((transaction) => transaction.id));
+    const { data: existingPluggyTx, error: existingError } = await supabase
       .from("transactions")
-      .delete()
+      .select("pluggy_transaction_id")
       .eq("account_id", account.id)
-      .eq("source", "pluggy")
-      .not("pluggy_transaction_id", "in", `(${currentIds.join(",")})`);
+      .eq("source", "pluggy");
 
-    if (deleteError) throw new Error(deleteError.message);
+    if (existingError) throw new Error(existingError.message);
+
+    const staleIds = (existingPluggyTx ?? [])
+      .map((row) => row.pluggy_transaction_id)
+      .filter((id): id is string => id !== null && !currentIds.has(id));
+
+    if (staleIds.length > 0) {
+      const { error: deleteError } = await supabase
+        .from("transactions")
+        .delete()
+        .in("pluggy_transaction_id", staleIds);
+
+      if (deleteError) throw new Error(deleteError.message);
+    }
   }
 
   revalidatePath("/accounts");
