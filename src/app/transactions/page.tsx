@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { AccountFilter } from "./account-filter";
 import { AddTransactionDialog } from "./add-transaction-dialog";
 import { MonthPicker } from "./month-picker";
 import { TransactionRowActions } from "./transaction-row-actions";
@@ -55,25 +56,29 @@ function currentMonthKey() {
 export default async function TransactionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ month?: string }>;
+  searchParams: Promise<{ month?: string; account?: string }>;
 }) {
-  const { month: monthParam } = await searchParams;
+  const { month: monthParam, account: accountParam } = await searchParams;
   const monthKey = monthParam && /^\d{4}-\d{2}$/.test(monthParam) ? monthParam : currentMonthKey();
   const monthStart = `${monthKey}-01`;
   const monthEnd = `${shiftMonth(monthKey, 1)}-01`;
   const previousMonthKey = shiftMonth(monthKey, -1);
   const nextMonthKey = shiftMonth(monthKey, 1);
+  const accountQuery = accountParam ? `&account=${accountParam}` : "";
 
   const supabase = await createClient();
 
+  let transactionsQuery = supabase
+    .from("transactions")
+    .select("*")
+    .gte("date", monthStart)
+    .lt("date", monthEnd)
+    .order("date", { ascending: false });
+  if (accountParam) transactionsQuery = transactionsQuery.eq("account_id", accountParam);
+
   const [{ data: transactions, error: txError }, { data: accounts, error: accError }, { data: categories, error: catError }] =
     await Promise.all([
-      supabase
-        .from("transactions")
-        .select("*")
-        .gte("date", monthStart)
-        .lt("date", monthEnd)
-        .order("date", { ascending: false }),
+      transactionsQuery,
       supabase.from("accounts").select("*").order("name"),
       supabase.from("categories").select("*").order("name"),
     ]);
@@ -111,7 +116,11 @@ export default async function TransactionsPage({
       </div>
 
       <div className="flex items-center justify-between">
-        <Button variant="outline" size="sm" render={<Link href={`/transactions?month=${previousMonthKey}`} />}>
+        <Button
+          variant="outline"
+          size="sm"
+          render={<Link href={`/transactions?month=${previousMonthKey}${accountQuery}`} />}
+        >
           ← {formatMonthShort(previousMonthKey)}
         </Button>
         <div className="flex items-center gap-2">
@@ -125,10 +134,21 @@ export default async function TransactionsPage({
           </div>
           <MonthPicker selectedMonth={monthKey} />
         </div>
-        <Button variant="outline" size="sm" render={<Link href={`/transactions?month=${nextMonthKey}`} />}>
+        <Button
+          variant="outline"
+          size="sm"
+          render={<Link href={`/transactions?month=${nextMonthKey}${accountQuery}`} />}
+        >
           {formatMonthShort(nextMonthKey)} →
         </Button>
       </div>
+
+      {allAccounts.length > 0 && (
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Account</span>
+          <AccountFilter accounts={allAccounts} month={monthKey} selectedAccountId={accountParam} />
+        </div>
+      )}
 
       {monthTransactions.length === 0 ? (
         <p className="text-sm text-muted-foreground">
