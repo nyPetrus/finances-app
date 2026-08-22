@@ -299,16 +299,17 @@ export default async function TransactionsPage({
                   </TableCell>
                   <TableCell className="overflow-hidden">
                     {category ? (
-                      <div className="flex max-w-full items-center gap-1.5">
+                      <div className="flex max-w-full flex-col gap-0.5">
                         <Badge
                           variant="secondary"
+                          className="max-w-full truncate"
                           style={{ backgroundColor: `${category.color}22`, color: category.color }}
                         >
                           {category.name}
                         </Badge>
                         {transactionClass && (
                           <span
-                            className="min-w-0 flex-1 truncate text-xs text-muted-foreground"
+                            className="block truncate text-xs text-muted-foreground"
                             title={transactionClass.name}
                           >
                             › {transactionClass.name}
