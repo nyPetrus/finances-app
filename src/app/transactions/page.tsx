@@ -308,10 +308,7 @@ export default async function TransactionsPage({
                           {category.name}
                         </Badge>
                         {transactionClass && (
-                          <span
-                            className="block truncate text-xs text-muted-foreground"
-                            title={transactionClass.name}
-                          >
+                          <span className="whitespace-normal break-words text-xs text-muted-foreground">
                             › {transactionClass.name}
                           </span>
                         )}
