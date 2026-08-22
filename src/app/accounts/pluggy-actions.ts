@@ -79,23 +79,39 @@ export async function syncPluggyItem(itemId: string) {
     // source instead of flagging them, so anything previously synced for
     // this account that's no longer in the current fetch has to be removed.
     const currentIds = new Set(transactions.map((transaction) => transaction.id));
-    const { data: existingPluggyTx, error: existingError } = await supabase
-      .from("transactions")
-      .select("pluggy_transaction_id")
-      .eq("account_id", account.id)
-      .eq("source", "pluggy");
 
-    if (existingError) throw new Error(existingError.message);
+    // PostgREST caps a single select at its default max-rows, so accounts
+    // with a long history (this one has 1500+ transactions) need paging to
+    // see every previously synced id, not just the first page.
+    const existingIds: string[] = [];
+    const pageSize = 1000;
+    for (let offset = 0; ; offset += pageSize) {
+      const { data: page, error: existingError } = await supabase
+        .from("transactions")
+        .select("pluggy_transaction_id")
+        .eq("account_id", account.id)
+        .eq("source", "pluggy")
+        .range(offset, offset + pageSize - 1);
 
-    const staleIds = (existingPluggyTx ?? [])
-      .map((row) => row.pluggy_transaction_id)
-      .filter((id): id is string => id !== null && !currentIds.has(id));
+      if (existingError) throw new Error(existingError.message);
+      if (!page || page.length === 0) break;
 
-    if (staleIds.length > 0) {
+      for (const row of page) {
+        if (row.pluggy_transaction_id) existingIds.push(row.pluggy_transaction_id);
+      }
+
+      if (page.length < pageSize) break;
+    }
+
+    const staleIds = existingIds.filter((id) => !currentIds.has(id));
+
+    const deleteChunkSize = 200;
+    for (let i = 0; i < staleIds.length; i += deleteChunkSize) {
+      const chunk = staleIds.slice(i, i + deleteChunkSize);
       const { error: deleteError } = await supabase
         .from("transactions")
         .delete()
-        .in("pluggy_transaction_id", staleIds);
+        .in("pluggy_transaction_id", chunk);
 
       if (deleteError) throw new Error(deleteError.message);
     }
