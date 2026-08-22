@@ -59,26 +59,36 @@ export async function syncPluggyItem(itemId: string) {
 
     if (transactions.length === 0) continue;
 
-    const rows = transactions.map((transaction) => ({
-      user_id: user.id,
-      account_id: account.id,
-      date: transaction.date.toISOString().slice(0, 10),
-      description: transaction.description,
-      amount: transaction.type === "DEBIT" ? -Math.abs(transaction.amount) : Math.abs(transaction.amount),
-      source: "pluggy" as const,
-      pluggy_transaction_id: transaction.id,
-    }));
+    // Pending transactions are unsettled holds/forecasts (including
+    // not-yet-billed future credit-card installments) that can still
+    // change, get reversed, or never actually clear, so they aren't
+    // synced until the institution posts them for real.
+    const postedTransactions = transactions.filter((transaction) => transaction.status !== "PENDING");
 
-    const { error: txError } = await supabase
-      .from("transactions")
-      .upsert(rows, { onConflict: "pluggy_transaction_id" });
+    if (postedTransactions.length > 0) {
+      const rows = postedTransactions.map((transaction) => ({
+        user_id: user.id,
+        account_id: account.id,
+        date: transaction.date.toISOString().slice(0, 10),
+        description: transaction.description,
+        amount: transaction.type === "DEBIT" ? -Math.abs(transaction.amount) : Math.abs(transaction.amount),
+        source: "pluggy" as const,
+        pluggy_transaction_id: transaction.id,
+      }));
 
-    if (txError) throw new Error(txError.message);
+      const { error: txError } = await supabase
+        .from("transactions")
+        .upsert(rows, { onConflict: "pluggy_transaction_id" });
+
+      if (txError) throw new Error(txError.message);
+    }
 
     // Pluggy stops returning transactions that get canceled/reversed at the
     // source instead of flagging them, so anything previously synced for
-    // this account that's no longer in the current fetch has to be removed.
-    const currentIds = new Set(transactions.map((transaction) => transaction.id));
+    // this account that's no longer posted in the current fetch has to be
+    // removed (this also purges any pending transactions synced before
+    // this filter existed).
+    const currentIds = new Set(postedTransactions.map((transaction) => transaction.id));
 
     // PostgREST caps a single select at its default max-rows, so accounts
     // with a long history (this one has 1500+ transactions) need paging to
