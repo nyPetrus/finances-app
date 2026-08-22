@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import type { Account, Category, Transaction } from "@/lib/supabase/types";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +16,13 @@ import { AccountFilter } from "./account-filter";
 import { AddTransactionDialog } from "./add-transaction-dialog";
 import { MonthPicker } from "./month-picker";
 import { TransactionRowActions } from "./transaction-row-actions";
+
+const SORT_KEYS = ["date", "description", "account", "category", "amount"] as const;
+type SortKey = (typeof SORT_KEYS)[number];
+
+function isSortKey(value: string | undefined): value is SortKey {
+  return !!value && (SORT_KEYS as readonly string[]).includes(value);
+}
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
@@ -56,15 +64,31 @@ function currentMonthKey() {
 export default async function TransactionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ month?: string; account?: string }>;
+  searchParams: Promise<{ month?: string; account?: string; sort?: string; dir?: string }>;
 }) {
-  const { month: monthParam, account: accountParam } = await searchParams;
+  const { month: monthParam, account: accountParam, sort: sortParam, dir: dirParam } = await searchParams;
   const monthKey = monthParam && /^\d{4}-\d{2}$/.test(monthParam) ? monthParam : currentMonthKey();
   const monthStart = `${monthKey}-01`;
   const monthEnd = `${shiftMonth(monthKey, 1)}-01`;
   const previousMonthKey = shiftMonth(monthKey, -1);
   const nextMonthKey = shiftMonth(monthKey, 1);
-  const accountQuery = accountParam ? `&account=${accountParam}` : "";
+  const sortKey: SortKey = isSortKey(sortParam) ? sortParam : "date";
+  const sortDir: "asc" | "desc" = dirParam === "asc" ? "asc" : "desc";
+
+  function buildHref(overrides: { month?: string; sort?: SortKey; dir?: "asc" | "desc" } = {}) {
+    const params = new URLSearchParams({ month: overrides.month ?? monthKey });
+    if (accountParam) params.set("account", accountParam);
+    const nextSort = overrides.sort ?? (isSortKey(sortParam) ? sortParam : undefined);
+    const nextDir = overrides.dir ?? (isSortKey(sortParam) ? sortDir : undefined);
+    if (nextSort) params.set("sort", nextSort);
+    if (nextSort && nextDir) params.set("dir", nextDir);
+    return `/transactions?${params.toString()}`;
+  }
+
+  function sortHref(column: SortKey) {
+    const nextDir: "asc" | "desc" = sortKey === column && sortDir === "asc" ? "desc" : "asc";
+    return buildHref({ sort: column, dir: nextDir });
+  }
 
   const supabase = await createClient();
 
@@ -94,6 +118,33 @@ export default async function TransactionsPage({
   const accountsById = new Map(allAccounts.map((a) => [a.id, a]));
   const categoriesById = new Map(allCategories.map((c) => [c.id, c]));
 
+  const sortedTransactions = [...monthTransactions].sort((a, b) => {
+    let cmp = 0;
+    switch (sortKey) {
+      case "date":
+        cmp = a.date.localeCompare(b.date) || a.created_at.localeCompare(b.created_at);
+        break;
+      case "description":
+        cmp = a.description.localeCompare(b.description);
+        break;
+      case "account":
+        cmp = (accountsById.get(a.account_id)?.name ?? "").localeCompare(
+          accountsById.get(b.account_id)?.name ?? "",
+        );
+        break;
+      case "category": {
+        const aName = (a.category_id ? categoriesById.get(a.category_id)?.name : undefined) ?? "";
+        const bName = (b.category_id ? categoriesById.get(b.category_id)?.name : undefined) ?? "";
+        cmp = aName.localeCompare(bName);
+        break;
+      }
+      case "amount":
+        cmp = a.amount - b.amount;
+        break;
+    }
+    return sortDir === "asc" ? cmp : -cmp;
+  });
+
   let income = 0;
   let expense = 0;
   for (const transaction of monthTransactions) {
@@ -119,7 +170,7 @@ export default async function TransactionsPage({
         <Button
           variant="outline"
           size="sm"
-          render={<Link href={`/transactions?month=${previousMonthKey}${accountQuery}`} />}
+          render={<Link href={buildHref({ month: previousMonthKey })} />}
         >
           ← {formatMonthShort(previousMonthKey)}
         </Button>
@@ -137,7 +188,7 @@ export default async function TransactionsPage({
         <Button
           variant="outline"
           size="sm"
-          render={<Link href={`/transactions?month=${nextMonthKey}${accountQuery}`} />}
+          render={<Link href={buildHref({ month: nextMonthKey })} />}
         >
           {formatMonthShort(nextMonthKey)} →
         </Button>
@@ -167,16 +218,46 @@ export default async function TransactionsPage({
           </colgroup>
           <TableHeader>
             <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Account</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead className="text-right">Amount</TableHead>
+              <TableHead>
+                <Link href={sortHref("date")} className="flex items-center gap-1 hover:text-foreground">
+                  Date
+                  {sortKey === "date" &&
+                    (sortDir === "asc" ? <ChevronUpIcon className="size-3.5" /> : <ChevronDownIcon className="size-3.5" />)}
+                </Link>
+              </TableHead>
+              <TableHead>
+                <Link href={sortHref("description")} className="flex items-center gap-1 hover:text-foreground">
+                  Description
+                  {sortKey === "description" &&
+                    (sortDir === "asc" ? <ChevronUpIcon className="size-3.5" /> : <ChevronDownIcon className="size-3.5" />)}
+                </Link>
+              </TableHead>
+              <TableHead>
+                <Link href={sortHref("account")} className="flex items-center gap-1 hover:text-foreground">
+                  Account
+                  {sortKey === "account" &&
+                    (sortDir === "asc" ? <ChevronUpIcon className="size-3.5" /> : <ChevronDownIcon className="size-3.5" />)}
+                </Link>
+              </TableHead>
+              <TableHead>
+                <Link href={sortHref("category")} className="flex items-center gap-1 hover:text-foreground">
+                  Category
+                  {sortKey === "category" &&
+                    (sortDir === "asc" ? <ChevronUpIcon className="size-3.5" /> : <ChevronDownIcon className="size-3.5" />)}
+                </Link>
+              </TableHead>
+              <TableHead className="text-right">
+                <Link href={sortHref("amount")} className="flex items-center justify-end gap-1 hover:text-foreground">
+                  Amount
+                  {sortKey === "amount" &&
+                    (sortDir === "asc" ? <ChevronUpIcon className="size-3.5" /> : <ChevronDownIcon className="size-3.5" />)}
+                </Link>
+              </TableHead>
               <TableHead className="w-0" />
             </TableRow>
           </TableHeader>
           <TableBody>
-            {monthTransactions.map((transaction) => {
+            {sortedTransactions.map((transaction) => {
               const category = transaction.category_id ? categoriesById.get(transaction.category_id) : null;
               const account = accountsById.get(transaction.account_id);
               return (

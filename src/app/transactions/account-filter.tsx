@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Select,
   SelectContent,
@@ -22,13 +22,16 @@ export function AccountFilter({
   selectedAccountId?: string;
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   return (
     <Select
       value={selectedAccountId ?? ALL_ACCOUNTS}
       onValueChange={(value) => {
-        const params = new URLSearchParams({ month });
+        const params = new URLSearchParams(searchParams);
+        params.set("month", month);
         if (value && value !== ALL_ACCOUNTS) params.set("account", value);
+        else params.delete("account");
         router.push(`/transactions?${params.toString()}`);
       }}
     >
