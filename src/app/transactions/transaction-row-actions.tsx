@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { EllipsisIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,8 +11,13 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -39,21 +45,39 @@ export function TransactionRowActions({
 
   const classesForCategory = categoryId ? classes.filter((c) => c.category_id === categoryId) : [];
 
+  function openEditDialog() {
+    setCategoryId(transaction.category_id);
+    setClassId(transaction.class_id);
+    setOpen(true);
+  }
+
+  async function handleDelete() {
+    if (!window.confirm("Delete this transaction?")) return;
+    const formData = new FormData();
+    formData.set("id", transaction.id);
+    await deleteTransaction(formData);
+  }
+
   return (
-    <div className="flex items-center gap-2">
-      <Dialog
-        open={open}
-        onOpenChange={(next) => {
-          setOpen(next);
-          if (next) {
-            setCategoryId(transaction.category_id);
-            setClassId(transaction.class_id);
-          }
-        }}
-      >
-        <DialogTrigger render={<Button variant="outline" size="sm" />}>
-          Edit
-        </DialogTrigger>
+    <div className="flex items-center justify-end">
+      <DropdownMenu>
+        <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
+          <EllipsisIcon />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={openEditDialog}>Edit</DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => setTransactionHidden(transaction.id, !transaction.is_hidden)}
+          >
+            {transaction.is_hidden ? "Unhide" : "Hide"}
+          </DropdownMenuItem>
+          <DropdownMenuItem variant="destructive" onClick={handleDelete}>
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit transaction</DialogTitle>
@@ -174,27 +198,6 @@ export function TransactionRowActions({
           </form>
         </DialogContent>
       </Dialog>
-
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => setTransactionHidden(transaction.id, !transaction.is_hidden)}
-      >
-        {transaction.is_hidden ? "Unhide" : "Hide"}
-      </Button>
-
-      <form
-        action={async (formData) => {
-          if (window.confirm("Delete this transaction?")) {
-            await deleteTransaction(formData);
-          }
-        }}
-      >
-        <input type="hidden" name="id" value={transaction.id} />
-        <Button type="submit" variant="ghost" size="sm" className="text-destructive">
-          Delete
-        </Button>
-      </form>
     </div>
   );
 }
