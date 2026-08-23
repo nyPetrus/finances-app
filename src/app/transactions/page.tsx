@@ -239,9 +239,9 @@ export default async function TransactionsPage({
             <col className="w-[10%]" />
             <col className="w-[28%]" />
             <col className="w-[14%]" />
-            <col className="w-[14%]" />
+            <col className="w-[26%]" />
             <col className="w-[16%]" />
-            <col className="w-[18%]" />
+            <col className="w-[6%]" />
           </colgroup>
           <TableHeader>
             <TableRow>
