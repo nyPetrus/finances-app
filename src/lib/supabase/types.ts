@@ -16,6 +16,14 @@ export type Class = {
   created_at: string;
 };
 
+export type MappedDescription = {
+  user_id: string;
+  description: string;
+  category_id: string;
+  class_id: string | null;
+  created_at: string;
+};
+
 export type Account = {
   id: string;
   user_id: string;
