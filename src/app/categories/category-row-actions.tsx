@@ -24,10 +24,17 @@ import { updateCategory, deleteCategory } from "./actions";
 
 export function CategoryRowActions({ category }: { category: Category }) {
   const [open, setOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   return (
     <div className="flex items-center gap-2">
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog
+        open={open}
+        onOpenChange={(next) => {
+          setOpen(next);
+          if (next) setError(null);
+        }}
+      >
         <DialogTrigger render={<Button variant="outline" size="sm" />}>
           Edit
         </DialogTrigger>
@@ -38,8 +45,12 @@ export function CategoryRowActions({ category }: { category: Category }) {
           <form
             id={`edit-category-${category.id}`}
             action={async (formData) => {
-              await updateCategory(formData);
-              setOpen(false);
+              try {
+                await updateCategory(formData);
+                setOpen(false);
+              } catch (err) {
+                setError(err instanceof Error ? err.message : "Failed to update category.");
+              }
             }}
             className="flex flex-col gap-4"
           >
@@ -71,6 +82,7 @@ export function CategoryRowActions({ category }: { category: Category }) {
                 className="h-10 w-16 p-1"
               />
             </div>
+            {error && <p className="text-sm text-destructive">{error}</p>}
             <DialogFooter>
               <Button type="submit" form={`edit-category-${category.id}`}>
                 Save

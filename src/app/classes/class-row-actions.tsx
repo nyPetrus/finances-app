@@ -30,10 +30,17 @@ export function ClassRowActions({
   categories: Category[];
 }) {
   const [open, setOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   return (
     <div className="flex items-center gap-2">
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog
+        open={open}
+        onOpenChange={(next) => {
+          setOpen(next);
+          if (next) setError(null);
+        }}
+      >
         <DialogTrigger render={<Button variant="outline" size="sm" />}>
           Edit
         </DialogTrigger>
@@ -44,8 +51,12 @@ export function ClassRowActions({
           <form
             id={`edit-class-${classItem.id}`}
             action={async (formData) => {
-              await updateClass(formData);
-              setOpen(false);
+              try {
+                await updateClass(formData);
+                setOpen(false);
+              } catch (err) {
+                setError(err instanceof Error ? err.message : "Failed to update class.");
+              }
             }}
             className="flex flex-col gap-4"
           >
@@ -69,6 +80,7 @@ export function ClassRowActions({
                 </SelectContent>
               </Select>
             </div>
+            {error && <p className="text-sm text-destructive">{error}</p>}
             <DialogFooter>
               <Button type="submit" form={`edit-class-${classItem.id}`}>
                 Save

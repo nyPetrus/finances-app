@@ -3,6 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
+function throwFriendlyError(message: string, code?: string): never {
+  if (code === "23505") throw new Error("A category with this name already exists.");
+  throw new Error(message);
+}
+
 export async function addCategory(formData: FormData) {
   const supabase = await createClient();
   const {
@@ -20,7 +25,7 @@ export async function addCategory(formData: FormData) {
     .from("categories")
     .insert({ user_id: user.id, name, kind, color });
 
-  if (error) throw new Error(error.message);
+  if (error) throwFriendlyError(error.message, error.code);
 
   revalidatePath("/categories");
   revalidatePath("/transactions");
@@ -46,7 +51,7 @@ export async function updateCategory(formData: FormData) {
     .eq("id", id)
     .eq("user_id", user.id);
 
-  if (error) throw new Error(error.message);
+  if (error) throwFriendlyError(error.message, error.code);
 
   revalidatePath("/categories");
   revalidatePath("/transactions");

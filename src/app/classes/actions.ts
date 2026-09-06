@@ -3,6 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
+function throwFriendlyError(message: string, code?: string): never {
+  if (code === "23505") throw new Error("A class with this name already exists.");
+  throw new Error(message);
+}
+
 export async function addClass(formData: FormData) {
   const supabase = await createClient();
   const {
@@ -19,7 +24,7 @@ export async function addClass(formData: FormData) {
     .from("classes")
     .insert({ user_id: user.id, category_id: categoryId, name });
 
-  if (error) throw new Error(error.message);
+  if (error) throwFriendlyError(error.message, error.code);
 
   revalidatePath("/classes");
 }
@@ -43,7 +48,7 @@ export async function updateClass(formData: FormData) {
     .eq("id", id)
     .eq("user_id", user.id);
 
-  if (error) throw new Error(error.message);
+  if (error) throwFriendlyError(error.message, error.code);
 
   revalidatePath("/classes");
 }
