@@ -17,7 +17,7 @@ import { AddTransactionDialog } from "./add-transaction-dialog";
 import { MonthPicker } from "./month-picker";
 import { TransactionRowActions } from "./transaction-row-actions";
 
-const SORT_KEYS = ["date", "description", "account", "category", "amount"] as const;
+const SORT_KEYS = ["date", "description", "account", "category", "class", "amount"] as const;
 type SortKey = (typeof SORT_KEYS)[number];
 
 function isSortKey(value: string | undefined): value is SortKey {
@@ -157,6 +157,12 @@ export default async function TransactionsPage({
         cmp = aName.localeCompare(bName);
         break;
       }
+      case "class": {
+        const aName = (a.class_id ? classesById.get(a.class_id)?.name : undefined) ?? "";
+        const bName = (b.class_id ? classesById.get(b.class_id)?.name : undefined) ?? "";
+        cmp = aName.localeCompare(bName);
+        break;
+      }
       case "amount":
         cmp = a.amount - b.amount;
         break;
@@ -237,9 +243,10 @@ export default async function TransactionsPage({
         <Table className="table-fixed">
           <colgroup>
             <col className="w-[10%]" />
-            <col className="w-[28%]" />
+            <col className="w-[24%]" />
+            <col className="w-[12%]" />
+            <col className="w-[18%]" />
             <col className="w-[14%]" />
-            <col className="w-[26%]" />
             <col className="w-[16%]" />
             <col className="w-[6%]" />
           </colgroup>
@@ -273,6 +280,13 @@ export default async function TransactionsPage({
                     (sortDir === "asc" ? <ChevronUpIcon className="size-3.5" /> : <ChevronDownIcon className="size-3.5" />)}
                 </Link>
               </TableHead>
+              <TableHead>
+                <Link href={sortHref("class")} className="flex items-center gap-1 hover:text-foreground">
+                  Class
+                  {sortKey === "class" &&
+                    (sortDir === "asc" ? <ChevronUpIcon className="size-3.5" /> : <ChevronDownIcon className="size-3.5" />)}
+                </Link>
+              </TableHead>
               <TableHead className="text-right">
                 <Link href={sortHref("amount")} className="flex items-center justify-end gap-1 hover:text-foreground">
                   Amount
@@ -299,22 +313,22 @@ export default async function TransactionsPage({
                   </TableCell>
                   <TableCell className="overflow-hidden">
                     {category ? (
-                      <div className="flex max-w-full flex-col gap-0.5">
-                        <Badge
-                          variant="secondary"
-                          className="max-w-full truncate"
-                          style={{ backgroundColor: `${category.color}22`, color: category.color }}
-                        >
-                          {category.name}
-                        </Badge>
-                        {transactionClass && (
-                          <span className="whitespace-normal break-words text-xs text-muted-foreground">
-                            › {transactionClass.name}
-                          </span>
-                        )}
-                      </div>
+                      <Badge
+                        variant="secondary"
+                        className="max-w-full truncate"
+                        style={{ backgroundColor: `${category.color}22`, color: category.color }}
+                      >
+                        {category.name}
+                      </Badge>
                     ) : (
                       <span className="text-sm text-muted-foreground">Uncategorized</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="truncate" title={transactionClass?.name}>
+                    {transactionClass ? (
+                      transactionClass.name
+                    ) : (
+                      <span className="text-sm text-muted-foreground">—</span>
                     )}
                   </TableCell>
                   <TableCell
