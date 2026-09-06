@@ -29,7 +29,15 @@ function formatCurrency(value: number) {
 }
 
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat("pt-BR").format(new Date(`${value}T00:00:00`));
+  return new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" }).format(new Date(value));
+}
+
+function formatTime(value: string) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "UTC",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
 }
 
 function formatMonthLabel(monthKey: string) {
@@ -304,7 +312,12 @@ export default async function TransactionsPage({
               const account = accountsById.get(transaction.account_id);
               return (
                 <TableRow key={transaction.id}>
-                  <TableCell>{formatDate(transaction.date)}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-col">
+                      <span>{formatDate(transaction.date)}</span>
+                      <span className="text-xs text-muted-foreground">{formatTime(transaction.date)}</span>
+                    </div>
+                  </TableCell>
                   <TableCell className="truncate font-medium" title={transaction.description}>
                     {transaction.description}
                   </TableCell>

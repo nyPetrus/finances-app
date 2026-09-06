@@ -25,7 +25,7 @@ export default async function BudgetPage({
         .from("transactions")
         .select("*")
         .gte("date", `${year}-01-01`)
-        .lte("date", `${year}-12-31`)
+        .lt("date", `${year + 1}-01-01`)
         .eq("is_hidden", false),
     ]);
 

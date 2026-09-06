@@ -26,6 +26,10 @@ function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function nowTime() {
+  return new Date().toTimeString().slice(0, 5);
+}
+
 export function AddTransactionDialog({
   accounts,
   categories,
@@ -69,10 +73,14 @@ export function AddTransactionDialog({
             <Label htmlFor="description">Description</Label>
             <Input id="description" name="description" required autoFocus />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="date">Date</Label>
               <Input id="date" name="date" type="date" defaultValue={todayISO()} required />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="time">Time</Label>
+              <Input id="time" name="time" type="time" defaultValue={nowTime()} />
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="amount">Amount</Label>

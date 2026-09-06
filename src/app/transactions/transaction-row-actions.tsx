@@ -28,6 +28,13 @@ import {
 import type { Account, Category, Class, Transaction } from "@/lib/supabase/types";
 import { updateTransaction, deleteTransaction, setTransactionHidden } from "./actions";
 
+function splitDateTime(iso: string) {
+  const parsed = new Date(iso);
+  const date = parsed.toISOString().slice(0, 10);
+  const time = `${String(parsed.getUTCHours()).padStart(2, "0")}:${String(parsed.getUTCMinutes()).padStart(2, "0")}`;
+  return { date, time };
+}
+
 export function TransactionRowActions({
   transaction,
   accounts,
@@ -100,15 +107,24 @@ export function TransactionRowActions({
                 required
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div className="flex flex-col gap-2">
                 <Label htmlFor={`date-${transaction.id}`}>Date</Label>
                 <Input
                   id={`date-${transaction.id}`}
                   name="date"
                   type="date"
-                  defaultValue={transaction.date}
+                  defaultValue={splitDateTime(transaction.date).date}
                   required
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor={`time-${transaction.id}`}>Time</Label>
+                <Input
+                  id={`time-${transaction.id}`}
+                  name="time"
+                  type="time"
+                  defaultValue={splitDateTime(transaction.date).time}
                 />
               </div>
               <div className="flex flex-col gap-2">

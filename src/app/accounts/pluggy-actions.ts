@@ -77,7 +77,7 @@ export async function syncPluggyItem(itemId: string) {
       const rows = postedTransactions.map((transaction) => ({
         user_id: user.id,
         account_id: account.id,
-        date: transaction.date.toISOString().slice(0, 10),
+        date: transaction.date.toISOString(),
         description: transaction.description,
         amount: transaction.type === "DEBIT" ? -Math.abs(transaction.amount) : Math.abs(transaction.amount),
         source: "pluggy" as const,

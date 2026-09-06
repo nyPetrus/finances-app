@@ -3,6 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
+function combineDateAndTime(dateInput: string, timeInput: string) {
+  return `${dateInput}T${timeInput || "00:00"}:00`;
+}
+
 export async function addTransaction(formData: FormData) {
   const supabase = await createClient();
   const {
@@ -13,11 +17,14 @@ export async function addTransaction(formData: FormData) {
   const account_id = formData.get("account_id") as string;
   const category_id = (formData.get("category_id") as string) || null;
   const class_id = (formData.get("class_id") as string) || null;
-  const date = formData.get("date") as string;
+  const dateInput = formData.get("date") as string;
+  const timeInput = formData.get("time") as string;
   const description = (formData.get("description") as string).trim();
   const amount = Number(formData.get("amount"));
 
-  if (!account_id || !date || !description || !Number.isFinite(amount)) return;
+  if (!account_id || !dateInput || !description || !Number.isFinite(amount)) return;
+
+  const date = combineDateAndTime(dateInput, timeInput);
 
   const { error } = await supabase.from("transactions").insert({
     user_id: user.id,
@@ -46,11 +53,14 @@ export async function updateTransaction(formData: FormData) {
   const account_id = formData.get("account_id") as string;
   const category_id = (formData.get("category_id") as string) || null;
   const class_id = (formData.get("class_id") as string) || null;
-  const date = formData.get("date") as string;
+  const dateInput = formData.get("date") as string;
+  const timeInput = formData.get("time") as string;
   const description = (formData.get("description") as string).trim();
   const amount = Number(formData.get("amount"));
 
-  if (!description || !Number.isFinite(amount)) return;
+  if (!dateInput || !description || !Number.isFinite(amount)) return;
+
+  const date = combineDateAndTime(dateInput, timeInput);
 
   const { error } = await supabase
     .from("transactions")
