@@ -22,3 +22,49 @@ Tailwind v4 + shadcn/ui, Supabase (Postgres + Auth, RLS per user), Pluggy
 - Deployed on Vercel, auto-deploys on push to `main`
   (https://github.com/nyPetrus/finances-app). Live at
   https://finances-app-two-zeta.vercel.app.
+
+## Table page conventions
+
+All list-style pages (Transactions, Categories, Classes, Descriptions,
+Accounts) follow the same structure. Match this when adding a new one
+instead of inventing a fresh layout.
+
+- **Markup**: shadcn's `Table`/`TableHeader`/`TableBody`/`TableRow`/`TableCell`
+  from `@/components/ui/table`. Use `<Table className="table-fixed">` with an
+  explicit `<colgroup>` of percentage widths that sum to 100; give the
+  trailing actions column a narrow, unlabeled `<TableHead className="w-0" />`.
+  Default to one flat, sortable table rather than grouped sections (e.g.
+  Categories and Classes used to be grouped `<ul>` lists by kind/category —
+  they were flattened into sortable tables for consistency).
+- **Sorting**: every column header is sortable via the shared
+  `SortableTableHead` component (`src/components/sortable-table-head.tsx`).
+  Each page defines its own `SORT_KEYS as const` tuple + `SortKey` type +
+  `isSortKey` guard, reads `sort`/`dir` out of `searchParams`, derives
+  `sortKey`/`sortDir` with a sensible default, and builds each header's link
+  with a local `sortHref(column)` helper (flips direction if the column is
+  already active, otherwise starts at `"asc"`). Sort the fetched rows in JS
+  with a `switch (sortKey)` before rendering — don't rely on the DB query's
+  `.order()` for the display order.
+- **Row actions**: a single dropdown menu, not separate inline buttons.
+  Trigger is `<DropdownMenuTrigger render={<Button variant="ghost"
+  size="icon-sm" />}><EllipsisIcon /></DropdownMenuTrigger>`, content holds
+  `DropdownMenuItem`s ("Edit", "Delete" with `variant="destructive"`, plus
+  anything else the row needs — e.g. Accounts' "Sync", Transactions' "Hide").
+  The edit dialog is *not* wrapped in a `DialogTrigger`; it's a plain
+  `Dialog`/`DialogContent` whose `open` state is local, opened by the "Edit"
+  item's `onClick`, so it can share the menu's trigger button. Delete goes
+  through a `window.confirm(...)` before calling the delete server action.
+- **Edit/Add dialogs**: `Label` + `Input`/`Select` fields per `@/components/ui`.
+  Wrap the server action call in the form's `action` in try/catch, store the
+  message in local `error` state, and render it as
+  `{error && <p className="text-sm text-destructive">{error}</p>}` above the
+  footer — server actions should throw `Error`s with user-facing messages
+  (see e.g. the unique-name violation handling in
+  `src/app/categories/actions.ts`).
+- **Category/class chips**: render with `Badge` (`variant="secondary"`),
+  colored via `style={{ backgroundColor: \`${color}22\`, color }}` using the
+  category's own `color` field.
+- **Mutations**: server actions call `revalidatePath` for every page that
+  displays the changed data (a category edit revalidates `/categories` *and*
+  `/transactions`, for instance) — check for cross-page dependencies before
+  assuming one path is enough.
