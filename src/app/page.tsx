@@ -67,6 +67,7 @@ export default async function Home({
   const spendingByCategory = new Map<string, number>();
   for (const t of nonTransferYearTransactions) {
     if (t.amount >= 0 || !t.category_id) continue;
+    if (categoriesById.get(t.category_id)?.kind !== "expense") continue;
     spendingByCategory.set(t.category_id, (spendingByCategory.get(t.category_id) ?? 0) + -t.amount);
   }
   const spendingChartData = Array.from(spendingByCategory.entries())
