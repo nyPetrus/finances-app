@@ -1,4 +1,5 @@
 @AGENTS.md
+@PITFALLS.md
 
 # Project notes
 
