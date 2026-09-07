@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { syncMappedDescriptions } from "@/app/descriptions/actions";
 
 function combineDateAndTime(dateInput: string, timeInput: string) {
   return `${dateInput}T${timeInput || "00:00"}:00`;
@@ -91,6 +92,41 @@ export async function setTransactionHidden(id: string, hidden: boolean) {
   revalidatePath("/transactions");
   revalidatePath("/budget");
   revalidatePath("/");
+}
+
+export async function syncDescriptionFromTransaction(transactionId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { data: transaction, error: txError } = await supabase
+    .from("transactions")
+    .select("description, category_id, class_id")
+    .eq("id", transactionId)
+    .eq("user_id", user.id)
+    .single();
+
+  if (txError) throw new Error(txError.message);
+  if (!transaction.category_id) {
+    throw new Error("Assign a category to this transaction before syncing its description.");
+  }
+
+  const { error: upsertError } = await supabase.from("mapped_descriptions").upsert(
+    {
+      user_id: user.id,
+      description: transaction.description,
+      category_id: transaction.category_id,
+      class_id: transaction.class_id,
+      check_type: "equal_to",
+    },
+    { onConflict: "user_id,description" },
+  );
+
+  if (upsertError) throw new Error(upsertError.message);
+
+  return syncMappedDescriptions();
 }
 
 export async function deleteTransaction(formData: FormData) {

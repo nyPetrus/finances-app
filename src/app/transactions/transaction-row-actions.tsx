@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { EllipsisIcon } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,7 +27,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Account, Category, Class, Transaction } from "@/lib/supabase/types";
-import { updateTransaction, deleteTransaction, setTransactionHidden } from "./actions";
+import {
+  updateTransaction,
+  deleteTransaction,
+  setTransactionHidden,
+  syncDescriptionFromTransaction,
+} from "./actions";
 
 function splitDateTime(iso: string) {
   const parsed = new Date(iso);
@@ -49,6 +55,7 @@ export function TransactionRowActions({
   const [open, setOpen] = useState(false);
   const [categoryId, setCategoryId] = useState<string | null>(transaction.category_id);
   const [classId, setClassId] = useState<string | null>(transaction.class_id);
+  const [isSyncing, startSync] = useTransition();
 
   const classesForCategory = categoryId ? classes.filter((c) => c.category_id === categoryId) : [];
 
@@ -65,6 +72,21 @@ export function TransactionRowActions({
     await deleteTransaction(formData);
   }
 
+  function handleSyncDescription() {
+    startSync(async () => {
+      try {
+        const count = await syncDescriptionFromTransaction(transaction.id);
+        toast.success(
+          count === 1
+            ? "Description saved — 1 transaction categorized."
+            : `Description saved — ${count} transactions categorized.`,
+        );
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to sync description.");
+      }
+    });
+  }
+
   return (
     <div className="flex items-center justify-end">
       <DropdownMenu>
@@ -73,6 +95,12 @@ export function TransactionRowActions({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={openEditDialog}>Edit</DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={!transaction.category_id || isSyncing}
+            onClick={handleSyncDescription}
+          >
+            {isSyncing ? "Syncing…" : "Sync descriptions"}
+          </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => setTransactionHidden(transaction.id, !transaction.is_hidden)}
           >
