@@ -1,41 +1,16 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Category, Class } from "@/lib/supabase/types";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { AddClassDialog } from "./add-class-dialog";
 import { ClassRowActions } from "./class-row-actions";
-
-function CategoryGroup({
-  category,
-  classes,
-  categories,
-}: {
-  category: Category;
-  classes: Class[];
-  categories: Category[];
-}) {
-  return (
-    <div>
-      <h2 className="mb-3 flex items-center gap-2 text-lg font-medium">
-        <span
-          className="h-3 w-3 rounded-full"
-          style={{ backgroundColor: category.color }}
-        />
-        {category.name}
-      </h2>
-      {classes.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No classes yet.</p>
-      ) : (
-        <ul className="divide-y rounded-md border">
-          {classes.map((classItem) => (
-            <li key={classItem.id} className="flex items-center justify-between px-4 py-3">
-              <span>{classItem.name}</span>
-              <ClassRowActions classItem={classItem} categories={categories} />
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
 
 export default async function ClassesPage() {
   const supabase = await createClient();
@@ -51,12 +26,7 @@ export default async function ClassesPage() {
   const allCategories = (categories ?? []) as Category[];
   const allClasses = (classes ?? []) as Class[];
 
-  const classesByCategory = new Map<string, Class[]>();
-  for (const classItem of allClasses) {
-    const list = classesByCategory.get(classItem.category_id) ?? [];
-    list.push(classItem);
-    classesByCategory.set(classItem.category_id, list);
-  }
+  const categoriesById = new Map(allCategories.map((c) => [c.id, c]));
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-6">
@@ -69,17 +39,51 @@ export default async function ClassesPage() {
         <p className="text-sm text-muted-foreground">
           No categories yet. Create one on the Categories page first.
         </p>
+      ) : allClasses.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No classes yet.</p>
       ) : (
-        <div className="flex flex-col gap-6">
-          {allCategories.map((category) => (
-            <CategoryGroup
-              key={category.id}
-              category={category}
-              classes={classesByCategory.get(category.id) ?? []}
-              categories={allCategories}
-            />
-          ))}
-        </div>
+        <Table className="table-fixed">
+          <colgroup>
+            <col className="w-[45%]" />
+            <col className="w-[35%]" />
+            <col className="w-[20%]" />
+          </colgroup>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead className="w-0" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {allClasses.map((classItem) => {
+              const category = categoriesById.get(classItem.category_id);
+              return (
+                <TableRow key={classItem.id}>
+                  <TableCell className="truncate font-medium" title={classItem.name}>
+                    {classItem.name}
+                  </TableCell>
+                  <TableCell className="overflow-hidden">
+                    {category ? (
+                      <Badge
+                        variant="secondary"
+                        className="max-w-full truncate"
+                        style={{ backgroundColor: `${category.color}22`, color: category.color }}
+                      >
+                        {category.name}
+                      </Badge>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <ClassRowActions classItem={classItem} categories={allCategories} />
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
       )}
     </div>
   );

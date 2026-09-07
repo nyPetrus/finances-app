@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { EllipsisIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,8 +11,13 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -26,18 +32,35 @@ export function CategoryRowActions({ category }: { category: Category }) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  function openEditDialog() {
+    setError(null);
+    setOpen(true);
+  }
+
+  async function handleDelete() {
+    if (!window.confirm(`Delete "${category.name}"? Transactions in this category will become uncategorized.`)) {
+      return;
+    }
+    const formData = new FormData();
+    formData.set("id", category.id);
+    await deleteCategory(formData);
+  }
+
   return (
-    <div className="flex items-center gap-2">
-      <Dialog
-        open={open}
-        onOpenChange={(next) => {
-          setOpen(next);
-          if (next) setError(null);
-        }}
-      >
-        <DialogTrigger render={<Button variant="outline" size="sm" />}>
-          Edit
-        </DialogTrigger>
+    <div className="flex items-center justify-end">
+      <DropdownMenu>
+        <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
+          <EllipsisIcon />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={openEditDialog}>Edit</DropdownMenuItem>
+          <DropdownMenuItem variant="destructive" onClick={handleDelete}>
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit category</DialogTitle>
@@ -91,19 +114,6 @@ export function CategoryRowActions({ category }: { category: Category }) {
           </form>
         </DialogContent>
       </Dialog>
-
-      <form
-        action={async (formData) => {
-          if (window.confirm(`Delete "${category.name}"? Transactions in this category will become uncategorized.`)) {
-            await deleteCategory(formData);
-          }
-        }}
-      >
-        <input type="hidden" name="id" value={category.id} />
-        <Button type="submit" variant="ghost" size="sm" className="text-destructive">
-          Delete
-        </Button>
-      </form>
     </div>
   );
 }

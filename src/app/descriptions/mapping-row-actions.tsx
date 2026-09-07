@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { EllipsisIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,8 +11,13 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -32,26 +38,41 @@ export function MappingRowActions({
   classes: Class[];
 }) {
   const [open, setOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [categoryId, setCategoryId] = useState<string | null>(mapping.category_id);
   const [classId, setClassId] = useState<string | null>(mapping.class_id);
 
   const classesForCategory = categoryId ? classes.filter((c) => c.category_id === categoryId) : [];
 
+  function openEditDialog() {
+    setError(null);
+    setCategoryId(mapping.category_id);
+    setClassId(mapping.class_id);
+    setOpen(true);
+  }
+
+  async function handleDelete() {
+    if (!window.confirm(`Delete mapping for "${mapping.description}"?`)) return;
+    const formData = new FormData();
+    formData.set("description", mapping.description);
+    await deleteMappedDescription(formData);
+  }
+
   return (
-    <div className="flex items-center gap-2">
-      <Dialog
-        open={open}
-        onOpenChange={(next) => {
-          setOpen(next);
-          if (next) {
-            setCategoryId(mapping.category_id);
-            setClassId(mapping.class_id);
-          }
-        }}
-      >
-        <DialogTrigger render={<Button variant="outline" size="sm" />}>
-          Edit
-        </DialogTrigger>
+    <div className="flex items-center justify-end">
+      <DropdownMenu>
+        <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
+          <EllipsisIcon />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={openEditDialog}>Edit</DropdownMenuItem>
+          <DropdownMenuItem variant="destructive" onClick={handleDelete}>
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit mapping</DialogTitle>
@@ -59,8 +80,12 @@ export function MappingRowActions({
           <form
             id={`edit-mapping-${mapping.description}`}
             action={async (formData) => {
-              await updateMappedDescription(formData);
-              setOpen(false);
+              try {
+                await updateMappedDescription(formData);
+                setOpen(false);
+              } catch (err) {
+                setError(err instanceof Error ? err.message : "Failed to update mapping.");
+              }
             }}
             className="flex flex-col gap-4"
           >
@@ -124,6 +149,7 @@ export function MappingRowActions({
                 </SelectContent>
               </Select>
             </div>
+            {error && <p className="text-sm text-destructive">{error}</p>}
             <DialogFooter>
               <Button type="submit" form={`edit-mapping-${mapping.description}`}>
                 Save
@@ -132,19 +158,6 @@ export function MappingRowActions({
           </form>
         </DialogContent>
       </Dialog>
-
-      <form
-        action={async (formData) => {
-          if (window.confirm(`Delete mapping for "${mapping.description}"?`)) {
-            await deleteMappedDescription(formData);
-          }
-        }}
-      >
-        <input type="hidden" name="description" value={mapping.description} />
-        <Button type="submit" variant="ghost" size="sm" className="text-destructive">
-          Delete
-        </Button>
-      </form>
     </div>
   );
 }

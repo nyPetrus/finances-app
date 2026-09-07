@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { EllipsisIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,8 +12,13 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { Account } from "@/lib/supabase/types";
 import { updateAccount, deleteAccount } from "./actions";
 import { syncPluggyItem } from "./pluggy-actions";
@@ -23,37 +29,53 @@ export function AccountRowActions({ account }: { account: Account }) {
   const [syncError, setSyncError] = useState<string | null>(null);
   const router = useRouter();
 
+  function handleSync() {
+    startSync(async () => {
+      setSyncError(null);
+      try {
+        await syncPluggyItem(account.pluggy_item_id!);
+        router.refresh();
+      } catch (err) {
+        setSyncError(err instanceof Error ? err.message : "Failed to sync.");
+      }
+    });
+  }
+
+  async function handleDelete() {
+    if (!window.confirm(`Delete "${account.name}"? This will also delete all of its transactions.`)) {
+      return;
+    }
+    const formData = new FormData();
+    formData.set("id", account.id);
+    await deleteAccount(formData);
+  }
+
   return (
-    <div className="flex items-center gap-2">
-      {account.is_automatic && account.pluggy_item_id && (
-        <div className="flex flex-col items-end gap-1">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={isSyncing}
-            onClick={() =>
-              startSync(async () => {
-                setSyncError(null);
-                try {
-                  await syncPluggyItem(account.pluggy_item_id!);
-                  router.refresh();
-                } catch (err) {
-                  setSyncError(err instanceof Error ? err.message : "Failed to sync.");
-                }
-              })
-            }
-          >
-            {isSyncing ? "Syncing…" : "Sync"}
-          </Button>
-          {syncError && <p className="text-xs text-destructive">{syncError}</p>}
-        </div>
-      )}
+    <div className="flex flex-col items-end gap-1">
+      <div className="flex items-center justify-end">
+        <DropdownMenu>
+          <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
+            <EllipsisIcon />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {account.is_automatic && account.pluggy_item_id && (
+              <DropdownMenuItem disabled={isSyncing} onClick={handleSync}>
+                {isSyncing ? "Syncing…" : "Sync"}
+              </DropdownMenuItem>
+            )}
+            {!account.is_automatic && (
+              <DropdownMenuItem onClick={() => setOpen(true)}>Edit</DropdownMenuItem>
+            )}
+            <DropdownMenuItem variant="destructive" onClick={handleDelete}>
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      {syncError && <p className="text-xs text-destructive">{syncError}</p>}
 
       {!account.is_automatic && (
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger render={<Button variant="outline" size="sm" />}>
-            Edit
-          </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Edit account</DialogTitle>
@@ -99,23 +121,6 @@ export function AccountRowActions({ account }: { account: Account }) {
           </DialogContent>
         </Dialog>
       )}
-
-      <form
-        action={async (formData) => {
-          if (
-            window.confirm(
-              `Delete "${account.name}"? This will also delete all of its transactions.`
-            )
-          ) {
-            await deleteAccount(formData);
-          }
-        }}
-      >
-        <input type="hidden" name="id" value={account.id} />
-        <Button type="submit" variant="ghost" size="sm" className="text-destructive">
-          Delete
-        </Button>
-      </form>
     </div>
   );
 }
