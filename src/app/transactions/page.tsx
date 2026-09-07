@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import type { Account, Category, Class, Transaction } from "@/lib/supabase/types";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { SortableTableHead } from "@/components/sortable-table-head";
 import { AccountFilter } from "./account-filter";
 import { AddTransactionDialog } from "./add-transaction-dialog";
 import { MonthPicker } from "./month-picker";
@@ -260,48 +260,29 @@ export default async function TransactionsPage({
           </colgroup>
           <TableHeader>
             <TableRow>
-              <TableHead>
-                <Link href={sortHref("date")} className="flex items-center gap-1 hover:text-foreground">
-                  Date
-                  {sortKey === "date" &&
-                    (sortDir === "asc" ? <ChevronUpIcon className="size-3.5" /> : <ChevronDownIcon className="size-3.5" />)}
-                </Link>
-              </TableHead>
-              <TableHead>
-                <Link href={sortHref("description")} className="flex items-center gap-1 hover:text-foreground">
-                  Description
-                  {sortKey === "description" &&
-                    (sortDir === "asc" ? <ChevronUpIcon className="size-3.5" /> : <ChevronDownIcon className="size-3.5" />)}
-                </Link>
-              </TableHead>
-              <TableHead>
-                <Link href={sortHref("account")} className="flex items-center gap-1 hover:text-foreground">
-                  Account
-                  {sortKey === "account" &&
-                    (sortDir === "asc" ? <ChevronUpIcon className="size-3.5" /> : <ChevronDownIcon className="size-3.5" />)}
-                </Link>
-              </TableHead>
-              <TableHead>
-                <Link href={sortHref("category")} className="flex items-center gap-1 hover:text-foreground">
-                  Category
-                  {sortKey === "category" &&
-                    (sortDir === "asc" ? <ChevronUpIcon className="size-3.5" /> : <ChevronDownIcon className="size-3.5" />)}
-                </Link>
-              </TableHead>
-              <TableHead>
-                <Link href={sortHref("class")} className="flex items-center gap-1 hover:text-foreground">
-                  Class
-                  {sortKey === "class" &&
-                    (sortDir === "asc" ? <ChevronUpIcon className="size-3.5" /> : <ChevronDownIcon className="size-3.5" />)}
-                </Link>
-              </TableHead>
-              <TableHead className="text-right">
-                <Link href={sortHref("amount")} className="flex items-center justify-end gap-1 hover:text-foreground">
-                  Amount
-                  {sortKey === "amount" &&
-                    (sortDir === "asc" ? <ChevronUpIcon className="size-3.5" /> : <ChevronDownIcon className="size-3.5" />)}
-                </Link>
-              </TableHead>
+              <SortableTableHead href={sortHref("date")} active={sortKey === "date"} dir={sortDir}>
+                Date
+              </SortableTableHead>
+              <SortableTableHead href={sortHref("description")} active={sortKey === "description"} dir={sortDir}>
+                Description
+              </SortableTableHead>
+              <SortableTableHead href={sortHref("account")} active={sortKey === "account"} dir={sortDir}>
+                Account
+              </SortableTableHead>
+              <SortableTableHead href={sortHref("category")} active={sortKey === "category"} dir={sortDir}>
+                Category
+              </SortableTableHead>
+              <SortableTableHead href={sortHref("class")} active={sortKey === "class"} dir={sortDir}>
+                Class
+              </SortableTableHead>
+              <SortableTableHead
+                href={sortHref("amount")}
+                active={sortKey === "amount"}
+                dir={sortDir}
+                align="right"
+              >
+                Amount
+              </SortableTableHead>
               <TableHead className="w-0" />
             </TableRow>
           </TableHeader>

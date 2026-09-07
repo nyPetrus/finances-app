@@ -9,15 +9,36 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { SortableTableHead } from "@/components/sortable-table-head";
 import { AddClassDialog } from "./add-class-dialog";
 import { ClassRowActions } from "./class-row-actions";
 
-export default async function ClassesPage() {
+const SORT_KEYS = ["name", "category"] as const;
+type SortKey = (typeof SORT_KEYS)[number];
+
+function isSortKey(value: string | undefined): value is SortKey {
+  return !!value && (SORT_KEYS as readonly string[]).includes(value);
+}
+
+export default async function ClassesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ sort?: string; dir?: string }>;
+}) {
+  const { sort: sortParam, dir: dirParam } = await searchParams;
+  const sortKey: SortKey = isSortKey(sortParam) ? sortParam : "name";
+  const sortDir: "asc" | "desc" = dirParam === "desc" ? "desc" : "asc";
+
+  function sortHref(column: SortKey) {
+    const nextDir: "asc" | "desc" = sortKey === column && sortDir === "asc" ? "desc" : "asc";
+    return `/classes?${new URLSearchParams({ sort: column, dir: nextDir }).toString()}`;
+  }
+
   const supabase = await createClient();
   const [{ data: categories, error: catError }, { data: classes, error: classError }] =
     await Promise.all([
-      supabase.from("categories").select("*").order("kind").order("name"),
-      supabase.from("classes").select("*").order("name"),
+      supabase.from("categories").select("*"),
+      supabase.from("classes").select("*"),
     ]);
 
   if (catError) throw new Error(catError.message);
@@ -27,6 +48,22 @@ export default async function ClassesPage() {
   const allClasses = (classes ?? []) as Class[];
 
   const categoriesById = new Map(allCategories.map((c) => [c.id, c]));
+
+  const sortedClasses = [...allClasses].sort((a, b) => {
+    let cmp = 0;
+    switch (sortKey) {
+      case "name":
+        cmp = a.name.localeCompare(b.name);
+        break;
+      case "category": {
+        const aName = categoriesById.get(a.category_id)?.name ?? "";
+        const bName = categoriesById.get(b.category_id)?.name ?? "";
+        cmp = aName.localeCompare(bName) || a.name.localeCompare(b.name);
+        break;
+      }
+    }
+    return sortDir === "asc" ? cmp : -cmp;
+  });
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-6">
@@ -39,7 +76,7 @@ export default async function ClassesPage() {
         <p className="text-sm text-muted-foreground">
           No categories yet. Create one on the Categories page first.
         </p>
-      ) : allClasses.length === 0 ? (
+      ) : sortedClasses.length === 0 ? (
         <p className="text-sm text-muted-foreground">No classes yet.</p>
       ) : (
         <Table className="table-fixed">
@@ -50,13 +87,17 @@ export default async function ClassesPage() {
           </colgroup>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Category</TableHead>
+              <SortableTableHead href={sortHref("name")} active={sortKey === "name"} dir={sortDir}>
+                Name
+              </SortableTableHead>
+              <SortableTableHead href={sortHref("category")} active={sortKey === "category"} dir={sortDir}>
+                Category
+              </SortableTableHead>
               <TableHead className="w-0" />
             </TableRow>
           </TableHeader>
           <TableBody>
-            {allClasses.map((classItem) => {
+            {sortedClasses.map((classItem) => {
               const category = categoriesById.get(classItem.category_id);
               return (
                 <TableRow key={classItem.id}>

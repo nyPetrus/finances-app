@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { SortableTableHead } from "@/components/sortable-table-head";
 import { AddCategoryDialog } from "./add-category-dialog";
 import { CategoryRowActions } from "./category-row-actions";
 
@@ -18,17 +19,46 @@ const kindLabels: Record<Category["kind"], string> = {
   transfer: "Transfer",
 };
 
-export default async function CategoriesPage() {
+const SORT_KEYS = ["name", "type"] as const;
+type SortKey = (typeof SORT_KEYS)[number];
+
+function isSortKey(value: string | undefined): value is SortKey {
+  return !!value && (SORT_KEYS as readonly string[]).includes(value);
+}
+
+export default async function CategoriesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ sort?: string; dir?: string }>;
+}) {
+  const { sort: sortParam, dir: dirParam } = await searchParams;
+  const sortKey: SortKey = isSortKey(sortParam) ? sortParam : "name";
+  const sortDir: "asc" | "desc" = dirParam === "desc" ? "desc" : "asc";
+
+  function sortHref(column: SortKey) {
+    const nextDir: "asc" | "desc" = sortKey === column && sortDir === "asc" ? "desc" : "asc";
+    return `/categories?${new URLSearchParams({ sort: column, dir: nextDir }).toString()}`;
+  }
+
   const supabase = await createClient();
-  const { data: categories, error } = await supabase
-    .from("categories")
-    .select("*")
-    .order("kind")
-    .order("name");
+  const { data: categories, error } = await supabase.from("categories").select("*");
 
   if (error) throw new Error(error.message);
 
   const allCategories = (categories ?? []) as Category[];
+
+  const sortedCategories = [...allCategories].sort((a, b) => {
+    let cmp = 0;
+    switch (sortKey) {
+      case "name":
+        cmp = a.name.localeCompare(b.name);
+        break;
+      case "type":
+        cmp = a.kind.localeCompare(b.kind) || a.name.localeCompare(b.name);
+        break;
+    }
+    return sortDir === "asc" ? cmp : -cmp;
+  });
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-6">
@@ -37,7 +67,7 @@ export default async function CategoriesPage() {
         <AddCategoryDialog />
       </div>
 
-      {allCategories.length === 0 ? (
+      {sortedCategories.length === 0 ? (
         <p className="text-sm text-muted-foreground">No categories yet.</p>
       ) : (
         <Table className="table-fixed">
@@ -48,13 +78,17 @@ export default async function CategoriesPage() {
           </colgroup>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Type</TableHead>
+              <SortableTableHead href={sortHref("name")} active={sortKey === "name"} dir={sortDir}>
+                Name
+              </SortableTableHead>
+              <SortableTableHead href={sortHref("type")} active={sortKey === "type"} dir={sortDir}>
+                Type
+              </SortableTableHead>
               <TableHead className="w-0" />
             </TableRow>
           </TableHeader>
           <TableBody>
-            {allCategories.map((category) => (
+            {sortedCategories.map((category) => (
               <TableRow key={category.id}>
                 <TableCell className="truncate font-medium" title={category.name}>
                   <div className="flex items-center gap-2">

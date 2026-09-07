@@ -9,11 +9,32 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { SortableTableHead } from "@/components/sortable-table-head";
 import { AddMappingDialog } from "./add-mapping-dialog";
 import { MappingRowActions } from "./mapping-row-actions";
 import { SyncButton } from "./sync-button";
 
-export default async function DescriptionsPage() {
+const SORT_KEYS = ["description", "category", "class"] as const;
+type SortKey = (typeof SORT_KEYS)[number];
+
+function isSortKey(value: string | undefined): value is SortKey {
+  return !!value && (SORT_KEYS as readonly string[]).includes(value);
+}
+
+export default async function DescriptionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ sort?: string; dir?: string }>;
+}) {
+  const { sort: sortParam, dir: dirParam } = await searchParams;
+  const sortKey: SortKey = isSortKey(sortParam) ? sortParam : "description";
+  const sortDir: "asc" | "desc" = dirParam === "desc" ? "desc" : "asc";
+
+  function sortHref(column: SortKey) {
+    const nextDir: "asc" | "desc" = sortKey === column && sortDir === "asc" ? "desc" : "asc";
+    return `/descriptions?${new URLSearchParams({ sort: column, dir: nextDir }).toString()}`;
+  }
+
   const supabase = await createClient();
 
   const [
@@ -21,9 +42,9 @@ export default async function DescriptionsPage() {
     { data: classes, error: classError },
     { data: mappings, error: mapError },
   ] = await Promise.all([
-    supabase.from("categories").select("*").order("name"),
-    supabase.from("classes").select("*").order("name"),
-    supabase.from("mapped_descriptions").select("*").order("description"),
+    supabase.from("categories").select("*"),
+    supabase.from("classes").select("*"),
+    supabase.from("mapped_descriptions").select("*"),
   ]);
 
   if (catError) throw new Error(catError.message);
@@ -36,6 +57,28 @@ export default async function DescriptionsPage() {
 
   const categoriesById = new Map(allCategories.map((c) => [c.id, c]));
   const classesById = new Map(allClasses.map((c) => [c.id, c]));
+
+  const sortedMappings = [...allMappings].sort((a, b) => {
+    let cmp = 0;
+    switch (sortKey) {
+      case "description":
+        cmp = a.description.localeCompare(b.description);
+        break;
+      case "category": {
+        const aName = categoriesById.get(a.category_id)?.name ?? "";
+        const bName = categoriesById.get(b.category_id)?.name ?? "";
+        cmp = aName.localeCompare(bName);
+        break;
+      }
+      case "class": {
+        const aName = (a.class_id ? classesById.get(a.class_id)?.name : undefined) ?? "";
+        const bName = (b.class_id ? classesById.get(b.class_id)?.name : undefined) ?? "";
+        cmp = aName.localeCompare(bName);
+        break;
+      }
+    }
+    return sortDir === "asc" ? cmp : -cmp;
+  });
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 p-6">
@@ -56,7 +99,7 @@ export default async function DescriptionsPage() {
         <p className="text-sm text-muted-foreground">
           No categories yet. Create one on the Categories page first.
         </p>
-      ) : allMappings.length === 0 ? (
+      ) : sortedMappings.length === 0 ? (
         <p className="text-sm text-muted-foreground">No mapped descriptions yet.</p>
       ) : (
         <Table className="table-fixed">
@@ -68,14 +111,20 @@ export default async function DescriptionsPage() {
           </colgroup>
           <TableHeader>
             <TableRow>
-              <TableHead>Description</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Class</TableHead>
+              <SortableTableHead href={sortHref("description")} active={sortKey === "description"} dir={sortDir}>
+                Description
+              </SortableTableHead>
+              <SortableTableHead href={sortHref("category")} active={sortKey === "category"} dir={sortDir}>
+                Category
+              </SortableTableHead>
+              <SortableTableHead href={sortHref("class")} active={sortKey === "class"} dir={sortDir}>
+                Class
+              </SortableTableHead>
               <TableHead className="w-0" />
             </TableRow>
           </TableHeader>
           <TableBody>
-            {allMappings.map((mapping) => {
+            {sortedMappings.map((mapping) => {
               const category = categoriesById.get(mapping.category_id);
               const classItem = mapping.class_id ? classesById.get(mapping.class_id) : null;
               return (
