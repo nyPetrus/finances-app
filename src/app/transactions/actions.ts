@@ -19,7 +19,7 @@ export async function addTransaction(formData: FormData) {
   const class_id = (formData.get("class_id") as string) || null;
   const dateInput = formData.get("date") as string;
   const timeInput = formData.get("time") as string;
-  const description = (formData.get("description") as string).trim();
+  const description = (formData.get("description") as string).trim().toLowerCase();
   const amount = Number(formData.get("amount"));
 
   if (!account_id || !dateInput || !description || !Number.isFinite(amount)) return;
@@ -55,7 +55,7 @@ export async function updateTransaction(formData: FormData) {
   const class_id = (formData.get("class_id") as string) || null;
   const dateInput = formData.get("date") as string;
   const timeInput = formData.get("time") as string;
-  const description = (formData.get("description") as string).trim();
+  const description = (formData.get("description") as string).trim().toLowerCase();
   const amount = Number(formData.get("amount"));
 
   if (!dateInput || !description || !Number.isFinite(amount)) return;

@@ -78,7 +78,7 @@ export async function syncPluggyItem(itemId: string) {
         user_id: user.id,
         account_id: account.id,
         date: transaction.date.toISOString(),
-        description: transaction.description,
+        description: transaction.description.toLowerCase(),
         amount: transaction.type === "DEBIT" ? -Math.abs(transaction.amount) : Math.abs(transaction.amount),
         source: "pluggy" as const,
         pluggy_transaction_id: transaction.id,

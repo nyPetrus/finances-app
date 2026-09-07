@@ -29,6 +29,12 @@ Tailwind v4 + shadcn/ui, Supabase (Postgres + Auth, RLS per user), Pluggy
   `body` rule in `globals.css` applies Tailwind's `tabular-nums` globally so
   digits always align in columns — don't remove it, and don't override it
   with `proportional-nums` in a table/dashboard context.
+- **`transactions.description` is always stored lowercase.** Enforced in
+  `src/app/transactions/actions.ts` (manual add/edit) and
+  `src/app/accounts/pluggy-actions.ts` (Pluggy sync) — any new path that
+  inserts or updates a transaction's description must lowercase it first.
+  Existing rows were backfilled once via
+  `supabase/migrations/0012_lowercase_transaction_descriptions.sql`.
 
 ## Table page conventions
 
