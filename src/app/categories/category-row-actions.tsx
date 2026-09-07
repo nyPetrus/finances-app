@@ -25,15 +25,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ColorSwatchPicker } from "@/components/color-swatch-picker";
 import type { Category } from "@/lib/supabase/types";
 import { updateCategory, deleteCategory } from "./actions";
 
 export function CategoryRowActions({ category }: { category: Category }) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [color, setColor] = useState(category.color);
 
   function openEditDialog() {
     setError(null);
+    setColor(category.color);
     setOpen(true);
   }
 
@@ -96,14 +99,8 @@ export function CategoryRowActions({ category }: { category: Category }) {
               </Select>
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor={`color-${category.id}`}>Color</Label>
-              <Input
-                id={`color-${category.id}`}
-                name="color"
-                type="color"
-                defaultValue={category.color}
-                className="h-10 w-16 p-1"
-              />
+              <Label>Color</Label>
+              <ColorSwatchPicker name="color" value={color} onChange={setColor} />
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
             <DialogFooter>

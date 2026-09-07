@@ -19,18 +19,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ColorSwatchPicker } from "@/components/color-swatch-picker";
+import { CATEGORY_COLORS } from "@/lib/category-colors";
 import { addCategory } from "./actions";
 
 export function AddCategoryDialog() {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [color, setColor] = useState(CATEGORY_COLORS[0]);
 
   return (
     <Dialog
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
-        if (next) setError(null);
+        if (next) {
+          setError(null);
+          setColor(CATEGORY_COLORS[0]);
+        }
       }}
     >
       <DialogTrigger render={<Button />}>Add category</DialogTrigger>
@@ -68,8 +74,8 @@ export function AddCategoryDialog() {
             </Select>
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="color">Color</Label>
-            <Input id="color" name="color" type="color" defaultValue="#64748b" className="h-10 w-16 p-1" />
+            <Label>Color</Label>
+            <ColorSwatchPicker name="color" value={color} onChange={setColor} />
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <DialogFooter>
