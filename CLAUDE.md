@@ -22,6 +22,13 @@ Tailwind v4 + shadcn/ui, Supabase (Postgres + Auth, RLS per user), Pluggy
 - Deployed on Vercel, auto-deploys on push to `main`
   (https://github.com/nyPetrus/finances-app). Live at
   https://finances-app-two-zeta.vercel.app.
+- **Body font is Inter** (`src/app/layout.tsx`, loaded via `next/font/google`
+  as `--font-inter`, wired to Tailwind's `--font-sans` in `globals.css`),
+  chosen for a numbers-heavy app because of its legibility at small sizes and
+  true tabular figures. `Geist_Mono` is still used for `--font-mono`. The
+  `body` rule in `globals.css` applies Tailwind's `tabular-nums` globally so
+  digits always align in columns — don't remove it, and don't override it
+  with `proportional-nums` in a table/dashboard context.
 
 ## Table page conventions
 
