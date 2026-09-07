@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronUpIcon, ChevronsUpDownIcon } from "lucide-react";
 import { TableHead } from "@/components/ui/table";
 
 export function SortableTableHead({
@@ -24,12 +24,15 @@ export function SortableTableHead({
         }`}
       >
         {children}
-        {active &&
-          (dir === "asc" ? (
+        {active ? (
+          dir === "asc" ? (
             <ChevronUpIcon className="size-3.5" />
           ) : (
             <ChevronDownIcon className="size-3.5" />
-          ))}
+          )
+        ) : (
+          <ChevronsUpDownIcon className="size-3.5 text-muted-foreground/40" />
+        )}
       </Link>
     </TableHead>
   );
