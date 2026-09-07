@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import type { BudgetItem, Category, Transaction } from "@/lib/supabase/types";
+import { fetchAllTransactionsInRange } from "@/lib/supabase/fetch-all-transactions";
+import type { BudgetItem, Category } from "@/lib/supabase/types";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { YearlyGrid } from "./yearly-grid";
@@ -17,27 +18,20 @@ export default async function BudgetPage({
 
   const supabase = await createClient();
 
-  const [{ data: categories, error: catError }, { data: budgetItems, error: budgetError }, { data: transactions, error: txError }] =
+  const [{ data: categories, error: catError }, { data: budgetItems, error: budgetError }, allTransactions] =
     await Promise.all([
       supabase.from("categories").select("*").order("kind").order("name"),
       supabase.from("budget_items").select("*").eq("year", year),
-      supabase
-        .from("transactions")
-        .select("*")
-        .gte("date", `${year}-01-01`)
-        .lt("date", `${year + 1}-01-01`)
-        .eq("is_hidden", false),
+      fetchAllTransactionsInRange(supabase, `${year}-01-01`, `${year + 1}-01-01`),
     ]);
 
   if (catError) throw new Error(catError.message);
   if (budgetError) throw new Error(budgetError.message);
-  if (txError) throw new Error(txError.message);
 
   // Transfers between the user's own accounts (e.g. a credit card bill
   // payment) aren't income or expense, so they're excluded from budgeting.
   const allCategories = (categories ?? []).filter((c) => c.kind !== "transfer") as Category[];
   const allBudgetItems = (budgetItems ?? []) as BudgetItem[];
-  const allTransactions = (transactions ?? []) as Transaction[];
 
   const plannedByCategory = new Map<string, number[]>();
   for (const item of allBudgetItems) {

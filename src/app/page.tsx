@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { fetchAllTransactionsInRange } from "@/lib/supabase/fetch-all-transactions";
 import type { Account, BudgetItem, Category, Transaction } from "@/lib/supabase/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,23 +30,17 @@ export default async function Home({
     { data: accounts, error: accError },
     { data: categories, error: catError },
     { data: budgetItems, error: budgetError },
-    { data: yearTransactions, error: yearTxError },
+    yearTransactions,
   ] = await Promise.all([
     supabase.from("accounts").select("*"),
     supabase.from("categories").select("*"),
     supabase.from("budget_items").select("*").eq("year", year),
-    supabase
-      .from("transactions")
-      .select("*")
-      .gte("date", `${year}-01-01`)
-      .lt("date", `${year + 1}-01-01`)
-      .eq("is_hidden", false),
+    fetchAllTransactionsInRange(supabase, `${year}-01-01`, `${year + 1}-01-01`),
   ]);
 
   if (accError) throw new Error(accError.message);
   if (catError) throw new Error(catError.message);
   if (budgetError) throw new Error(budgetError.message);
-  if (yearTxError) throw new Error(yearTxError.message);
 
   const allAccounts = (accounts ?? []) as Account[];
   const allCategories = (categories ?? []) as Category[];
@@ -57,7 +52,7 @@ export default async function Home({
 
   const totalBalance = allAccounts.reduce((sum, a) => sum + a.current_balance, 0);
 
-  const nonTransferYearTransactions = ((yearTransactions ?? []) as Transaction[]).filter(
+  const nonTransferYearTransactions = yearTransactions.filter(
     (t) => !isTransfer(t),
   );
 
@@ -87,7 +82,7 @@ export default async function Home({
     plannedByMonth[item.month - 1] += item.planned_amount;
   }
   const actualByMonth = Array(12).fill(0);
-  for (const t of (yearTransactions ?? []) as Transaction[]) {
+  for (const t of yearTransactions) {
     if (t.amount >= 0 || isTransfer(t)) continue;
     const month = Number(t.date.slice(5, 7));
     actualByMonth[month - 1] += -t.amount;
