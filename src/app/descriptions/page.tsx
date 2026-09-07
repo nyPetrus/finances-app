@@ -14,7 +14,13 @@ import { AddMappingDialog } from "./add-mapping-dialog";
 import { MappingRowActions } from "./mapping-row-actions";
 import { SyncButton } from "./sync-button";
 
-const SORT_KEYS = ["description", "category", "class"] as const;
+const checkTypeLabels: Record<MappedDescription["check_type"], string> = {
+  equal_to: "Equal to",
+  starts_with: "Starts with",
+  contains: "Contains",
+};
+
+const SORT_KEYS = ["description", "check_type", "category", "class"] as const;
 type SortKey = (typeof SORT_KEYS)[number];
 
 function isSortKey(value: string | undefined): value is SortKey {
@@ -64,6 +70,9 @@ export default async function DescriptionsPage({
       case "description":
         cmp = a.description.localeCompare(b.description);
         break;
+      case "check_type":
+        cmp = checkTypeLabels[a.check_type].localeCompare(checkTypeLabels[b.check_type]);
+        break;
       case "category": {
         const aName = categoriesById.get(a.category_id)?.name ?? "";
         const bName = categoriesById.get(b.category_id)?.name ?? "";
@@ -91,8 +100,9 @@ export default async function DescriptionsPage({
       </div>
 
       <p className="text-sm text-muted-foreground">
-        Map an exact transaction description to a category (and optionally a class). Press Sync to
-        auto-categorize any uncategorized transactions whose description matches one of these.
+        Map a transaction description to a category (and optionally a class), matched as an exact
+        equal, a prefix, or a substring. Press Sync to auto-categorize any uncategorized
+        transactions that match — exact matches are applied first, then prefixes, then substrings.
       </p>
 
       {allCategories.length === 0 ? (
@@ -104,15 +114,19 @@ export default async function DescriptionsPage({
       ) : (
         <Table className="table-fixed">
           <colgroup>
-            <col className="w-[46%]" />
-            <col className="w-[22%]" />
+            <col className="w-[32%]" />
+            <col className="w-[16%]" />
             <col className="w-[18%]" />
-            <col className="w-[14%]" />
+            <col className="w-[16%]" />
+            <col className="w-[18%]" />
           </colgroup>
           <TableHeader>
             <TableRow>
               <SortableTableHead href={sortHref("description")} active={sortKey === "description"} dir={sortDir}>
                 Description
+              </SortableTableHead>
+              <SortableTableHead href={sortHref("check_type")} active={sortKey === "check_type"} dir={sortDir}>
+                Check type
               </SortableTableHead>
               <SortableTableHead href={sortHref("category")} active={sortKey === "category"} dir={sortDir}>
                 Category
@@ -131,6 +145,9 @@ export default async function DescriptionsPage({
                 <TableRow key={mapping.description}>
                   <TableCell className="truncate" title={mapping.description}>
                     {mapping.description}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">{checkTypeLabels[mapping.check_type]}</Badge>
                   </TableCell>
                   <TableCell className="overflow-hidden">
                     {category ? (

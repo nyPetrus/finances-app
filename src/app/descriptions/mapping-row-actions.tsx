@@ -100,6 +100,19 @@ export function MappingRowActions({
               />
             </div>
             <div className="flex flex-col gap-2">
+              <Label htmlFor={`check-type-${mapping.description}`}>Check type</Label>
+              <Select name="check_type" defaultValue={mapping.check_type}>
+                <SelectTrigger id={`check-type-${mapping.description}`}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="equal_to">Equal to</SelectItem>
+                  <SelectItem value="starts_with">Starts with</SelectItem>
+                  <SelectItem value="contains">Contains</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col gap-2">
               <Label htmlFor={`category-${mapping.description}`}>Category</Label>
               <Select
                 name="category_id"

@@ -21,6 +21,7 @@ export type MappedDescription = {
   description: string;
   category_id: string;
   class_id: string | null;
+  check_type: "equal_to" | "starts_with" | "contains";
   created_at: string;
 };
 
