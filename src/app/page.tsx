@@ -65,8 +65,13 @@ export default async function Home({
   const net = income + expenses;
 
   const spendingByCategory = new Map<string, number>();
+  let uncategorizedSpending = 0;
   for (const t of nonTransferYearTransactions) {
-    if (t.amount >= 0 || !t.category_id) continue;
+    if (t.amount >= 0) continue;
+    if (!t.category_id) {
+      uncategorizedSpending += -t.amount;
+      continue;
+    }
     if (categoriesById.get(t.category_id)?.kind !== "expense") continue;
     spendingByCategory.set(t.category_id, (spendingByCategory.get(t.category_id) ?? 0) + -t.amount);
   }
@@ -75,8 +80,11 @@ export default async function Home({
       name: categoriesById.get(categoryId)?.name ?? "Unknown",
       color: categoriesById.get(categoryId)?.color ?? "#898781",
       amount,
-    }))
-    .sort((a, b) => b.amount - a.amount);
+    }));
+  if (uncategorizedSpending > 0) {
+    spendingChartData.push({ name: "Uncategorized", color: "#898781", amount: uncategorizedSpending });
+  }
+  spendingChartData.sort((a, b) => b.amount - a.amount);
 
   const plannedByMonth = Array(12).fill(0);
   for (const item of (budgetItems ?? []) as BudgetItem[]) {
@@ -169,7 +177,7 @@ export default async function Home({
         </CardHeader>
         <CardContent>
           {spendingChartData.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No categorized expenses yet in {year}.</p>
+            <p className="text-sm text-muted-foreground">No expenses yet in {year}.</p>
           ) : (
             <SpendingByCategoryChart data={spendingChartData} />
           )}
