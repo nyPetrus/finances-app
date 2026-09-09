@@ -32,6 +32,10 @@ function formatCurrency(value: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 }
 
+function formatDateTime(value: string) {
+  return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
+}
+
 export function AccountsTable({
   accounts,
   sortKey,
@@ -67,6 +71,9 @@ export function AccountsTable({
           break;
         case "source":
           cmp = Number(a.is_automatic) - Number(b.is_automatic);
+          break;
+        case "lastSync":
+          cmp = a.updated_at.localeCompare(b.updated_at);
           break;
         case "balance":
           cmp = a.current_balance - b.current_balance;
@@ -191,6 +198,9 @@ export function AccountsTable({
             <SortableTableHead href={sortHref("source")} active={sortKey === "source"} dir={sortDir}>
               Source
             </SortableTableHead>
+            <SortableTableHead href={sortHref("lastSync")} active={sortKey === "lastSync"} dir={sortDir}>
+              Last sync
+            </SortableTableHead>
             <SortableTableHead
               href={sortHref("balance")}
               active={sortKey === "balance"}
@@ -217,9 +227,14 @@ export function AccountsTable({
               <TableCell>{account.institution ?? "—"}</TableCell>
               <TableCell>{typeLabels[account.type]}</TableCell>
               <TableCell>
-                <Badge variant={account.is_automatic ? "default" : "secondary"}>
-                  {account.is_automatic ? "Automatic" : "Manual"}
-                </Badge>
+                <Badge variant="secondary">{account.is_automatic ? "Automatic" : "Manual"}</Badge>
+              </TableCell>
+              <TableCell>
+                {account.is_automatic ? (
+                  formatDateTime(account.updated_at)
+                ) : (
+                  <span className="text-sm text-muted-foreground">—</span>
+                )}
               </TableCell>
               <TableCell className="text-right">{formatCurrency(account.current_balance)}</TableCell>
             </TableRow>
