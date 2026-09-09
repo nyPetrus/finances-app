@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Columns3Icon } from "lucide-react";
+import { ChevronDownIcon, ChevronUpIcon, Columns3Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -67,6 +66,8 @@ const COLUMNS: { key: SortKey; label: string; align?: "right"; cellClassName?: s
 ];
 
 const HIDDEN_COLUMNS_STORAGE_KEY = "accounts-table-hidden-columns";
+const COLUMN_ORDER_STORAGE_KEY = "accounts-table-column-order";
+const DEFAULT_COLUMN_ORDER = COLUMNS.map((column) => column.key);
 
 function renderCell(account: Account, key: SortKey) {
   switch (key) {
@@ -106,11 +107,22 @@ export function AccountsTable({
   const [actionError, setActionError] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [hiddenColumns, setHiddenColumns] = useState<Set<SortKey>>(new Set());
+  const [columnOrder, setColumnOrder] = useState<SortKey[]>(DEFAULT_COLUMN_ORDER);
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(HIDDEN_COLUMNS_STORAGE_KEY);
-      if (stored) setHiddenColumns(new Set(JSON.parse(stored)));
+      const storedHidden = localStorage.getItem(HIDDEN_COLUMNS_STORAGE_KEY);
+      if (storedHidden) setHiddenColumns(new Set(JSON.parse(storedHidden)));
+
+      const storedOrder = localStorage.getItem(COLUMN_ORDER_STORAGE_KEY);
+      if (storedOrder) {
+        const parsed = JSON.parse(storedOrder) as SortKey[];
+        // Reconcile against the current column set, so a stored order from
+        // before a column was added/removed doesn't drop or lose it.
+        const known = parsed.filter((key) => DEFAULT_COLUMN_ORDER.includes(key));
+        const missing = DEFAULT_COLUMN_ORDER.filter((key) => !known.includes(key));
+        setColumnOrder([...known, ...missing]);
+      }
     } catch {
       // ignore malformed/inaccessible storage
     }
@@ -123,6 +135,22 @@ export function AccountsTable({
       else next.add(key);
       try {
         localStorage.setItem(HIDDEN_COLUMNS_STORAGE_KEY, JSON.stringify(Array.from(next)));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }
+
+  function moveColumn(key: SortKey, direction: -1 | 1) {
+    setColumnOrder((prev) => {
+      const index = prev.indexOf(key);
+      const swapWith = index + direction;
+      if (index === -1 || swapWith < 0 || swapWith >= prev.length) return prev;
+      const next = [...prev];
+      [next[index], next[swapWith]] = [next[swapWith], next[index]];
+      try {
+        localStorage.setItem(COLUMN_ORDER_STORAGE_KEY, JSON.stringify(next));
       } catch {
         // ignore
       }
@@ -228,7 +256,9 @@ export function AccountsTable({
     );
   }
 
-  const visibleColumns = COLUMNS.filter((column) => !hiddenColumns.has(column.key));
+  const columnsByKey = new Map(COLUMNS.map((column) => [column.key, column]));
+  const orderedColumns = columnOrder.map((key) => columnsByKey.get(key)!);
+  const visibleColumns = orderedColumns.filter((column) => !hiddenColumns.has(column.key));
 
   return (
     <div className="flex flex-col gap-3">
@@ -241,15 +271,34 @@ export function AccountsTable({
             <DropdownMenuTrigger render={<Button variant="outline" size="icon-sm" />}>
               <Columns3Icon />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {COLUMNS.map((column) => (
-                <DropdownMenuCheckboxItem
-                  key={column.key}
-                  checked={!hiddenColumns.has(column.key)}
-                  onCheckedChange={() => toggleColumn(column.key)}
-                >
-                  {column.label}
-                </DropdownMenuCheckboxItem>
+            <DropdownMenuContent align="end" className="min-w-48">
+              {orderedColumns.map((column, index) => (
+                <div key={column.key} className="flex items-center gap-1.5 rounded-md px-1.5 py-1">
+                  <Checkbox
+                    checked={!hiddenColumns.has(column.key)}
+                    onCheckedChange={() => toggleColumn(column.key)}
+                    aria-label={`Show ${column.label} column`}
+                  />
+                  <span className="flex-1 text-sm">{column.label}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    disabled={index === 0}
+                    onClick={() => moveColumn(column.key, -1)}
+                    aria-label={`Move ${column.label} column earlier`}
+                  >
+                    <ChevronUpIcon />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    disabled={index === orderedColumns.length - 1}
+                    onClick={() => moveColumn(column.key, 1)}
+                    aria-label={`Move ${column.label} column later`}
+                  >
+                    <ChevronDownIcon />
+                  </Button>
+                </div>
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
