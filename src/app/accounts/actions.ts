@@ -61,22 +61,25 @@ export async function updateAccount(formData: FormData) {
   revalidatePath("/accounts");
 }
 
-export async function deleteAccount(formData: FormData) {
+export async function deleteAccounts(ids: string[]) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
 
-  const id = formData.get("id") as string;
+  if (ids.length === 0) return;
 
   const { error } = await supabase
     .from("accounts")
     .delete()
-    .eq("id", id)
+    .in("id", ids)
     .eq("user_id", user.id);
 
   if (error) throw new Error(error.message);
 
   revalidatePath("/accounts");
+  revalidatePath("/transactions");
+  revalidatePath("/budget");
+  revalidatePath("/");
 }
