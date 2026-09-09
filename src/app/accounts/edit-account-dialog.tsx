@@ -41,11 +41,11 @@ export function EditAccountDialog({ account }: { account: Account }) {
             <Input id={`name-${account.id}`} name="name" defaultValue={account.name} required />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor={`institution-${account.id}`}>Institution</Label>
+            <Label htmlFor={`source-${account.id}`}>Source</Label>
             <Input
-              id={`institution-${account.id}`}
-              name="institution"
-              defaultValue={account.institution ?? ""}
+              id={`source-${account.id}`}
+              name="source"
+              defaultValue={account.source ?? ""}
             />
           </div>
           <div className="flex flex-col gap-2">

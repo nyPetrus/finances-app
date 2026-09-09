@@ -37,7 +37,7 @@ export async function syncPluggyItem(itemId: string) {
         {
           user_id: user.id,
           name: pluggyAccount.name,
-          institution: item.connector.name,
+          source: item.connector.name,
           type: isCreditCard ? "credit_card" : "checking",
           is_automatic: true,
           pluggy_item_id: itemId,

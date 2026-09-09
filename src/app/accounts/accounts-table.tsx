@@ -1,10 +1,25 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
+import { Columns3Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -15,7 +30,7 @@ import {
 } from "@/components/ui/table";
 import { SortableTableHead } from "@/components/sortable-table-head";
 import type { Account } from "@/lib/supabase/types";
-import { deleteAccounts } from "./actions";
+import { deleteAccounts, updateAccountLabel } from "./actions";
 import { syncPluggyItem } from "./pluggy-actions";
 import { EditAccountDialog } from "./edit-account-dialog";
 import { type SortKey } from "./sort";
@@ -36,6 +51,38 @@ function formatDateTime(value: string) {
   return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
 }
 
+const COLUMNS: { key: SortKey; label: string; align?: "right"; cellClassName?: string }[] = [
+  { key: "account", label: "Account" },
+  { key: "name", label: "Name", cellClassName: "font-medium" },
+  { key: "source", label: "Source" },
+  { key: "type", label: "Type" },
+  { key: "lastSync", label: "Last sync" },
+  { key: "balance", label: "Balance", align: "right", cellClassName: "text-right" },
+];
+
+const HIDDEN_COLUMNS_STORAGE_KEY = "accounts-table-hidden-columns";
+
+function renderCell(account: Account, key: SortKey) {
+  switch (key) {
+    case "account":
+      return account.label ?? <span className="text-sm text-muted-foreground">—</span>;
+    case "name":
+      return account.is_automatic ? account.name : <EditAccountDialog account={account} />;
+    case "source":
+      return account.source ?? "—";
+    case "type":
+      return typeLabels[account.type];
+    case "lastSync":
+      return account.is_automatic ? (
+        formatDateTime(account.updated_at)
+      ) : (
+        <span className="text-sm text-muted-foreground">—</span>
+      );
+    case "balance":
+      return formatCurrency(account.current_balance);
+  }
+}
+
 export function AccountsTable({
   accounts,
   sortKey,
@@ -49,7 +96,33 @@ export function AccountsTable({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [isSyncing, startSync] = useTransition();
   const [isDeleting, startDelete] = useTransition();
+  const [isSavingLabel, startSaveLabel] = useTransition();
   const [actionError, setActionError] = useState<string | null>(null);
+  const [labelDialogOpen, setLabelDialogOpen] = useState(false);
+  const [hiddenColumns, setHiddenColumns] = useState<Set<SortKey>>(new Set());
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(HIDDEN_COLUMNS_STORAGE_KEY);
+      if (stored) setHiddenColumns(new Set(JSON.parse(stored)));
+    } catch {
+      // ignore malformed/inaccessible storage
+    }
+  }, []);
+
+  function toggleColumn(key: SortKey) {
+    setHiddenColumns((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      try {
+        localStorage.setItem(HIDDEN_COLUMNS_STORAGE_KEY, JSON.stringify(Array.from(next)));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }
 
   function sortHref(column: SortKey) {
     const nextDir: "asc" | "desc" = sortKey === column && sortDir === "asc" ? "desc" : "asc";
@@ -60,17 +133,17 @@ export function AccountsTable({
     return [...accounts].sort((a, b) => {
       let cmp = 0;
       switch (sortKey) {
+        case "account":
+          cmp = (a.label ?? "").localeCompare(b.label ?? "");
+          break;
         case "name":
           cmp = a.name.localeCompare(b.name);
           break;
-        case "institution":
-          cmp = (a.institution ?? "").localeCompare(b.institution ?? "");
+        case "source":
+          cmp = (a.source ?? "").localeCompare(b.source ?? "");
           break;
         case "type":
           cmp = typeLabels[a.type].localeCompare(typeLabels[b.type]);
-          break;
-        case "source":
-          cmp = Number(a.is_automatic) - Number(b.is_automatic);
           break;
         case "lastSync":
           cmp = a.updated_at.localeCompare(b.updated_at);
@@ -107,6 +180,7 @@ export function AccountsTable({
         .map((a) => a.pluggy_item_id as string),
     ),
   );
+  const soleSelectedAccount = selected.size === 1 ? selectedAccounts[0] : null;
 
   function handleSync() {
     setActionError(null);
@@ -148,13 +222,31 @@ export function AccountsTable({
     );
   }
 
+  const visibleColumns = COLUMNS.filter((column) => !hiddenColumns.has(column.key));
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <span className="text-sm text-muted-foreground">
-          {selected.size > 0 ? `${selected.size} selected` : "Select accounts to sync or delete"}
+          {selected.size > 0 ? `${selected.size} selected` : "Select accounts to sync, edit, or delete"}
         </span>
         <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger render={<Button variant="outline" size="icon-sm" />}>
+              <Columns3Icon />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {COLUMNS.map((column) => (
+                <DropdownMenuCheckboxItem
+                  key={column.key}
+                  checked={!hiddenColumns.has(column.key)}
+                  onCheckedChange={() => toggleColumn(column.key)}
+                >
+                  {column.label}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button
             variant="outline"
             size="sm"
@@ -162,6 +254,14 @@ export function AccountsTable({
             onClick={handleSync}
           >
             {isSyncing ? "Syncing…" : "Sync"}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!soleSelectedAccount || isSyncing || isDeleting}
+            onClick={() => setLabelDialogOpen(true)}
+          >
+            Edit
           </Button>
           <Button
             variant="destructive"
@@ -186,29 +286,17 @@ export function AccountsTable({
                 aria-label="Select all accounts"
               />
             </TableHead>
-            <SortableTableHead href={sortHref("name")} active={sortKey === "name"} dir={sortDir}>
-              Name
-            </SortableTableHead>
-            <SortableTableHead href={sortHref("institution")} active={sortKey === "institution"} dir={sortDir}>
-              Institution
-            </SortableTableHead>
-            <SortableTableHead href={sortHref("type")} active={sortKey === "type"} dir={sortDir}>
-              Type
-            </SortableTableHead>
-            <SortableTableHead href={sortHref("source")} active={sortKey === "source"} dir={sortDir}>
-              Source
-            </SortableTableHead>
-            <SortableTableHead href={sortHref("lastSync")} active={sortKey === "lastSync"} dir={sortDir}>
-              Last sync
-            </SortableTableHead>
-            <SortableTableHead
-              href={sortHref("balance")}
-              active={sortKey === "balance"}
-              dir={sortDir}
-              align="right"
-            >
-              Balance
-            </SortableTableHead>
+            {visibleColumns.map((column) => (
+              <SortableTableHead
+                key={column.key}
+                href={sortHref(column.key)}
+                active={sortKey === column.key}
+                dir={sortDir}
+                align={column.align}
+              >
+                {column.label}
+              </SortableTableHead>
+            ))}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -221,26 +309,62 @@ export function AccountsTable({
                   aria-label={`Select ${account.name}`}
                 />
               </TableCell>
-              <TableCell className="font-medium">
-                {account.is_automatic ? account.name : <EditAccountDialog account={account} />}
-              </TableCell>
-              <TableCell>{account.institution ?? "—"}</TableCell>
-              <TableCell>{typeLabels[account.type]}</TableCell>
-              <TableCell>
-                <Badge variant="secondary">{account.is_automatic ? "Automatic" : "Manual"}</Badge>
-              </TableCell>
-              <TableCell>
-                {account.is_automatic ? (
-                  formatDateTime(account.updated_at)
-                ) : (
-                  <span className="text-sm text-muted-foreground">—</span>
-                )}
-              </TableCell>
-              <TableCell className="text-right">{formatCurrency(account.current_balance)}</TableCell>
+              {visibleColumns.map((column) => (
+                <TableCell key={column.key} className={column.cellClassName}>
+                  {renderCell(account, column.key)}
+                </TableCell>
+              ))}
             </TableRow>
           ))}
         </TableBody>
       </Table>
+
+      {soleSelectedAccount && (
+        <Dialog open={labelDialogOpen} onOpenChange={setLabelDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit account label</DialogTitle>
+            </DialogHeader>
+            <form
+              id={`edit-account-label-${soleSelectedAccount.id}`}
+              action={(formData) => {
+                setActionError(null);
+                startSaveLabel(async () => {
+                  try {
+                    await updateAccountLabel(formData);
+                    setLabelDialogOpen(false);
+                    setSelected(new Set());
+                  } catch (err) {
+                    setActionError(err instanceof Error ? err.message : "Failed to save label.");
+                  }
+                });
+              }}
+              className="flex flex-col gap-4"
+            >
+              <input type="hidden" name="id" value={soleSelectedAccount.id} />
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="label">Account</Label>
+                <Input
+                  id="label"
+                  name="label"
+                  placeholder="Short label for this account"
+                  defaultValue={soleSelectedAccount.label ?? ""}
+                  autoFocus
+                />
+              </div>
+              <DialogFooter>
+                <Button
+                  type="submit"
+                  form={`edit-account-label-${soleSelectedAccount.id}`}
+                  disabled={isSavingLabel}
+                >
+                  {isSavingLabel ? "Saving…" : "Save"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

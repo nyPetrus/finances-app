@@ -44,8 +44,8 @@ export function AddAccountDialog() {
             <Input id="name" name="name" placeholder="e.g. Nubank Checking" required autoFocus />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="institution">Institution (optional)</Label>
-            <Input id="institution" name="institution" placeholder="e.g. Nubank" />
+            <Label htmlFor="source">Source (optional)</Label>
+            <Input id="source" name="source" placeholder="e.g. Nubank" />
           </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="type">Type</Label>
