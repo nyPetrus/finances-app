@@ -40,12 +40,12 @@ export function AddAccountDialog() {
           className="flex flex-col gap-4"
         >
           <div className="flex flex-col gap-2">
-            <Label htmlFor="name">Name</Label>
-            <Input id="name" name="name" placeholder="e.g. Nubank Checking" required autoFocus />
+            <Label htmlFor="label">Account (optional)</Label>
+            <Input id="label" name="label" placeholder="Short label for this account" autoFocus />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="source">Source (optional)</Label>
-            <Input id="source" name="source" placeholder="e.g. Nubank" />
+            <Label htmlFor="name">Name</Label>
+            <Input id="name" name="name" placeholder="e.g. Nubank Checking" required />
           </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="type">Type</Label>

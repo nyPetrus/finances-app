@@ -21,6 +21,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -30,9 +37,8 @@ import {
 } from "@/components/ui/table";
 import { SortableTableHead } from "@/components/sortable-table-head";
 import type { Account } from "@/lib/supabase/types";
-import { deleteAccounts, updateAccountLabel } from "./actions";
+import { deleteAccounts, updateAccount } from "./actions";
 import { syncPluggyItem } from "./pluggy-actions";
-import { EditAccountDialog } from "./edit-account-dialog";
 import { type SortKey } from "./sort";
 
 const typeLabels: Record<Account["type"], string> = {
@@ -67,7 +73,7 @@ function renderCell(account: Account, key: SortKey) {
     case "account":
       return account.label ?? <span className="text-sm text-muted-foreground">—</span>;
     case "name":
-      return account.is_automatic ? account.name : <EditAccountDialog account={account} />;
+      return account.name;
     case "source":
       return account.source ?? "—";
     case "type":
@@ -96,9 +102,9 @@ export function AccountsTable({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [isSyncing, startSync] = useTransition();
   const [isDeleting, startDelete] = useTransition();
-  const [isSavingLabel, startSaveLabel] = useTransition();
+  const [isSavingEdit, startSaveEdit] = useTransition();
   const [actionError, setActionError] = useState<string | null>(null);
-  const [labelDialogOpen, setLabelDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [hiddenColumns, setHiddenColumns] = useState<Set<SortKey>>(new Set());
 
   useEffect(() => {
@@ -259,7 +265,7 @@ export function AccountsTable({
             variant="outline"
             size="sm"
             disabled={!soleSelectedAccount || isSyncing || isDeleting}
-            onClick={() => setLabelDialogOpen(true)}
+            onClick={() => setEditDialogOpen(true)}
           >
             Edit
           </Button>
@@ -320,22 +326,22 @@ export function AccountsTable({
       </Table>
 
       {soleSelectedAccount && (
-        <Dialog open={labelDialogOpen} onOpenChange={setLabelDialogOpen}>
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Edit account label</DialogTitle>
+              <DialogTitle>Edit account</DialogTitle>
             </DialogHeader>
             <form
-              id={`edit-account-label-${soleSelectedAccount.id}`}
+              id={`edit-account-${soleSelectedAccount.id}`}
               action={(formData) => {
                 setActionError(null);
-                startSaveLabel(async () => {
+                startSaveEdit(async () => {
                   try {
-                    await updateAccountLabel(formData);
-                    setLabelDialogOpen(false);
+                    await updateAccount(formData);
+                    setEditDialogOpen(false);
                     setSelected(new Set());
                   } catch (err) {
-                    setActionError(err instanceof Error ? err.message : "Failed to save label.");
+                    setActionError(err instanceof Error ? err.message : "Failed to save account.");
                   }
                 });
               }}
@@ -352,13 +358,32 @@ export function AccountsTable({
                   autoFocus
                 />
               </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="name">Name</Label>
+                <Input id="name" name="name" defaultValue={soleSelectedAccount.name} required />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="type">Type</Label>
+                <Select name="type" defaultValue={soleSelectedAccount.type}>
+                  <SelectTrigger id="type">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="checking">Checking</SelectItem>
+                    <SelectItem value="investment">Investment</SelectItem>
+                    <SelectItem value="fgts">FGTS</SelectItem>
+                    <SelectItem value="credit_card">Credit card</SelectItem>
+                    <SelectItem value="manual">Manual / Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <DialogFooter>
                 <Button
                   type="submit"
-                  form={`edit-account-label-${soleSelectedAccount.id}`}
-                  disabled={isSavingLabel}
+                  form={`edit-account-${soleSelectedAccount.id}`}
+                  disabled={isSavingEdit}
                 >
-                  {isSavingLabel ? "Saving…" : "Save"}
+                  {isSavingEdit ? "Saving…" : "Save"}
                 </Button>
               </DialogFooter>
             </form>
