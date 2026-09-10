@@ -138,7 +138,7 @@ export function TransactionsTable({
         return <span title={transaction.description}>{transaction.description}</span>;
       case "account": {
         const account = accountsById.get(transaction.account_id);
-        return <span title={account?.name}>{account?.name ?? "—"}</span>;
+        return <span title={account?.label ?? undefined}>{account?.label ?? "—"}</span>;
       }
       case "category": {
         const category = transaction.category_id ? categoriesById.get(transaction.category_id) : null;

@@ -122,8 +122,8 @@ export default async function TransactionsPage({
         cmp = a.description.localeCompare(b.description);
         break;
       case "account":
-        cmp = (accountsById.get(a.account_id)?.name ?? "").localeCompare(
-          accountsById.get(b.account_id)?.name ?? "",
+        cmp = (accountsById.get(a.account_id)?.label ?? "").localeCompare(
+          accountsById.get(b.account_id)?.label ?? "",
         );
         break;
       case "category": {
