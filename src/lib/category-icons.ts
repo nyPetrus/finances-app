@@ -15,6 +15,7 @@ import {
   ShoppingBagIcon,
   ShoppingCartIcon,
   SmartphoneIcon,
+  SmileIcon,
   TagIcon,
   TrendingUpIcon,
   UsersRoundIcon,
@@ -50,6 +51,7 @@ export const CATEGORY_ICON_MAP: Record<string, LucideIcon> = {
   wrench: WrenchIcon,
   family: UsersRoundIcon,
   cloud: CloudIcon,
+  smile: SmileIcon,
   tag: TagIcon,
 };
 
