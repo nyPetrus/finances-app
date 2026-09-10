@@ -2,6 +2,7 @@ import {
   ArrowLeftRightIcon,
   BriefcaseIcon,
   CarIcon,
+  CloudIcon,
   FilmIcon,
   GiftIcon,
   GraduationCapIcon,
@@ -16,6 +17,7 @@ import {
   SmartphoneIcon,
   TagIcon,
   TrendingUpIcon,
+  UsersRoundIcon,
   UtensilsCrossedIcon,
   WrenchIcon,
   ZapIcon,
@@ -46,6 +48,8 @@ export const CATEGORY_ICON_MAP: Record<string, LucideIcon> = {
   "paw-print": PawPrintIcon,
   smartphone: SmartphoneIcon,
   wrench: WrenchIcon,
+  family: UsersRoundIcon,
+  cloud: CloudIcon,
   tag: TagIcon,
 };
 
