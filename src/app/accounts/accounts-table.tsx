@@ -56,12 +56,17 @@ function formatDateTime(value: string) {
   return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
 }
 
-const COLUMNS: { key: SortKey; label: string; align?: "right"; cellClassName?: string }[] = [
+const COLUMNS: {
+  key: SortKey;
+  label: string;
+  align?: "right" | "center";
+  cellClassName?: string;
+}[] = [
   { key: "account", label: "Account" },
   { key: "name", label: "Name", cellClassName: "font-medium" },
-  { key: "source", label: "Source" },
-  { key: "type", label: "Type" },
-  { key: "lastSync", label: "Last sync" },
+  { key: "source", label: "Source", align: "center", cellClassName: "text-center" },
+  { key: "type", label: "Type", align: "center", cellClassName: "text-center" },
+  { key: "lastSync", label: "Last sync", align: "center", cellClassName: "text-center" },
   { key: "balance", label: "Balance", align: "right", cellClassName: "text-right" },
 ];
 
@@ -263,10 +268,10 @@ export function AccountsTable({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <span className="text-sm text-muted-foreground">
-          {selected.size > 0 ? `${selected.size} selected` : "Select accounts to sync, edit, or delete"}
-        </span>
-        <div className="flex items-center gap-2">
+        {selected.size > 0 && (
+          <span className="text-sm text-muted-foreground">{selected.size} selected</span>
+        )}
+        <div className="ml-auto flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger render={<Button variant="outline" size="icon-sm" />}>
               <Columns3Icon />

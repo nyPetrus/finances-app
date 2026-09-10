@@ -35,7 +35,7 @@ export function ConnectBankButton() {
     <>
       <div className="flex flex-col items-end gap-1">
         <Button variant="outline" onClick={handleClick} disabled={isPending}>
-          Connect bank (Pluggy)
+          Connect bank
         </Button>
         {error && <p className="text-sm text-destructive">{error}</p>}
       </div>

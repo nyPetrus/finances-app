@@ -12,15 +12,17 @@ export function SortableTableHead({
   href: string;
   active: boolean;
   dir: "asc" | "desc";
-  align?: "left" | "right";
+  align?: "left" | "right" | "center";
   children: React.ReactNode;
 }) {
   return (
-    <TableHead className={align === "right" ? "text-right" : undefined}>
+    <TableHead
+      className={align === "right" ? "text-right" : align === "center" ? "text-center" : undefined}
+    >
       <Link
         href={href}
         className={`flex items-center gap-1 hover:text-foreground ${
-          align === "right" ? "justify-end" : ""
+          align === "right" ? "justify-end" : align === "center" ? "justify-center" : ""
         }`}
       >
         {children}

@@ -26,7 +26,7 @@ export function AddAccountDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button />}>Add account</DialogTrigger>
+      <DialogTrigger render={<Button variant="ghost" />}>Add account</DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>New account</DialogTitle>
