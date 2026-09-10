@@ -64,8 +64,8 @@ list page instead of inventing a fresh layout.
   one row is checked).
 - **Row actions live in a toolbar above the table, not a per-row menu.**
   Right-aligned button group: `ColumnsMenu` first, then any page-specific
-  bulk actions (Accounts' "Sync", Transactions' "Sync"/"Hide"–"Unhide"),
-  then "Edit" (disabled unless `soleSelectedRow` is set; opens a dialog
+  bulk actions (Accounts' and Transactions' "Sync"), then "Edit" (disabled
+  unless `soleSelectedRow` is set; opens a dialog
   scoped to that one row), then "Delete" (`variant="ghost"` — no red
   fill/destructive styling; disabled when nothing's selected; confirms via
   `window.confirm(...)` before calling a bulk delete action). A left-aligned
@@ -100,7 +100,17 @@ list page instead of inventing a fresh layout.
   component (not passed down as a prop — functions aren't serializable
   across the server/client boundary), since header cells now render
   client-side to respect column order/visibility; it must preserve any
-  page-level filters in the URL (Transactions' `month`/`account`/`hidden`).
+  page-level filters in the URL (Transactions' `month`/`account`).
+- **"Add" buttons are icon-only**, a `PlusIcon` (`lucide-react`) with no
+  label text — e.g. `AddAccountDialog`'s `DialogTrigger` renders
+  `<Button size="icon" aria-label="Add account" title="Add account">
+  <PlusIcon /></Button>` instead of a button reading "Add account". Always
+  pair the icon with `aria-label` *and* `title` set to the same descriptive
+  text ("Add account", "Add category", ...) — the icon alone doesn't convey
+  which row type it adds, and dropping the label removes the only other cue,
+  so both the accessible name and the hover tooltip must carry it. Keep
+  whatever `variant` the button already had (Accounts' is `ghost`; the rest
+  are the default filled variant) — only the label and size change.
 - **Edit/Add dialogs**: `Label` + `Input`/`Select` fields per `@/components/ui`.
   Add dialogs (still a standalone `DialogTrigger`-wrapped `Dialog`, e.g.
   `AddAccountDialog`) keep their own local `error` state, shown as

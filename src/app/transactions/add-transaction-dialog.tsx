@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,7 +57,9 @@ export function AddTransactionDialog({
         }
       }}
     >
-      <DialogTrigger render={<Button />}>Add transaction</DialogTrigger>
+      <DialogTrigger render={<Button size="icon" aria-label="Add transaction" title="Add transaction" />}>
+        <PlusIcon />
+      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>New transaction</DialogTitle>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,7 +43,9 @@ export function AddMappingDialog({ categories, classes }: { categories: Category
         }
       }}
     >
-      <DialogTrigger render={<Button />}>Add mapping</DialogTrigger>
+      <DialogTrigger render={<Button size="icon" aria-label="Add mapping" title="Add mapping" />}>
+        <PlusIcon />
+      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>New description mapping</DialogTitle>
