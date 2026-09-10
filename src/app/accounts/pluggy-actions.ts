@@ -34,7 +34,17 @@ function sleep(ms: number) {
 // src/app/accounts/page.tsx) for the fetch/upsert work that follows.
 async function waitForPluggyUpdate(itemId: string, budgetMs: number): Promise<Item> {
   const deadline = Date.now() + budgetMs;
-  let item = await pluggyClient.updateItem(itemId);
+  let item: Item;
+  try {
+    item = await pluggyClient.updateItem(itemId);
+  } catch (err) {
+    // Some connectors (notably Pluggy's own sandbox/demo connectors, which
+    // have no real bank behind them to poll) reject on-demand update
+    // requests outright with a 400. Fall back to whatever Pluggy currently
+    // has cached rather than failing the whole sync over it.
+    console.error("Pluggy updateItem failed, falling back to cached data:", err);
+    return pluggyClient.fetchItem(itemId);
+  }
 
   while ((item.status === "UPDATING" || item.status === "MERGING") && Date.now() < deadline) {
     await sleep(2500);
