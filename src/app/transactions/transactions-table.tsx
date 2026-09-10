@@ -47,14 +47,6 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" }).format(new Date(value));
 }
 
-function formatTime(value: string) {
-  return new Intl.DateTimeFormat("pt-BR", {
-    timeZone: "UTC",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
-}
-
 function splitDateTime(iso: string) {
   const parsed = new Date(iso);
   const date = parsed.toISOString().slice(0, 10);
@@ -121,12 +113,7 @@ export function TransactionsTable({
   function renderCell(transaction: Transaction, key: SortKey) {
     switch (key) {
       case "date":
-        return (
-          <div className="flex flex-col">
-            <span>{formatDate(transaction.date)}</span>
-            <span className="text-xs text-muted-foreground">{formatTime(transaction.date)}</span>
-          </div>
-        );
+        return formatDate(transaction.date);
       case "description":
         return <span title={transaction.description}>{transaction.description}</span>;
       case "account": {
