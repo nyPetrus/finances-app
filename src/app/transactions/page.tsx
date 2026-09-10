@@ -1,43 +1,15 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import type { Account, Category, Class, Transaction } from "@/lib/supabase/types";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { SortableTableHead } from "@/components/sortable-table-head";
 import { AccountFilter } from "./account-filter";
 import { AddTransactionDialog } from "./add-transaction-dialog";
 import { MonthPicker } from "./month-picker";
-import { TransactionRowActions } from "./transaction-row-actions";
-
-const SORT_KEYS = ["date", "description", "account", "category", "class", "amount"] as const;
-type SortKey = (typeof SORT_KEYS)[number];
-
-function isSortKey(value: string | undefined): value is SortKey {
-  return !!value && (SORT_KEYS as readonly string[]).includes(value);
-}
+import { TransactionsTable } from "./transactions-table";
+import { isSortKey, type SortKey } from "./sort";
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
-}
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" }).format(new Date(value));
-}
-
-function formatTime(value: string) {
-  return new Intl.DateTimeFormat("pt-BR", {
-    timeZone: "UTC",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
 }
 
 function formatMonthLabel(monthKey: string) {
@@ -101,11 +73,6 @@ export default async function TransactionsPage({
     if (accountParam) params.set("account", accountParam);
     if (!showHidden) params.set("hidden", "1");
     return `/transactions?${params.toString()}`;
-  }
-
-  function sortHref(column: SortKey) {
-    const nextDir: "asc" | "desc" = sortKey === column && sortDir === "asc" ? "desc" : "asc";
-    return buildHref({ sort: column, dir: nextDir });
   }
 
   const supabase = await createClient();
@@ -248,107 +215,17 @@ export default async function TransactionsPage({
               }`}
         </p>
       ) : (
-        <Table className="table-fixed">
-          <colgroup>
-            <col className="w-[10%]" />
-            <col className="w-[24%]" />
-            <col className="w-[12%]" />
-            <col className="w-[18%]" />
-            <col className="w-[14%]" />
-            <col className="w-[16%]" />
-            <col className="w-[6%]" />
-          </colgroup>
-          <TableHeader>
-            <TableRow>
-              <SortableTableHead href={sortHref("date")} active={sortKey === "date"} dir={sortDir}>
-                Date
-              </SortableTableHead>
-              <SortableTableHead href={sortHref("description")} active={sortKey === "description"} dir={sortDir}>
-                Description
-              </SortableTableHead>
-              <SortableTableHead href={sortHref("account")} active={sortKey === "account"} dir={sortDir}>
-                Account
-              </SortableTableHead>
-              <SortableTableHead href={sortHref("category")} active={sortKey === "category"} dir={sortDir}>
-                Category
-              </SortableTableHead>
-              <SortableTableHead href={sortHref("class")} active={sortKey === "class"} dir={sortDir}>
-                Class
-              </SortableTableHead>
-              <SortableTableHead
-                href={sortHref("amount")}
-                active={sortKey === "amount"}
-                dir={sortDir}
-                align="right"
-              >
-                Amount
-              </SortableTableHead>
-              <TableHead className="w-0" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedTransactions.map((transaction) => {
-              const category = transaction.category_id ? categoriesById.get(transaction.category_id) : null;
-              const transactionClass = transaction.class_id ? classesById.get(transaction.class_id) : null;
-              const account = accountsById.get(transaction.account_id);
-              return (
-                <TableRow key={transaction.id}>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span>{formatDate(transaction.date)}</span>
-                      <span className="text-xs text-muted-foreground">{formatTime(transaction.date)}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="truncate font-medium" title={transaction.description}>
-                    {transaction.description}
-                  </TableCell>
-                  <TableCell className="truncate" title={account?.name}>
-                    {account?.name ?? "—"}
-                  </TableCell>
-                  <TableCell className="overflow-hidden">
-                    {category ? (
-                      <Badge
-                        variant="secondary"
-                        className="max-w-full truncate"
-                        style={{ backgroundColor: `${category.color}22`, color: category.color }}
-                      >
-                        {category.name}
-                      </Badge>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">Uncategorized</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="truncate" title={transactionClass?.name}>
-                    {transactionClass ? (
-                      transactionClass.name
-                    ) : (
-                      <span className="text-sm text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell
-                    className={`text-right ${
-                      category?.kind === "transfer"
-                        ? "text-muted-foreground"
-                        : transaction.amount < 0
-                          ? "text-destructive"
-                          : "text-emerald-600"
-                    }`}
-                  >
-                    {formatCurrency(transaction.amount)}
-                  </TableCell>
-                  <TableCell>
-                    <TransactionRowActions
-                      transaction={transaction}
-                      accounts={allAccounts}
-                      categories={allCategories}
-                      classes={allClasses}
-                    />
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+        <TransactionsTable
+          transactions={sortedTransactions}
+          accounts={allAccounts}
+          categories={allCategories}
+          classes={allClasses}
+          sortKey={sortKey}
+          sortDir={sortDir}
+          monthKey={monthKey}
+          accountParam={accountParam}
+          showHidden={showHidden}
+        />
       )}
     </div>
   );

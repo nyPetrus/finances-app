@@ -65,20 +65,20 @@ export async function updateMappedDescription(formData: FormData) {
   revalidatePath("/descriptions");
 }
 
-export async function deleteMappedDescription(formData: FormData) {
+export async function deleteMappedDescriptions(descriptions: string[]) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
 
-  const description = formData.get("description") as string;
+  if (descriptions.length === 0) return;
 
   const { error } = await supabase
     .from("mapped_descriptions")
     .delete()
     .eq("user_id", user.id)
-    .eq("description", description);
+    .in("description", descriptions);
 
   if (error) throw new Error(error.message);
 

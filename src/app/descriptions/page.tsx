@@ -1,31 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Category, Class, MappedDescription } from "@/lib/supabase/types";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { SortableTableHead } from "@/components/sortable-table-head";
+import { DescriptionsTable } from "./descriptions-table";
 import { AddMappingDialog } from "./add-mapping-dialog";
-import { MappingRowActions } from "./mapping-row-actions";
 import { SyncButton } from "./sync-button";
+import { isSortKey, type SortKey } from "./sort";
 
 const checkTypeLabels: Record<MappedDescription["check_type"], string> = {
   equal_to: "Equal to",
   starts_with: "Starts with",
   contains: "Contains",
 };
-
-const SORT_KEYS = ["description", "check_type", "category", "class"] as const;
-type SortKey = (typeof SORT_KEYS)[number];
-
-function isSortKey(value: string | undefined): value is SortKey {
-  return !!value && (SORT_KEYS as readonly string[]).includes(value);
-}
 
 export default async function DescriptionsPage({
   searchParams,
@@ -35,11 +19,6 @@ export default async function DescriptionsPage({
   const { sort: sortParam, dir: dirParam } = await searchParams;
   const sortKey: SortKey = isSortKey(sortParam) ? sortParam : "description";
   const sortDir: "asc" | "desc" = dirParam === "desc" ? "desc" : "asc";
-
-  function sortHref(column: SortKey) {
-    const nextDir: "asc" | "desc" = sortKey === column && sortDir === "asc" ? "desc" : "asc";
-    return `/descriptions?${new URLSearchParams({ sort: column, dir: nextDir }).toString()}`;
-  }
 
   const supabase = await createClient();
 
@@ -109,70 +88,14 @@ export default async function DescriptionsPage({
         <p className="text-sm text-muted-foreground">
           No categories yet. Create one on the Categories page first.
         </p>
-      ) : sortedMappings.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No mapped descriptions yet.</p>
       ) : (
-        <Table className="table-fixed">
-          <colgroup>
-            <col className="w-[32%]" />
-            <col className="w-[16%]" />
-            <col className="w-[18%]" />
-            <col className="w-[16%]" />
-            <col className="w-[18%]" />
-          </colgroup>
-          <TableHeader>
-            <TableRow>
-              <SortableTableHead href={sortHref("description")} active={sortKey === "description"} dir={sortDir}>
-                Description
-              </SortableTableHead>
-              <SortableTableHead href={sortHref("check_type")} active={sortKey === "check_type"} dir={sortDir}>
-                Check type
-              </SortableTableHead>
-              <SortableTableHead href={sortHref("category")} active={sortKey === "category"} dir={sortDir}>
-                Category
-              </SortableTableHead>
-              <SortableTableHead href={sortHref("class")} active={sortKey === "class"} dir={sortDir}>
-                Class
-              </SortableTableHead>
-              <TableHead className="w-0" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedMappings.map((mapping) => {
-              const category = categoriesById.get(mapping.category_id);
-              const classItem = mapping.class_id ? classesById.get(mapping.class_id) : null;
-              return (
-                <TableRow key={mapping.description}>
-                  <TableCell className="truncate" title={mapping.description}>
-                    {mapping.description}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">{checkTypeLabels[mapping.check_type]}</Badge>
-                  </TableCell>
-                  <TableCell className="overflow-hidden">
-                    {category ? (
-                      <Badge
-                        variant="secondary"
-                        className="max-w-full truncate"
-                        style={{ backgroundColor: `${category.color}22`, color: category.color }}
-                      >
-                        {category.name}
-                      </Badge>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="truncate" title={classItem?.name}>
-                    {classItem?.name ?? "—"}
-                  </TableCell>
-                  <TableCell>
-                    <MappingRowActions mapping={mapping} categories={allCategories} classes={allClasses} />
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+        <DescriptionsTable
+          mappings={sortedMappings}
+          categories={allCategories}
+          classes={allClasses}
+          sortKey={sortKey}
+          sortDir={sortDir}
+        />
       )}
     </div>
   );

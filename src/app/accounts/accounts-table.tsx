@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDownIcon, ChevronUpIcon, Columns3Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -14,11 +13,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -35,6 +29,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SortableTableHead } from "@/components/sortable-table-head";
+import { ColumnsMenu } from "@/components/columns-menu";
+import { useRowSelection } from "@/hooks/use-row-selection";
+import { useColumnPreferences } from "@/hooks/use-column-preferences";
 import type { Account } from "@/lib/supabase/types";
 import { deleteAccounts, updateAccount } from "./actions";
 import { syncPluggyItem } from "./pluggy-actions";
@@ -70,8 +67,6 @@ const COLUMNS: {
   { key: "balance", label: "Balance", align: "right", cellClassName: "text-right" },
 ];
 
-const HIDDEN_COLUMNS_STORAGE_KEY = "accounts-table-hidden-columns";
-const COLUMN_ORDER_STORAGE_KEY = "accounts-table-column-order";
 const DEFAULT_COLUMN_ORDER = COLUMNS.map((column) => column.key);
 
 function renderCell(account: Account, key: SortKey) {
@@ -105,63 +100,13 @@ export function AccountsTable({
   sortDir: "asc" | "desc";
 }) {
   const router = useRouter();
-  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [isSyncing, startSync] = useTransition();
   const [isDeleting, startDelete] = useTransition();
   const [isSavingEdit, startSaveEdit] = useTransition();
   const [actionError, setActionError] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [hiddenColumns, setHiddenColumns] = useState<Set<SortKey>>(new Set());
-  const [columnOrder, setColumnOrder] = useState<SortKey[]>(DEFAULT_COLUMN_ORDER);
-
-  useEffect(() => {
-    try {
-      const storedHidden = localStorage.getItem(HIDDEN_COLUMNS_STORAGE_KEY);
-      if (storedHidden) setHiddenColumns(new Set(JSON.parse(storedHidden)));
-
-      const storedOrder = localStorage.getItem(COLUMN_ORDER_STORAGE_KEY);
-      if (storedOrder) {
-        const parsed = JSON.parse(storedOrder) as SortKey[];
-        // Reconcile against the current column set, so a stored order from
-        // before a column was added/removed doesn't drop or lose it.
-        const known = parsed.filter((key) => DEFAULT_COLUMN_ORDER.includes(key));
-        const missing = DEFAULT_COLUMN_ORDER.filter((key) => !known.includes(key));
-        setColumnOrder([...known, ...missing]);
-      }
-    } catch {
-      // ignore malformed/inaccessible storage
-    }
-  }, []);
-
-  function toggleColumn(key: SortKey) {
-    setHiddenColumns((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      try {
-        localStorage.setItem(HIDDEN_COLUMNS_STORAGE_KEY, JSON.stringify(Array.from(next)));
-      } catch {
-        // ignore
-      }
-      return next;
-    });
-  }
-
-  function moveColumn(key: SortKey, direction: -1 | 1) {
-    setColumnOrder((prev) => {
-      const index = prev.indexOf(key);
-      const swapWith = index + direction;
-      if (index === -1 || swapWith < 0 || swapWith >= prev.length) return prev;
-      const next = [...prev];
-      [next[index], next[swapWith]] = [next[swapWith], next[index]];
-      try {
-        localStorage.setItem(COLUMN_ORDER_STORAGE_KEY, JSON.stringify(next));
-      } catch {
-        // ignore
-      }
-      return next;
-    });
-  }
+  const { hidden: hiddenColumns, order: columnOrder, toggle: toggleColumn, move: moveColumn } =
+    useColumnPreferences<SortKey>("accounts-table", DEFAULT_COLUMN_ORDER);
 
   function sortHref(column: SortKey) {
     const nextDir: "asc" | "desc" = sortKey === column && sortDir === "asc" ? "desc" : "asc";
@@ -195,23 +140,17 @@ export function AccountsTable({
     });
   }, [accounts, sortKey, sortDir]);
 
-  const allSelected = sorted.length > 0 && selected.size === sorted.length;
-  const someSelected = selected.size > 0 && !allSelected;
+  const {
+    selected,
+    allSelected,
+    someSelected,
+    toggleAll,
+    toggleOne,
+    clear: clearSelection,
+    selectedRows: selectedAccounts,
+    soleSelectedRow: soleSelectedAccount,
+  } = useRowSelection(sorted, (account) => account.id);
 
-  function toggleAll() {
-    setSelected(allSelected ? new Set() : new Set(sorted.map((a) => a.id)));
-  }
-
-  function toggleOne(id: string) {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
-
-  const selectedAccounts = sorted.filter((a) => selected.has(a.id));
   const syncableItemIds = Array.from(
     new Set(
       selectedAccounts
@@ -219,7 +158,6 @@ export function AccountsTable({
         .map((a) => a.pluggy_item_id as string),
     ),
   );
-  const soleSelectedAccount = selected.size === 1 ? selectedAccounts[0] : null;
 
   function handleSync() {
     setActionError(null);
@@ -228,7 +166,7 @@ export function AccountsTable({
         for (const itemId of syncableItemIds) {
           await syncPluggyItem(itemId);
         }
-        setSelected(new Set());
+        clearSelection();
         router.refresh();
       } catch (err) {
         setActionError(err instanceof Error ? err.message : "Failed to sync.");
@@ -246,7 +184,7 @@ export function AccountsTable({
     startDelete(async () => {
       try {
         await deleteAccounts(Array.from(selected));
-        setSelected(new Set());
+        clearSelection();
       } catch (err) {
         setActionError(err instanceof Error ? err.message : "Failed to delete.");
       }
@@ -262,8 +200,9 @@ export function AccountsTable({
   }
 
   const columnsByKey = new Map(COLUMNS.map((column) => [column.key, column]));
-  const orderedColumns = columnOrder.map((key) => columnsByKey.get(key)!);
-  const visibleColumns = orderedColumns.filter((column) => !hiddenColumns.has(column.key));
+  const visibleColumns = columnOrder
+    .map((key) => columnsByKey.get(key)!)
+    .filter((column) => !hiddenColumns.has(column.key));
 
   return (
     <div className="flex flex-col gap-3">
@@ -272,41 +211,7 @@ export function AccountsTable({
           <span className="text-sm text-muted-foreground">{selected.size} selected</span>
         )}
         <div className="ml-auto flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger render={<Button variant="outline" size="icon-sm" />}>
-              <Columns3Icon />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-48">
-              {orderedColumns.map((column, index) => (
-                <div key={column.key} className="flex items-center gap-1.5 rounded-md px-1.5 py-1">
-                  <Checkbox
-                    checked={!hiddenColumns.has(column.key)}
-                    onCheckedChange={() => toggleColumn(column.key)}
-                    aria-label={`Show ${column.label} column`}
-                  />
-                  <span className="flex-1 text-sm">{column.label}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    disabled={index === 0}
-                    onClick={() => moveColumn(column.key, -1)}
-                    aria-label={`Move ${column.label} column earlier`}
-                  >
-                    <ChevronUpIcon />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    disabled={index === orderedColumns.length - 1}
-                    onClick={() => moveColumn(column.key, 1)}
-                    aria-label={`Move ${column.label} column later`}
-                  >
-                    <ChevronDownIcon />
-                  </Button>
-                </div>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />
           <Button
             variant="outline"
             size="sm"
@@ -393,7 +298,7 @@ export function AccountsTable({
                   try {
                     await updateAccount(formData);
                     setEditDialogOpen(false);
-                    setSelected(new Set());
+                    clearSelection();
                   } catch (err) {
                     setActionError(err instanceof Error ? err.message : "Failed to save account.");
                   }

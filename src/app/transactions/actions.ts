@@ -74,17 +74,19 @@ export async function updateTransaction(formData: FormData) {
   revalidatePath("/transactions");
 }
 
-export async function setTransactionHidden(id: string, hidden: boolean) {
+export async function setTransactionsHidden(ids: string[], hidden: boolean) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
 
+  if (ids.length === 0) return;
+
   const { error } = await supabase
     .from("transactions")
     .update({ is_hidden: hidden })
-    .eq("id", id)
+    .in("id", ids)
     .eq("user_id", user.id);
 
   if (error) throw new Error(error.message);
@@ -94,33 +96,38 @@ export async function setTransactionHidden(id: string, hidden: boolean) {
   revalidatePath("/");
 }
 
-export async function syncDescriptionFromTransaction(transactionId: string) {
+export async function syncDescriptionsFromTransactions(transactionIds: string[]) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
 
-  const { data: transaction, error: txError } = await supabase
+  if (transactionIds.length === 0) return 0;
+
+  const { data: transactions, error: txError } = await supabase
     .from("transactions")
     .select("description, category_id, class_id")
-    .eq("id", transactionId)
-    .eq("user_id", user.id)
-    .single();
+    .in("id", transactionIds)
+    .eq("user_id", user.id);
 
   if (txError) throw new Error(txError.message);
-  if (!transaction.category_id) {
-    throw new Error("Assign a category to this transaction before syncing its description.");
+
+  const eligible = (transactions ?? []).filter(
+    (transaction): transaction is typeof transaction & { category_id: string } => !!transaction.category_id,
+  );
+  if (eligible.length === 0) {
+    throw new Error("Assign a category to at least one selected transaction before syncing.");
   }
 
   const { error: upsertError } = await supabase.from("mapped_descriptions").upsert(
-    {
+    eligible.map((transaction) => ({
       user_id: user.id,
       description: transaction.description,
       category_id: transaction.category_id,
       class_id: transaction.class_id,
-      check_type: "equal_to",
-    },
+      check_type: "equal_to" as const,
+    })),
     { onConflict: "user_id,description" },
   );
 
@@ -129,22 +136,24 @@ export async function syncDescriptionFromTransaction(transactionId: string) {
   return syncMappedDescriptions();
 }
 
-export async function deleteTransaction(formData: FormData) {
+export async function deleteTransactions(ids: string[]) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
 
-  const id = formData.get("id") as string;
+  if (ids.length === 0) return;
 
   const { error } = await supabase
     .from("transactions")
     .delete()
-    .eq("id", id)
+    .in("id", ids)
     .eq("user_id", user.id);
 
   if (error) throw new Error(error.message);
 
   revalidatePath("/transactions");
+  revalidatePath("/budget");
+  revalidatePath("/");
 }

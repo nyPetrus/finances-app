@@ -53,19 +53,19 @@ export async function updateClass(formData: FormData) {
   revalidatePath("/classes");
 }
 
-export async function deleteClass(formData: FormData) {
+export async function deleteClasses(ids: string[]) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
 
-  const id = formData.get("id") as string;
+  if (ids.length === 0) return;
 
   const { error } = await supabase
     .from("classes")
     .delete()
-    .eq("id", id)
+    .in("id", ids)
     .eq("user_id", user.id);
 
   if (error) throw new Error(error.message);
