@@ -6,7 +6,43 @@ import { Select as SelectPrimitive } from "@base-ui/react/select"
 import { cn } from "@/lib/utils"
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react"
 
-const Select = SelectPrimitive.Root
+// Base UI's <Select.Value> only shows the selected item's label once the
+// popup has mounted at least once (i.e. after the user opens it) — until
+// then it falls back to the raw value. Passing `items` to <Select.Root>
+// fixes that by letting it resolve the label immediately, but requires a
+// value->label map. Rather than have every call site hand-maintain one
+// (error-prone, easy to let drift from the actual <SelectItem>s), derive it
+// automatically by walking the JSX tree for <SelectItem value>label</SelectItem>.
+function collectSelectItems(node: React.ReactNode, acc: Record<string, React.ReactNode>) {
+  React.Children.forEach(node, (child) => {
+    if (!React.isValidElement(child)) return
+    const props = child.props as { value?: unknown; children?: React.ReactNode }
+    if (child.type === SelectItem) {
+      if (typeof props.value === "string") acc[props.value] = props.children
+      return
+    }
+    if (props.children !== undefined) collectSelectItems(props.children, acc)
+  })
+}
+
+function Select<Value = string, Multiple extends boolean | undefined = false>({
+  items,
+  children,
+  ...props
+}: SelectPrimitive.Root.Props<Value, Multiple>) {
+  const derivedItems = React.useMemo(() => {
+    if (items) return items
+    const acc: Record<string, React.ReactNode> = {}
+    collectSelectItems(children, acc)
+    return acc as unknown as typeof items
+  }, [items, children])
+
+  return (
+    <SelectPrimitive.Root items={derivedItems} {...props}>
+      {children}
+    </SelectPrimitive.Root>
+  )
+}
 
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
   return (
