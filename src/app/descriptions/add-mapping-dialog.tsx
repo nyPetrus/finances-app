@@ -43,7 +43,7 @@ export function AddMappingDialog({ categories, classes }: { categories: Category
         }
       }}
     >
-      <DialogTrigger render={<Button size="icon" aria-label="Add mapping" title="Add mapping" />}>
+      <DialogTrigger render={<Button variant="ghost" size="icon" aria-label="Add mapping" title="Add mapping" />}>
         <PlusIcon />
       </DialogTrigger>
       <DialogContent>

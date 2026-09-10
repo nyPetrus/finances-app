@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { PencilIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -133,11 +134,13 @@ export function ClassesTable({
           <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />
           <Button
             variant="outline"
-            size="sm"
+            size="icon-sm"
             disabled={!soleSelectedClass}
             onClick={() => setEditDialogOpen(true)}
+            aria-label="Edit"
+            title="Edit"
           >
-            Edit
+            <PencilIcon />
           </Button>
           <Button variant="ghost" size="sm" disabled={selected.size === 0 || isDeleting} onClick={handleDelete}>
             {isDeleting ? "Deleting…" : "Delete"}

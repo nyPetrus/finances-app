@@ -35,7 +35,7 @@ export function AddClassDialog({ categories }: { categories: Category[] }) {
         if (next) setError(null);
       }}
     >
-      <DialogTrigger render={<Button size="icon" aria-label="Add class" title="Add class" />}>
+      <DialogTrigger render={<Button variant="ghost" size="icon" aria-label="Add class" title="Add class" />}>
         <PlusIcon />
       </DialogTrigger>
       <DialogContent>

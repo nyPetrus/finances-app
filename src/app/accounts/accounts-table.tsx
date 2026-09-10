@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { PencilIcon, RefreshCwIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -214,19 +215,23 @@ export function AccountsTable({
           <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />
           <Button
             variant="outline"
-            size="sm"
+            size="icon-sm"
             disabled={syncableItemIds.length === 0 || isSyncing || isDeleting}
             onClick={handleSync}
+            aria-label="Sync"
+            title="Sync"
           >
-            {isSyncing ? "Syncing…" : "Sync"}
+            <RefreshCwIcon className={isSyncing ? "animate-spin" : undefined} />
           </Button>
           <Button
             variant="outline"
-            size="sm"
+            size="icon-sm"
             disabled={!soleSelectedAccount || isSyncing || isDeleting}
             onClick={() => setEditDialogOpen(true)}
+            aria-label="Edit"
+            title="Edit"
           >
-            Edit
+            <PencilIcon />
           </Button>
           <Button
             variant="ghost"

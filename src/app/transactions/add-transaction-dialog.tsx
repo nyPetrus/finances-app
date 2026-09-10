@@ -57,7 +57,7 @@ export function AddTransactionDialog({
         }
       }}
     >
-      <DialogTrigger render={<Button size="icon" aria-label="Add transaction" title="Add transaction" />}>
+      <DialogTrigger render={<Button variant="ghost" size="icon" aria-label="Add transaction" title="Add transaction" />}>
         <PlusIcon />
       </DialogTrigger>
       <DialogContent>

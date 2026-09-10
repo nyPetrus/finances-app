@@ -64,11 +64,18 @@ list page instead of inventing a fresh layout.
   one row is checked).
 - **Row actions live in a toolbar above the table, not a per-row menu.**
   Right-aligned button group: `ColumnsMenu` first, then any page-specific
-  bulk actions (Accounts' and Transactions' "Sync"), then "Edit" (disabled
-  unless `soleSelectedRow` is set; opens a dialog
-  scoped to that one row), then "Delete" (`variant="ghost"` — no red
+  bulk actions (Accounts' and Transactions' "Sync" — icon-only
+  `RefreshCwIcon`, `variant="outline"` `size="icon-sm"`, spinning via
+  `className={isSyncing ? "animate-spin" : undefined}` while pending), then
+  "Edit" (icon-only `PencilIcon`, same `outline`/`icon-sm` styling; disabled
+  unless `soleSelectedRow` is set; opens a dialog scoped to that one row),
+  then "Delete" — the one toolbar button that stays text-labeled, since
+  "Delete" alone has no ambiguous icon equivalent (`variant="ghost"`, no red
   fill/destructive styling; disabled when nothing's selected; confirms via
-  `window.confirm(...)` before calling a bulk delete action). A left-aligned
+  `window.confirm(...)` before calling a bulk delete action). Icon-only
+  toolbar buttons need `aria-label` *and* `title` set to the plain action
+  word ("Sync", "Edit") for the same reason "Add" buttons do (see below). A
+  left-aligned
   `{selected.size > 0 && <span>{selected.size} selected</span>}` fills the
   other side of the toolbar — render nothing (not a filler placeholder
   string) when nothing's selected. The edit dialog is a plain
@@ -102,15 +109,16 @@ list page instead of inventing a fresh layout.
   client-side to respect column order/visibility; it must preserve any
   page-level filters in the URL (Transactions' `month`/`account`).
 - **"Add" buttons are icon-only**, a `PlusIcon` (`lucide-react`) with no
-  label text — e.g. `AddAccountDialog`'s `DialogTrigger` renders
-  `<Button size="icon" aria-label="Add account" title="Add account">
-  <PlusIcon /></Button>` instead of a button reading "Add account". Always
-  pair the icon with `aria-label` *and* `title` set to the same descriptive
-  text ("Add account", "Add category", ...) — the icon alone doesn't convey
-  which row type it adds, and dropping the label removes the only other cue,
-  so both the accessible name and the hover tooltip must carry it. Keep
-  whatever `variant` the button already had (Accounts' is `ghost`; the rest
-  are the default filled variant) — only the label and size change.
+  label text and `variant="ghost"` — e.g. `AddAccountDialog`'s
+  `DialogTrigger` renders `<Button variant="ghost" size="icon"
+  aria-label="Add account" title="Add account"><PlusIcon /></Button>`
+  instead of a filled button reading "Add account". `ghost` (no background
+  fill) is the standard for every "+" trigger across the app — Accounts set
+  the precedent, the rest were brought in line with it. Always pair the icon
+  with `aria-label` *and* `title` set to the same descriptive text ("Add
+  account", "Add category", ...) — the icon alone doesn't convey which row
+  type it adds, and dropping the label removes the only other cue, so both
+  the accessible name and the hover tooltip must carry it.
 - **Edit/Add dialogs**: `Label` + `Input`/`Select` fields per `@/components/ui`.
   Add dialogs (still a standalone `DialogTrigger`-wrapped `Dialog`, e.g.
   `AddAccountDialog`) keep their own local `error` state, shown as

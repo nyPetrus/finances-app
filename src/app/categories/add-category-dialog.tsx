@@ -40,7 +40,7 @@ export function AddCategoryDialog() {
         }
       }}
     >
-      <DialogTrigger render={<Button size="icon" aria-label="Add category" title="Add category" />}>
+      <DialogTrigger render={<Button variant="ghost" size="icon" aria-label="Add category" title="Add category" />}>
         <PlusIcon />
       </DialogTrigger>
       <DialogContent>

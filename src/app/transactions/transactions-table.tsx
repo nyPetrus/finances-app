@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { PencilIcon, RefreshCwIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -232,14 +233,23 @@ export function TransactionsTable({
           <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />
           <Button
             variant="outline"
-            size="sm"
+            size="icon-sm"
             disabled={syncEligibleCount === 0 || isSyncing}
             onClick={handleSync}
+            aria-label="Sync"
+            title="Sync"
           >
-            {isSyncing ? "Syncing…" : "Sync"}
+            <RefreshCwIcon className={isSyncing ? "animate-spin" : undefined} />
           </Button>
-          <Button variant="outline" size="sm" disabled={!soleSelectedTransaction} onClick={openEditDialog}>
-            Edit
+          <Button
+            variant="outline"
+            size="icon-sm"
+            disabled={!soleSelectedTransaction}
+            onClick={openEditDialog}
+            aria-label="Edit"
+            title="Edit"
+          >
+            <PencilIcon />
           </Button>
           <Button variant="ghost" size="sm" disabled={selected.size === 0 || isDeleting} onClick={handleDelete}>
             {isDeleting ? "Deleting…" : "Delete"}
