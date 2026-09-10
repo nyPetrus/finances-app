@@ -324,7 +324,7 @@ export function AccountsTable({
             Edit
           </Button>
           <Button
-            variant="destructive"
+            variant="ghost"
             size="sm"
             disabled={selected.size === 0 || isSyncing || isDeleting}
             onClick={handleDelete}
