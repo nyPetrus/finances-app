@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/table";
 import { SortableTableHead } from "@/components/sortable-table-head";
 import { ColumnsMenu } from "@/components/columns-menu";
+import { CategoryIcon } from "@/components/category-icon";
 import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
 import type { Account, Category, Class, Transaction } from "@/lib/supabase/types";
@@ -135,11 +136,8 @@ export function TransactionsTable({
       case "category": {
         const category = transaction.category_id ? categoriesById.get(transaction.category_id) : null;
         return category ? (
-          <Badge
-            variant="secondary"
-            className="max-w-full truncate"
-            style={{ backgroundColor: `${category.color}22`, color: category.color }}
-          >
+          <Badge variant="secondary" className="max-w-full gap-1 truncate">
+            <CategoryIcon icon={category.icon} className="size-3.5 shrink-0" />
             {category.name}
           </Badge>
         ) : (

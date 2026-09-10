@@ -20,14 +20,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ColorSwatchPicker } from "@/components/color-swatch-picker";
-import { CATEGORY_COLORS } from "@/lib/category-colors";
+import { IconSwatchPicker } from "@/components/icon-swatch-picker";
+import { CATEGORY_ICONS } from "@/lib/category-icons";
 import { addCategory } from "./actions";
 
 export function AddCategoryDialog() {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [color, setColor] = useState(CATEGORY_COLORS[0]);
+  const [icon, setIcon] = useState(CATEGORY_ICONS[0]);
 
   return (
     <Dialog
@@ -36,7 +36,7 @@ export function AddCategoryDialog() {
         setOpen(next);
         if (next) {
           setError(null);
-          setColor(CATEGORY_COLORS[0]);
+          setIcon(CATEGORY_ICONS[0]);
         }
       }}
     >
@@ -77,8 +77,8 @@ export function AddCategoryDialog() {
             </Select>
           </div>
           <div className="flex flex-col gap-2">
-            <Label>Color</Label>
-            <ColorSwatchPicker name="color" value={color} onChange={setColor} />
+            <Label>Icon</Label>
+            <IconSwatchPicker name="icon" value={icon} onChange={setIcon} />
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <DialogFooter>

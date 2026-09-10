@@ -1,5 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { CategoryIcon } from "@/components/category-icon";
 import type { Category } from "@/lib/supabase/types";
 import { saveBudgetYear } from "./actions";
 
@@ -59,10 +60,7 @@ export function YearlyGrid({
                 <tr key={category.id} className="border-b last:border-0">
                   <td className="overflow-hidden bg-background px-2 py-2">
                     <div className="flex items-center gap-2 truncate" title={category.name}>
-                      <span
-                        className="h-2.5 w-2.5 shrink-0 rounded-full"
-                        style={{ backgroundColor: category.color }}
-                      />
+                      <CategoryIcon icon={category.icon} className="size-3.5 shrink-0 text-muted-foreground" />
                       <span className="truncate">{category.name}</span>
                     </div>
                   </td>

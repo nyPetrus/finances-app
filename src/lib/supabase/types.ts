@@ -3,7 +3,7 @@ export type Category = {
   user_id: string;
   name: string;
   kind: "income" | "expense" | "transfer";
-  color: string;
+  icon: string;
   is_default: boolean;
   created_at: string;
 };

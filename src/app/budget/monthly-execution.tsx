@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CategoryIcon } from "@/components/category-icon";
 import type { Category } from "@/lib/supabase/types";
 
 const MONTH_LABELS = Array.from({ length: 12 }, (_, i) =>
@@ -85,10 +86,7 @@ export function MonthlyExecution({
                 return (
                   <tr key={category.id} className="border-b last:border-0">
                     <td className="flex items-center gap-2 px-3 py-2">
-                      <span
-                        className="h-2.5 w-2.5 shrink-0 rounded-full"
-                        style={{ backgroundColor: category.color }}
-                      />
+                      <CategoryIcon icon={category.icon} className="size-3.5 shrink-0 text-muted-foreground" />
                       {category.name}
                     </td>
                     <td className="px-3 py-2 text-right">{formatCurrency(planned)}</td>

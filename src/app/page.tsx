@@ -4,6 +4,7 @@ import { fetchAllTransactionsInRange } from "@/lib/supabase/fetch-all-transactio
 import type { Account, BudgetItem, Category, Transaction } from "@/lib/supabase/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CHART_COLORS } from "@/lib/chart-colors";
 import { BudgetVsActualChart } from "./budget-vs-actual-chart";
 import { SpendingByCategoryChart } from "./spending-by-category-chart";
 
@@ -78,13 +79,16 @@ export default async function Home({
   const spendingChartData = Array.from(spendingByCategory.entries())
     .map(([categoryId, amount]) => ({
       name: categoriesById.get(categoryId)?.name ?? "Unknown",
-      color: categoriesById.get(categoryId)?.color ?? "#898781",
       amount,
     }));
   if (uncategorizedSpending > 0) {
-    spendingChartData.push({ name: "Uncategorized", color: "#898781", amount: uncategorizedSpending });
+    spendingChartData.push({ name: "Uncategorized", amount: uncategorizedSpending });
   }
   spendingChartData.sort((a, b) => b.amount - a.amount);
+  const spendingChartDataWithColor = spendingChartData.map((entry, i) => ({
+    ...entry,
+    color: CHART_COLORS[i % CHART_COLORS.length],
+  }));
 
   const plannedByMonth = Array(12).fill(0);
   for (const item of (budgetItems ?? []) as BudgetItem[]) {
@@ -176,10 +180,10 @@ export default async function Home({
           <CardTitle>Spending by category — {year}</CardTitle>
         </CardHeader>
         <CardContent>
-          {spendingChartData.length === 0 ? (
+          {spendingChartDataWithColor.length === 0 ? (
             <p className="text-sm text-muted-foreground">No expenses yet in {year}.</p>
           ) : (
-            <SpendingByCategoryChart data={spendingChartData} />
+            <SpendingByCategoryChart data={spendingChartDataWithColor} />
           )}
         </CardContent>
       </Card>

@@ -17,13 +17,13 @@ export async function addCategory(formData: FormData) {
 
   const name = (formData.get("name") as string).trim();
   const kind = formData.get("kind") as string;
-  const color = formData.get("color") as string;
+  const icon = formData.get("icon") as string;
 
   if (!name) return;
 
   const { error } = await supabase
     .from("categories")
-    .insert({ user_id: user.id, name, kind, color });
+    .insert({ user_id: user.id, name, kind, icon });
 
   if (error) throwFriendlyError(error.message, error.code);
 
@@ -41,13 +41,13 @@ export async function updateCategory(formData: FormData) {
   const id = formData.get("id") as string;
   const name = (formData.get("name") as string).trim();
   const kind = formData.get("kind") as string;
-  const color = formData.get("color") as string;
+  const icon = formData.get("icon") as string;
 
   if (!name) return;
 
   const { error } = await supabase
     .from("categories")
-    .update({ name, kind, color })
+    .update({ name, kind, icon })
     .eq("id", id)
     .eq("user_id", user.id);
 

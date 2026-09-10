@@ -129,9 +129,32 @@ list page instead of inventing a fresh layout.
   stays visible (dimmed) behind the modal backdrop. Server actions should
   throw `Error`s with user-facing messages (see the unique-name violation
   handling in `src/app/categories/actions.ts`).
-- **Category/class chips**: render with `Badge` (`variant="secondary"`),
-  colored via `style={{ backgroundColor: \`${color}22\`, color }}` using the
-  category's own `color` field.
+- **Categories are identified by an icon, not a color.** `categories.icon`
+  (text) stores a key into `CATEGORY_ICON_MAP`
+  (`src/lib/category-icons.ts`), a curated set of `lucide-react` icons picked
+  to fit common finance categories (groceries, transport, salary, etc.),
+  with `"tag"` as both the last palette entry and the fallback for an
+  unrecognized/missing key. Categories used to carry a `color` field instead
+  — that column was dropped (see
+  `supabase/migrations/0015_categories_icon.sql`, which also re-seeds the
+  on-signup default categories with fitting icons) and nothing should
+  reintroduce per-category color. Render the icon with the shared
+  `<CategoryIcon icon={category.icon} className="..." />`
+  (`src/components/category-icon.tsx`) rather than looking up
+  `CATEGORY_ICON_MAP` directly, so the fallback stays centralized. Add/Edit
+  Category dialogs let the user pick one via `<IconSwatchPicker name="icon"
+  value={icon} onChange={setIcon} />` (`src/components/icon-swatch-picker.tsx`),
+  the same swap-a-button-grid pattern the old `ColorSwatchPicker` used.
+  **Category/class chips**: render with `Badge` (`variant="secondary"`, now
+  a flat neutral style with no per-category tint) with `<CategoryIcon>` as a
+  leading child before the name — see Classes/Descriptions/Transactions'
+  `renderCell` "category" case. The Categories table's own Name column and
+  Budget's category rows (`yearly-grid.tsx`, `monthly-execution.tsx`) show
+  the same icon next to the name, without a Badge wrapper. The Dashboard's
+  "Spending by category" bar chart still needs a real fill color per bar
+  (icons don't work as a chart fill) — it assigns one from `CHART_COLORS`
+  (`src/lib/chart-colors.ts`) by bar position, entirely decoupled from
+  categories; don't wire that back to a per-category property.
 - **Mutations**: bulk actions take an array (`deleteAccounts(ids: string[])`,
   `deleteMappedDescriptions(descriptions: string[])`, etc.) and delete/update
   via `.in(...)`, guarded by `.eq("user_id", user.id)` like every other

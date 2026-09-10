@@ -31,7 +31,8 @@ import {
 } from "@/components/ui/table";
 import { SortableTableHead } from "@/components/sortable-table-head";
 import { ColumnsMenu } from "@/components/columns-menu";
-import { ColorSwatchPicker } from "@/components/color-swatch-picker";
+import { IconSwatchPicker } from "@/components/icon-swatch-picker";
+import { CategoryIcon } from "@/components/category-icon";
 import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
 import type { Category } from "@/lib/supabase/types";
@@ -56,7 +57,7 @@ function renderCell(category: Category, key: SortKey) {
     case "name":
       return (
         <div className="flex items-center gap-2">
-          <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: category.color }} />
+          <CategoryIcon icon={category.icon} className="size-4 shrink-0 text-muted-foreground" />
           <span className="truncate">{category.name}</span>
         </div>
       );
@@ -78,7 +79,7 @@ export function CategoriesTable({
   const [isSavingEdit, startSaveEdit] = useTransition();
   const [actionError, setActionError] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editColor, setEditColor] = useState("");
+  const [editIcon, setEditIcon] = useState("");
   const { hidden: hiddenColumns, order: columnOrder, toggle: toggleColumn, move: moveColumn } =
     useColumnPreferences<SortKey>("categories-table", DEFAULT_COLUMN_ORDER);
 
@@ -100,7 +101,7 @@ export function CategoriesTable({
   function openEditDialog() {
     if (!soleSelectedCategory) return;
     setActionError(null);
-    setEditColor(soleSelectedCategory.color);
+    setEditIcon(soleSelectedCategory.icon);
     setEditDialogOpen(true);
   }
 
@@ -234,8 +235,8 @@ export function CategoriesTable({
                 </Select>
               </div>
               <div className="flex flex-col gap-2">
-                <Label>Color</Label>
-                <ColorSwatchPicker name="color" value={editColor} onChange={setEditColor} />
+                <Label>Icon</Label>
+                <IconSwatchPicker name="icon" value={editIcon} onChange={setEditIcon} />
               </div>
               <DialogFooter>
                 <Button type="submit" form={`edit-category-${soleSelectedCategory.id}`} disabled={isSavingEdit}>
