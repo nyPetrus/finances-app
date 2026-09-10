@@ -78,12 +78,6 @@ export default async function DescriptionsPage({
         </div>
       </div>
 
-      <p className="text-sm text-muted-foreground">
-        Map a transaction description to a category (and optionally a class), matched as an exact
-        equal, a prefix, or a substring. Press Sync to auto-categorize any uncategorized
-        transactions that match — exact matches are applied first, then prefixes, then substrings.
-      </p>
-
       {allCategories.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           No categories yet. Create one on the Categories page first.
