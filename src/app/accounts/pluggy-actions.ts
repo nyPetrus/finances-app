@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { pluggyClient } from "@/lib/pluggy/client";
+import type { Item } from "pluggy-sdk";
 
 export async function getPluggyConnectToken() {
   const supabase = await createClient();
@@ -18,6 +19,31 @@ export async function getPluggyConnectToken() {
   return accessToken;
 }
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Pluggy only refreshes an item's data from the bank on its own schedule
+// (see Item.nextAutoSyncAt) — reading fetchItem/fetchAccounts/fetchAllTransactions
+// alone just returns whatever it last cached, which can be hours or days
+// stale. updateItem() is what actually asks Pluggy to go talk to the bank
+// right now; it responds immediately with status "UPDATING", so the caller
+// has to poll fetchItem until that settles into a terminal status.
+//
+// Bounded to leave headroom under the Server Action's maxDuration (see
+// src/app/accounts/page.tsx) for the fetch/upsert work that follows.
+async function waitForPluggyUpdate(itemId: string, budgetMs: number): Promise<Item> {
+  const deadline = Date.now() + budgetMs;
+  let item = await pluggyClient.updateItem(itemId);
+
+  while ((item.status === "UPDATING" || item.status === "MERGING") && Date.now() < deadline) {
+    await sleep(2500);
+    item = await pluggyClient.fetchItem(itemId);
+  }
+
+  return item;
+}
+
 export async function syncPluggyItem(itemId: string) {
   const supabase = await createClient();
   const {
@@ -25,7 +51,21 @@ export async function syncPluggyItem(itemId: string) {
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
 
-  const item = await pluggyClient.fetchItem(itemId);
+  const item = await waitForPluggyUpdate(itemId, 40_000);
+
+  if (item.status === "UPDATING" || item.status === "MERGING") {
+    throw new Error("Your bank is still updating — press Sync again in a moment.");
+  }
+  if (item.status === "LOGIN_ERROR") {
+    throw new Error('This bank connection needs to be reconnected — use "Connect bank" to sign in again.');
+  }
+  if (item.status === "WAITING_USER_INPUT" || item.status === "WAITING_USER_ACTION") {
+    throw new Error('This bank needs additional confirmation (e.g. a code or app approval) — use "Connect bank" to complete it.');
+  }
+  if (item.status === "OUTDATED") {
+    throw new Error("Your bank couldn't be updated just now — press Sync to try again.");
+  }
+
   // Fetch both BANK and CREDIT accounts for this item.
   const { results: pluggyAccounts } = await pluggyClient.fetchAccounts(itemId);
 

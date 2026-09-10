@@ -5,6 +5,10 @@ import { AddAccountDialog } from "./add-account-dialog";
 import { ConnectBankButton } from "./connect-bank-button";
 import { isSortKey, type SortKey } from "./sort";
 
+// syncPluggyItem now waits on a live bank update (via Pluggy's updateItem),
+// which can take longer than the platform's default Server Action timeout.
+export const maxDuration = 60;
+
 export default async function AccountsPage({
   searchParams,
 }: {
