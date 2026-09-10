@@ -21,7 +21,6 @@ export async function fetchAllTransactionsInRange(
       .select("*")
       .gte("date", gte)
       .lt("date", lt)
-      .eq("is_hidden", false)
       .order("date", { ascending: true })
       .range(offset, offset + pageSize - 1);
 
