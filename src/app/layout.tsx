@@ -29,9 +29,11 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
-        <NavBar />
-        {children}
+      <body className="min-h-full">
+        <div className="flex min-h-full">
+          <NavBar />
+          <main className="min-w-0 flex-1">{children}</main>
+        </div>
         <Toaster />
       </body>
     </html>
