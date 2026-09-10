@@ -36,6 +36,20 @@ Tailwind v4 + shadcn/ui, Supabase (Postgres + Auth, RLS per user), Pluggy
   inserts or updates a transaction's description must lowercase it first.
   Existing rows were backfilled once via
   `supabase/migrations/0012_lowercase_transaction_descriptions.sql`.
+- **Two ways to bulk-categorize uncategorized transactions from history**,
+  both in `src/app/descriptions/actions.ts`: `syncMappedDescriptions()` (the
+  Descriptions page's "Sync" button) applies the *existing*
+  `mapped_descriptions` rules — `equal_to` beats `starts_with` beats
+  `contains`, longest pattern wins within a tier — to every transaction
+  with `category_id is null`. `autoCategorizeFromHistory()` (the
+  "Auto-categorize from history" sparkles button next to it) goes one step
+  further: for every description that appears on an already-categorized
+  transaction but has *no* explicit mapping yet, it infers one (the
+  majority category/class combo for that exact description, `equal_to`
+  only) via an upsert keyed on the `(user_id, description)` primary key,
+  then calls `syncMappedDescriptions()` to apply the combined rule set. It
+  never overwrites a description that already has an explicit mapping, even
+  a `starts_with`/`contains` one that hasn't matched anything yet.
 - **Negative/expense amounts don't get a special color — only positive
   (income) amounts do.** A positive amount is `text-emerald-600`; a negative
   one just uses the default text color (no class, or explicitly omit the

@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Category, Class, MappedDescription } from "@/lib/supabase/types";
+import { AutoCategorizeButton } from "./auto-categorize-button";
 import { DescriptionsTable } from "./descriptions-table";
 import { SyncButton } from "./sync-button";
 import { isSortKey, type SortKey } from "./sort";
@@ -71,7 +72,10 @@ export default async function DescriptionsPage({
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Descriptions</h1>
-        <SyncButton />
+        <div className="flex items-center gap-2">
+          <AutoCategorizeButton />
+          <SyncButton />
+        </div>
       </div>
 
       {allCategories.length === 0 ? (

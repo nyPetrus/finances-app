@@ -193,3 +193,88 @@ export async function syncMappedDescriptions() {
 
   return updatedCount;
 }
+
+// Infers a mapping for every description that appears on at least one
+// already-categorized transaction but has no explicit mapped_descriptions
+// rule yet, then applies the full mapping set (existing rules + the newly
+// inferred ones) to every uncategorized transaction via syncMappedDescriptions.
+export async function autoCategorizeFromHistory() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const [{ data: mappings, error: mapError }, { data: categorized, error: txError }] = await Promise.all([
+    supabase.from("mapped_descriptions").select("description").eq("user_id", user.id),
+    supabase
+      .from("transactions")
+      .select("description, category_id, class_id")
+      .eq("user_id", user.id)
+      .not("category_id", "is", null),
+  ]);
+
+  if (mapError) throw new Error(mapError.message);
+  if (txError) throw new Error(txError.message);
+
+  const mappedDescriptions = new Set(
+    (mappings ?? []).map((m) => normalizeDescription(m.description)),
+  );
+
+  // For each description not already covered by an explicit rule, tally
+  // the category/class combo used on its categorized transactions and keep
+  // the most common one — a description categorized inconsistently in the
+  // past shouldn't silently flip-flop, so ties just keep whichever combo
+  // was tallied first.
+  const combosByDescription = new Map<
+    string,
+    Map<string, { category_id: string; class_id: string | null; count: number }>
+  >();
+
+  for (const transaction of (categorized ?? []) as {
+    description: string;
+    category_id: string | null;
+    class_id: string | null;
+  }[]) {
+    if (!transaction.category_id) continue;
+    const normalized = normalizeDescription(transaction.description);
+    if (mappedDescriptions.has(normalized)) continue;
+
+    const key = `${transaction.category_id}|${transaction.class_id ?? ""}`;
+    const combos = combosByDescription.get(normalized) ?? new Map();
+    const entry = combos.get(key) ?? {
+      category_id: transaction.category_id,
+      class_id: transaction.class_id,
+      count: 0,
+    };
+    entry.count += 1;
+    combos.set(key, entry);
+    combosByDescription.set(normalized, combos);
+  }
+
+  const inferredMappings = Array.from(combosByDescription.entries()).map(([description, combos]) => {
+    let best = { category_id: "", class_id: null as string | null, count: 0 };
+    for (const combo of combos.values()) {
+      if (combo.count > best.count) best = combo;
+    }
+    return {
+      user_id: user.id,
+      description,
+      category_id: best.category_id,
+      class_id: best.class_id,
+      check_type: "equal_to" as const,
+    };
+  });
+
+  if (inferredMappings.length > 0) {
+    const { error: upsertError } = await supabase
+      .from("mapped_descriptions")
+      .upsert(inferredMappings, { onConflict: "user_id,description" });
+
+    if (upsertError) throw new Error(upsertError.message);
+  }
+
+  const categorizedCount = await syncMappedDescriptions();
+
+  return { newMappings: inferredMappings.length, categorizedCount };
+}
