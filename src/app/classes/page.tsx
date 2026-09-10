@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Category, Class } from "@/lib/supabase/types";
 import { ClassesTable } from "./classes-table";
-import { AddClassDialog } from "./add-class-dialog";
 import { isSortKey, type SortKey } from "./sort";
 
 export default async function ClassesPage({
@@ -46,10 +45,7 @@ export default async function ClassesPage({
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Classes</h1>
-        {allCategories.length > 0 && <AddClassDialog categories={allCategories} />}
-      </div>
+      <h1 className="text-2xl font-semibold">Classes</h1>
 
       {allCategories.length === 0 ? (
         <p className="text-sm text-muted-foreground">

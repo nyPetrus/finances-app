@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import type { Account, Category, Class, Transaction } from "@/lib/supabase/types";
 import { Button } from "@/components/ui/button";
 import { AccountFilter } from "./account-filter";
-import { AddTransactionDialog } from "./add-transaction-dialog";
 import { MonthPicker } from "./month-picker";
 import { TransactionsTable } from "./transactions-table";
 import { isSortKey, type SortKey } from "./sort";
@@ -146,14 +145,7 @@ export default async function TransactionsPage({
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Transactions</h1>
-        {allAccounts.length > 0 ? (
-          <AddTransactionDialog accounts={allAccounts} categories={allCategories} classes={allClasses} />
-        ) : (
-          <Button render={<Link href="/accounts" />}>Create an account first</Button>
-        )}
-      </div>
+      <h1 className="text-2xl font-semibold">Transactions</h1>
 
       <div className="flex items-center justify-between">
         <Button
@@ -190,23 +182,22 @@ export default async function TransactionsPage({
         </div>
       )}
 
-      {monthTransactions.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No transactions in {formatMonthLabel(monthKey)}.{" "}
-          {allAccounts.length > 0 ? "Add one above." : "Create an account, then add a transaction."}
-        </p>
-      ) : (
-        <TransactionsTable
-          transactions={sortedTransactions}
-          accounts={allAccounts}
-          categories={allCategories}
-          classes={allClasses}
-          sortKey={sortKey}
-          sortDir={sortDir}
-          monthKey={monthKey}
-          accountParam={accountParam}
-        />
-      )}
+      <TransactionsTable
+        transactions={sortedTransactions}
+        accounts={allAccounts}
+        categories={allCategories}
+        classes={allClasses}
+        sortKey={sortKey}
+        sortDir={sortDir}
+        monthKey={monthKey}
+        accountParam={accountParam}
+        emptyMessage={
+          <>
+            No transactions in {formatMonthLabel(monthKey)}.{" "}
+            {allAccounts.length > 0 ? "Add one above." : "Create an account, then add a transaction."}
+          </>
+        }
+      />
     </div>
   );
 }

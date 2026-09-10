@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, type ReactNode } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { PencilIcon, RefreshCwIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +38,7 @@ import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
 import type { Account, Category, Class, Transaction } from "@/lib/supabase/types";
 import { deleteTransactions, syncDescriptionsFromTransactions, updateTransaction } from "./actions";
+import { AddTransactionDialog } from "./add-transaction-dialog";
 import { type SortKey } from "./sort";
 
 function formatCurrency(value: number) {
@@ -74,6 +76,7 @@ export function TransactionsTable({
   sortDir,
   monthKey,
   accountParam,
+  emptyMessage,
 }: {
   transactions: Transaction[];
   accounts: Account[];
@@ -83,6 +86,7 @@ export function TransactionsTable({
   sortDir: "asc" | "desc";
   monthKey: string;
   accountParam: string | undefined;
+  emptyMessage: ReactNode;
 }) {
   const [isSyncing, startSync] = useTransition();
   const [isDeleting, startDelete] = useTransition();
@@ -236,6 +240,13 @@ export function TransactionsTable({
           >
             <PencilIcon />
           </Button>
+          {accounts.length > 0 ? (
+            <AddTransactionDialog accounts={accounts} categories={categories} classes={classes} />
+          ) : (
+            <Button size="sm" render={<Link href="/accounts" />}>
+              Create an account first
+            </Button>
+          )}
           <Button variant="ghost" size="sm" disabled={selected.size === 0 || isDeleting} onClick={handleDelete}>
             {isDeleting ? "Deleting…" : "Delete"}
           </Button>
@@ -243,49 +254,53 @@ export function TransactionsTable({
       </div>
       {actionError && <p className="text-sm text-destructive">{actionError}</p>}
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-0">
-              <Checkbox
-                checked={allSelected}
-                indeterminate={someSelected}
-                onCheckedChange={toggleAll}
-                aria-label="Select all transactions"
-              />
-            </TableHead>
-            {visibleColumns.map((column) => (
-              <SortableTableHead
-                key={column.key}
-                href={sortHref(column.key)}
-                active={sortKey === column.key}
-                dir={sortDir}
-                align={column.align}
-              >
-                {column.label}
-              </SortableTableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {transactions.map((transaction) => (
-            <TableRow key={transaction.id}>
-              <TableCell>
+      {transactions.length === 0 ? (
+        <p className="text-sm text-muted-foreground">{emptyMessage}</p>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-0">
                 <Checkbox
-                  checked={selected.has(transaction.id)}
-                  onCheckedChange={() => toggleOne(transaction.id)}
-                  aria-label={`Select ${transaction.description}`}
+                  checked={allSelected}
+                  indeterminate={someSelected}
+                  onCheckedChange={toggleAll}
+                  aria-label="Select all transactions"
                 />
-              </TableCell>
+              </TableHead>
               {visibleColumns.map((column) => (
-                <TableCell key={column.key} className={column.cellClassName}>
-                  {renderCell(transaction, column.key)}
-                </TableCell>
+                <SortableTableHead
+                  key={column.key}
+                  href={sortHref(column.key)}
+                  active={sortKey === column.key}
+                  dir={sortDir}
+                  align={column.align}
+                >
+                  {column.label}
+                </SortableTableHead>
               ))}
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {transactions.map((transaction) => (
+              <TableRow key={transaction.id}>
+                <TableCell>
+                  <Checkbox
+                    checked={selected.has(transaction.id)}
+                    onCheckedChange={() => toggleOne(transaction.id)}
+                    aria-label={`Select ${transaction.description}`}
+                  />
+                </TableCell>
+                {visibleColumns.map((column) => (
+                  <TableCell key={column.key} className={column.cellClassName}>
+                    {renderCell(transaction, column.key)}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
 
       {soleSelectedTransaction && (
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>

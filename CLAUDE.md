@@ -82,10 +82,12 @@ list page instead of inventing a fresh layout.
   `className={isSyncing ? "animate-spin" : undefined}` while pending), then
   "Edit" (icon-only `PencilIcon`, same `outline`/`icon-sm` styling; disabled
   unless `soleSelectedRow` is set; opens a dialog scoped to that one row),
-  then "Delete" — the one toolbar button that stays text-labeled, since
-  "Delete" alone has no ambiguous icon equivalent (`variant="ghost"`, no red
-  fill/destructive styling; disabled when nothing's selected; confirms via
-  `window.confirm(...)` before calling a bulk delete action). Icon-only
+  then the page's "Add" dialog trigger (see below), then "Delete" — the one
+  toolbar button that stays text-labeled, since "Delete" alone has no
+  ambiguous icon equivalent (`variant="ghost"`, no red fill/destructive
+  styling; disabled when nothing's selected; confirms via
+  `window.confirm(...)` before calling a bulk delete action). "+" sits
+  immediately to the left of "Delete" on every table page. Icon-only
   toolbar buttons need `aria-label` *and* `title` set to the plain action
   word ("Sync", "Edit") for the same reason "Add" buttons do (see below). A
   left-aligned
@@ -96,6 +98,11 @@ list page instead of inventing a fresh layout.
   opened by the toolbar Edit button's `onClick`; guard its render on
   `soleSelectedRow` (`{soleSelectedRow && <Dialog ...>}`) so it has data to
   prefill from and unmounts cleanly once the dialog closes.
+  **The toolbar (and thus "+") must render even when the row list is
+  empty** — the empty-state message (`"No categories yet."` etc.) replaces
+  only the `<Table>` markup via a ternary, never the surrounding toolbar, so
+  "+" stays reachable from a zero-row page instead of being stranded behind
+  an early return.
 - **Column show/hide + reorder**: `useColumnPreferences<SortKey>(storageKey,
   defaultOrder)` (`src/hooks/use-column-preferences.ts`) persists both to
   localStorage under `${storageKey}-hidden-columns` /
@@ -131,7 +138,16 @@ list page instead of inventing a fresh layout.
   with `aria-label` *and* `title` set to the same descriptive text ("Add
   account", "Add category", ...) — the icon alone doesn't convey which row
   type it adds, and dropping the label removes the only other cue, so both
-  the accessible name and the hover tooltip must carry it.
+  the accessible name and the hover tooltip must carry it. The `Add*Dialog`
+  component itself is rendered from inside the `<X>Table` client component's
+  toolbar (immediately before "Delete"), not from the server `page.tsx`
+  header — `page.tsx` keeps only the `<h1>` and any page-level, non-row
+  controls (Accounts' `ConnectBankButton`, Descriptions' `SyncButton`,
+  Transactions' month nav). Classes and Descriptions render their `Add*Dialog`
+  unconditionally inside the table (safe because `page.tsx` only mounts the
+  table when categories exist); Transactions swaps its "+" for a "Create an
+  account first" link button when `accounts.length === 0`, using the same
+  `accounts` prop the table already receives.
 - **Edit/Add dialogs**: `Label` + `Input`/`Select` fields per `@/components/ui`.
   Add dialogs (still a standalone `DialogTrigger`-wrapped `Dialog`, e.g.
   `AddAccountDialog`) keep their own local `error` state, shown as

@@ -37,6 +37,7 @@ import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
 import type { Category } from "@/lib/supabase/types";
 import { deleteCategories, updateCategory } from "./actions";
+import { AddCategoryDialog } from "./add-category-dialog";
 import { type SortKey } from "./sort";
 
 const kindLabels: Record<Category["kind"], string> = {
@@ -122,10 +123,6 @@ export function CategoriesTable({
     });
   }
 
-  if (categories.length === 0) {
-    return <p className="text-sm text-muted-foreground">No categories yet.</p>;
-  }
-
   const columnsByKey = new Map(COLUMNS.map((column) => [column.key, column]));
   const visibleColumns = columnOrder
     .map((key) => columnsByKey.get(key)!)
@@ -149,6 +146,7 @@ export function CategoriesTable({
           >
             <PencilIcon />
           </Button>
+          <AddCategoryDialog />
           <Button variant="ghost" size="sm" disabled={selected.size === 0 || isDeleting} onClick={handleDelete}>
             {isDeleting ? "Deleting…" : "Delete"}
           </Button>
@@ -156,43 +154,47 @@ export function CategoriesTable({
       </div>
       {actionError && <p className="text-sm text-destructive">{actionError}</p>}
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-0">
-              <Checkbox
-                checked={allSelected}
-                indeterminate={someSelected}
-                onCheckedChange={toggleAll}
-                aria-label="Select all categories"
-              />
-            </TableHead>
-            {visibleColumns.map((column) => (
-              <SortableTableHead key={column.key} href={sortHref(column.key)} active={sortKey === column.key} dir={sortDir}>
-                {column.label}
-              </SortableTableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {categories.map((category) => (
-            <TableRow key={category.id}>
-              <TableCell>
+      {categories.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No categories yet.</p>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-0">
                 <Checkbox
-                  checked={selected.has(category.id)}
-                  onCheckedChange={() => toggleOne(category.id)}
-                  aria-label={`Select ${category.name}`}
+                  checked={allSelected}
+                  indeterminate={someSelected}
+                  onCheckedChange={toggleAll}
+                  aria-label="Select all categories"
                 />
-              </TableCell>
+              </TableHead>
               {visibleColumns.map((column) => (
-                <TableCell key={column.key} className={column.cellClassName}>
-                  {renderCell(category, column.key)}
-                </TableCell>
+                <SortableTableHead key={column.key} href={sortHref(column.key)} active={sortKey === column.key} dir={sortDir}>
+                  {column.label}
+                </SortableTableHead>
               ))}
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {categories.map((category) => (
+              <TableRow key={category.id}>
+                <TableCell>
+                  <Checkbox
+                    checked={selected.has(category.id)}
+                    onCheckedChange={() => toggleOne(category.id)}
+                    aria-label={`Select ${category.name}`}
+                  />
+                </TableCell>
+                {visibleColumns.map((column) => (
+                  <TableCell key={column.key} className={column.cellClassName}>
+                    {renderCell(category, column.key)}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
 
       {soleSelectedCategory && (
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>

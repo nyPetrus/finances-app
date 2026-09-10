@@ -35,6 +35,7 @@ import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
 import type { Account } from "@/lib/supabase/types";
 import { deleteAccounts, updateAccount } from "./actions";
+import { AddAccountDialog } from "./add-account-dialog";
 import { syncPluggyItem } from "./pluggy-actions";
 import { type SortKey } from "./sort";
 
@@ -192,14 +193,6 @@ export function AccountsTable({
     });
   }
 
-  if (sorted.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        No accounts yet. Add your first one to start tracking transactions.
-      </p>
-    );
-  }
-
   const columnsByKey = new Map(COLUMNS.map((column) => [column.key, column]));
   const visibleColumns = columnOrder
     .map((key) => columnsByKey.get(key)!)
@@ -233,6 +226,7 @@ export function AccountsTable({
           >
             <PencilIcon />
           </Button>
+          <AddAccountDialog />
           <Button
             variant="ghost"
             size="sm"
@@ -245,49 +239,55 @@ export function AccountsTable({
       </div>
       {actionError && <p className="text-sm text-destructive">{actionError}</p>}
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-0">
-              <Checkbox
-                checked={allSelected}
-                indeterminate={someSelected}
-                onCheckedChange={toggleAll}
-                aria-label="Select all accounts"
-              />
-            </TableHead>
-            {visibleColumns.map((column) => (
-              <SortableTableHead
-                key={column.key}
-                href={sortHref(column.key)}
-                active={sortKey === column.key}
-                dir={sortDir}
-                align={column.align}
-              >
-                {column.label}
-              </SortableTableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {sorted.map((account) => (
-            <TableRow key={account.id}>
-              <TableCell>
+      {sorted.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          No accounts yet. Add your first one to start tracking transactions.
+        </p>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-0">
                 <Checkbox
-                  checked={selected.has(account.id)}
-                  onCheckedChange={() => toggleOne(account.id)}
-                  aria-label={`Select ${account.name}`}
+                  checked={allSelected}
+                  indeterminate={someSelected}
+                  onCheckedChange={toggleAll}
+                  aria-label="Select all accounts"
                 />
-              </TableCell>
+              </TableHead>
               {visibleColumns.map((column) => (
-                <TableCell key={column.key} className={column.cellClassName}>
-                  {renderCell(account, column.key)}
-                </TableCell>
+                <SortableTableHead
+                  key={column.key}
+                  href={sortHref(column.key)}
+                  active={sortKey === column.key}
+                  dir={sortDir}
+                  align={column.align}
+                >
+                  {column.label}
+                </SortableTableHead>
               ))}
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {sorted.map((account) => (
+              <TableRow key={account.id}>
+                <TableCell>
+                  <Checkbox
+                    checked={selected.has(account.id)}
+                    onCheckedChange={() => toggleOne(account.id)}
+                    aria-label={`Select ${account.name}`}
+                  />
+                </TableCell>
+                {visibleColumns.map((column) => (
+                  <TableCell key={column.key} className={column.cellClassName}>
+                    {renderCell(account, column.key)}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
 
       {soleSelectedAccount && (
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>

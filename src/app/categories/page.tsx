@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Category } from "@/lib/supabase/types";
 import { CategoriesTable } from "./categories-table";
-import { AddCategoryDialog } from "./add-category-dialog";
 import { isSortKey, type SortKey } from "./sort";
 
 export default async function CategoriesPage({
@@ -35,10 +34,7 @@ export default async function CategoriesPage({
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Categories</h1>
-        <AddCategoryDialog />
-      </div>
+      <h1 className="text-2xl font-semibold">Categories</h1>
 
       <CategoriesTable categories={sortedCategories} sortKey={sortKey} sortDir={sortDir} />
     </div>

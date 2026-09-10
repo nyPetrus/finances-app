@@ -36,6 +36,7 @@ import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
 import type { Category, Class, MappedDescription } from "@/lib/supabase/types";
 import { deleteMappedDescriptions, updateMappedDescription } from "./actions";
+import { AddMappingDialog } from "./add-mapping-dialog";
 import { type SortKey } from "./sort";
 
 const checkTypeLabels: Record<MappedDescription["check_type"], string> = {
@@ -143,10 +144,6 @@ export function DescriptionsTable({
     });
   }
 
-  if (mappings.length === 0) {
-    return <p className="text-sm text-muted-foreground">No mapped descriptions yet.</p>;
-  }
-
   const columnsByKey = new Map(COLUMNS.map((column) => [column.key, column]));
   const visibleColumns = columnOrder
     .map((key) => columnsByKey.get(key)!)
@@ -170,6 +167,7 @@ export function DescriptionsTable({
           >
             <PencilIcon />
           </Button>
+          <AddMappingDialog categories={categories} classes={classes} />
           <Button variant="ghost" size="sm" disabled={selected.size === 0 || isDeleting} onClick={handleDelete}>
             {isDeleting ? "Deleting…" : "Delete"}
           </Button>
@@ -177,43 +175,47 @@ export function DescriptionsTable({
       </div>
       {actionError && <p className="text-sm text-destructive">{actionError}</p>}
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-0">
-              <Checkbox
-                checked={allSelected}
-                indeterminate={someSelected}
-                onCheckedChange={toggleAll}
-                aria-label="Select all mappings"
-              />
-            </TableHead>
-            {visibleColumns.map((column) => (
-              <SortableTableHead key={column.key} href={sortHref(column.key)} active={sortKey === column.key} dir={sortDir}>
-                {column.label}
-              </SortableTableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {mappings.map((mapping) => (
-            <TableRow key={mapping.description}>
-              <TableCell>
+      {mappings.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No mapped descriptions yet.</p>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-0">
                 <Checkbox
-                  checked={selected.has(mapping.description)}
-                  onCheckedChange={() => toggleOne(mapping.description)}
-                  aria-label={`Select mapping for ${mapping.description}`}
+                  checked={allSelected}
+                  indeterminate={someSelected}
+                  onCheckedChange={toggleAll}
+                  aria-label="Select all mappings"
                 />
-              </TableCell>
+              </TableHead>
               {visibleColumns.map((column) => (
-                <TableCell key={column.key} className={column.cellClassName}>
-                  {renderCell(mapping, column.key)}
-                </TableCell>
+                <SortableTableHead key={column.key} href={sortHref(column.key)} active={sortKey === column.key} dir={sortDir}>
+                  {column.label}
+                </SortableTableHead>
               ))}
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {mappings.map((mapping) => (
+              <TableRow key={mapping.description}>
+                <TableCell>
+                  <Checkbox
+                    checked={selected.has(mapping.description)}
+                    onCheckedChange={() => toggleOne(mapping.description)}
+                    aria-label={`Select mapping for ${mapping.description}`}
+                  />
+                </TableCell>
+                {visibleColumns.map((column) => (
+                  <TableCell key={column.key} className={column.cellClassName}>
+                    {renderCell(mapping, column.key)}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
 
       {soleSelectedMapping && (
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
