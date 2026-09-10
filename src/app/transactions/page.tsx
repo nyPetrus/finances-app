@@ -44,10 +44,9 @@ function currentMonthKey() {
 export default async function TransactionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ month?: string; account?: string; sort?: string; dir?: string; hidden?: string }>;
+  searchParams: Promise<{ month?: string; account?: string; sort?: string; dir?: string }>;
 }) {
-  const { month: monthParam, account: accountParam, sort: sortParam, dir: dirParam, hidden: hiddenParam } =
-    await searchParams;
+  const { month: monthParam, account: accountParam, sort: sortParam, dir: dirParam } = await searchParams;
   const monthKey = monthParam && /^\d{4}-\d{2}$/.test(monthParam) ? monthParam : currentMonthKey();
   const monthStart = `${monthKey}-01`;
   const monthEnd = `${shiftMonth(monthKey, 1)}-01`;
@@ -55,23 +54,14 @@ export default async function TransactionsPage({
   const nextMonthKey = shiftMonth(monthKey, 1);
   const sortKey: SortKey = isSortKey(sortParam) ? sortParam : "date";
   const sortDir: "asc" | "desc" = dirParam === "asc" ? "asc" : "desc";
-  const showHidden = hiddenParam === "1";
 
   function buildHref(overrides: { month?: string; sort?: SortKey; dir?: "asc" | "desc" } = {}) {
     const params = new URLSearchParams({ month: overrides.month ?? monthKey });
     if (accountParam) params.set("account", accountParam);
-    if (showHidden) params.set("hidden", "1");
     const nextSort = overrides.sort ?? (isSortKey(sortParam) ? sortParam : undefined);
     const nextDir = overrides.dir ?? (isSortKey(sortParam) ? sortDir : undefined);
     if (nextSort) params.set("sort", nextSort);
     if (nextSort && nextDir) params.set("dir", nextDir);
-    return `/transactions?${params.toString()}`;
-  }
-
-  function toggleHiddenHref() {
-    const params = new URLSearchParams({ month: monthKey });
-    if (accountParam) params.set("account", accountParam);
-    if (!showHidden) params.set("hidden", "1");
     return `/transactions?${params.toString()}`;
   }
 
@@ -82,7 +72,6 @@ export default async function TransactionsPage({
     .select("*")
     .gte("date", monthStart)
     .lt("date", monthEnd)
-    .eq("is_hidden", showHidden)
     .order("date", { ascending: false });
   if (accountParam) transactionsQuery = transactionsQuery.eq("account_id", accountParam);
 
@@ -194,25 +183,17 @@ export default async function TransactionsPage({
         </Button>
       </div>
 
-      <div className="flex items-center justify-between">
-        {allAccounts.length > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Account</span>
-            <AccountFilter accounts={allAccounts} month={monthKey} selectedAccountId={accountParam} />
-          </div>
-        )}
-        <Button variant="outline" size="sm" render={<Link href={toggleHiddenHref()} />}>
-          {showHidden ? "Show active" : "Show hidden"}
-        </Button>
-      </div>
+      {allAccounts.length > 0 && (
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Account</span>
+          <AccountFilter accounts={allAccounts} month={monthKey} selectedAccountId={accountParam} />
+        </div>
+      )}
 
       {monthTransactions.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          {showHidden
-            ? `No hidden transactions in ${formatMonthLabel(monthKey)}.`
-            : `No transactions in ${formatMonthLabel(monthKey)}. ${
-                allAccounts.length > 0 ? "Add one above." : "Create an account, then add a transaction."
-              }`}
+          No transactions in {formatMonthLabel(monthKey)}.{" "}
+          {allAccounts.length > 0 ? "Add one above." : "Create an account, then add a transaction."}
         </p>
       ) : (
         <TransactionsTable
@@ -224,7 +205,6 @@ export default async function TransactionsPage({
           sortDir={sortDir}
           monthKey={monthKey}
           accountParam={accountParam}
-          showHidden={showHidden}
         />
       )}
     </div>

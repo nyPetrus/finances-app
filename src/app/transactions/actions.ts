@@ -74,28 +74,6 @@ export async function updateTransaction(formData: FormData) {
   revalidatePath("/transactions");
 }
 
-export async function setTransactionsHidden(ids: string[], hidden: boolean) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Unauthorized");
-
-  if (ids.length === 0) return;
-
-  const { error } = await supabase
-    .from("transactions")
-    .update({ is_hidden: hidden })
-    .in("id", ids)
-    .eq("user_id", user.id);
-
-  if (error) throw new Error(error.message);
-
-  revalidatePath("/transactions");
-  revalidatePath("/budget");
-  revalidatePath("/");
-}
-
 export async function syncDescriptionsFromTransactions(transactionIds: string[]) {
   const supabase = await createClient();
   const {

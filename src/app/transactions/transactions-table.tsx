@@ -34,12 +34,7 @@ import { ColumnsMenu } from "@/components/columns-menu";
 import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
 import type { Account, Category, Class, Transaction } from "@/lib/supabase/types";
-import {
-  deleteTransactions,
-  setTransactionsHidden,
-  syncDescriptionsFromTransactions,
-  updateTransaction,
-} from "./actions";
+import { deleteTransactions, syncDescriptionsFromTransactions, updateTransaction } from "./actions";
 import { type SortKey } from "./sort";
 
 function formatCurrency(value: number) {
@@ -85,7 +80,6 @@ export function TransactionsTable({
   sortDir,
   monthKey,
   accountParam,
-  showHidden,
 }: {
   transactions: Transaction[];
   accounts: Account[];
@@ -95,10 +89,8 @@ export function TransactionsTable({
   sortDir: "asc" | "desc";
   monthKey: string;
   accountParam: string | undefined;
-  showHidden: boolean;
 }) {
   const [isSyncing, startSync] = useTransition();
-  const [isHiding, startHiding] = useTransition();
   const [isDeleting, startDelete] = useTransition();
   const [isSavingEdit, startSaveEdit] = useTransition();
   const [actionError, setActionError] = useState<string | null>(null);
@@ -119,7 +111,6 @@ export function TransactionsTable({
     const nextDir: "asc" | "desc" = sortKey === column && sortDir === "asc" ? "desc" : "asc";
     const params = new URLSearchParams({ month: monthKey });
     if (accountParam) params.set("account", accountParam);
-    if (showHidden) params.set("hidden", "1");
     params.set("sort", column);
     params.set("dir", nextDir);
     return `/transactions?${params.toString()}`;
@@ -211,18 +202,6 @@ export function TransactionsTable({
     });
   }
 
-  function handleToggleHidden() {
-    setActionError(null);
-    startHiding(async () => {
-      try {
-        await setTransactionsHidden(Array.from(selected), !showHidden);
-        clearSelection();
-      } catch (err) {
-        setActionError(err instanceof Error ? err.message : "Failed to update.");
-      }
-    });
-  }
-
   function handleDelete() {
     if (selected.size === 0) return;
     const label = selected.size === 1 ? "this transaction" : `these ${selected.size} transactions`;
@@ -258,9 +237,6 @@ export function TransactionsTable({
             onClick={handleSync}
           >
             {isSyncing ? "Syncing…" : "Sync"}
-          </Button>
-          <Button variant="outline" size="sm" disabled={selected.size === 0 || isHiding} onClick={handleToggleHidden}>
-            {isHiding ? "Updating…" : showHidden ? "Unhide" : "Hide"}
           </Button>
           <Button variant="outline" size="sm" disabled={!soleSelectedTransaction} onClick={openEditDialog}>
             Edit
