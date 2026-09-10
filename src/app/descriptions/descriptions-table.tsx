@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { PencilIcon } from "lucide-react";
+import { PencilIcon, Trash2Icon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -168,8 +168,15 @@ export function DescriptionsTable({
             <PencilIcon />
           </Button>
           <AddMappingDialog categories={categories} classes={classes} />
-          <Button variant="ghost" size="sm" disabled={selected.size === 0 || isDeleting} onClick={handleDelete}>
-            {isDeleting ? "Deleting…" : "Delete"}
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            disabled={selected.size === 0 || isDeleting}
+            onClick={handleDelete}
+            aria-label="Delete"
+            title="Delete"
+          >
+            <Trash2Icon />
           </Button>
         </div>
       </div>

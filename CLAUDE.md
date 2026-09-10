@@ -82,14 +82,14 @@ list page instead of inventing a fresh layout.
   `className={isSyncing ? "animate-spin" : undefined}` while pending), then
   "Edit" (icon-only `PencilIcon`, same `outline`/`icon-sm` styling; disabled
   unless `soleSelectedRow` is set; opens a dialog scoped to that one row),
-  then the page's "Add" dialog trigger (see below), then "Delete" — the one
-  toolbar button that stays text-labeled, since "Delete" alone has no
-  ambiguous icon equivalent (`variant="ghost"`, no red fill/destructive
-  styling; disabled when nothing's selected; confirms via
+  then the page's "Add" dialog trigger (see below), then "Delete" — now also
+  icon-only (`Trash2Icon`, `variant="ghost"` `size="icon-sm"`, no red
+  fill/destructive styling; disabled when nothing's selected; confirms via
   `window.confirm(...)` before calling a bulk delete action). "+" sits
   immediately to the left of "Delete" on every table page. Icon-only
   toolbar buttons need `aria-label` *and* `title` set to the plain action
-  word ("Sync", "Edit") for the same reason "Add" buttons do (see below). A
+  word ("Sync", "Edit", "Delete") for the same reason "Add" buttons do (see
+  below). A
   left-aligned
   `{selected.size > 0 && <span>{selected.size} selected</span>}` fills the
   other side of the toolbar — render nothing (not a filler placeholder

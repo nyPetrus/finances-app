@@ -3,7 +3,7 @@
 import { useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { PencilIcon, RefreshCwIcon } from "lucide-react";
+import { PencilIcon, RefreshCwIcon, Trash2Icon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -247,8 +247,15 @@ export function TransactionsTable({
               Create an account first
             </Button>
           )}
-          <Button variant="ghost" size="sm" disabled={selected.size === 0 || isDeleting} onClick={handleDelete}>
-            {isDeleting ? "Deleting…" : "Delete"}
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            disabled={selected.size === 0 || isDeleting}
+            onClick={handleDelete}
+            aria-label="Delete"
+            title="Delete"
+          >
+            <Trash2Icon />
           </Button>
         </div>
       </div>

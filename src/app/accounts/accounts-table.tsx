@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { PencilIcon, RefreshCwIcon } from "lucide-react";
+import { PencilIcon, RefreshCwIcon, Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -229,11 +229,13 @@ export function AccountsTable({
           <AddAccountDialog />
           <Button
             variant="ghost"
-            size="sm"
+            size="icon-sm"
             disabled={selected.size === 0 || isSyncing || isDeleting}
             onClick={handleDelete}
+            aria-label="Delete"
+            title="Delete"
           >
-            {isDeleting ? "Deleting…" : "Delete"}
+            <Trash2Icon />
           </Button>
         </div>
       </div>
