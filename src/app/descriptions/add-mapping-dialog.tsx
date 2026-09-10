@@ -64,7 +64,7 @@ export function AddMappingDialog({ categories, classes }: { categories: Category
             <Input id="description" name="description" required autoFocus placeholder="e.g. mercado" />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="check_type">Check type</Label>
+            <Label htmlFor="check_type">Operator</Label>
             <Select name="check_type" defaultValue="equal_to">
               <SelectTrigger id="check_type">
                 <SelectValue />

@@ -44,7 +44,7 @@ const checkTypeLabels: Record<MappedDescription["check_type"], string> = {
 
 const COLUMNS: { key: SortKey; label: string; cellClassName?: string }[] = [
   { key: "description", label: "Description", cellClassName: "truncate" },
-  { key: "check_type", label: "Check type" },
+  { key: "check_type", label: "Operator" },
   { key: "category", label: "Category" },
   { key: "class", label: "Class", cellClassName: "truncate" },
 ];
@@ -242,7 +242,7 @@ export function DescriptionsTable({
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="check_type">Check type</Label>
+                <Label htmlFor="check_type">Operator</Label>
                 <Select name="check_type" defaultValue={soleSelectedMapping.check_type}>
                   <SelectTrigger id="check_type">
                     <SelectValue />
