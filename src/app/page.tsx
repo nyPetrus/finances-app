@@ -148,7 +148,7 @@ export default async function Home({
               Expenses ({year})
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-xl font-semibold text-destructive">
+          <CardContent className="text-xl font-semibold">
             {formatCurrency(expenses)}
           </CardContent>
         </Card>

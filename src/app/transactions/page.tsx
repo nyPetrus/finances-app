@@ -169,7 +169,7 @@ export default async function TransactionsPage({
             <span className="text-sm text-muted-foreground">
               <span className="text-emerald-600">+{formatCurrency(income)}</span>
               {" / "}
-              <span className="text-destructive">{formatCurrency(expense)}</span>
+              <span>{formatCurrency(expense)}</span>
             </span>
           </div>
           <MonthPicker selectedMonth={monthKey} />

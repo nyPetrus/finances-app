@@ -144,9 +144,9 @@ export function TransactionsTable({
         const colorClassName =
           category?.kind === "transfer"
             ? "text-muted-foreground"
-            : transaction.amount < 0
-              ? "text-destructive"
-              : "text-emerald-600";
+            : transaction.amount >= 0
+              ? "text-emerald-600"
+              : undefined;
         return <span className={colorClassName}>{formatCurrency(transaction.amount)}</span>;
       }
     }
