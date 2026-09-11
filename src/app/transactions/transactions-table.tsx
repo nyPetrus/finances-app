@@ -42,7 +42,7 @@ import { AddTransactionDialog } from "./add-transaction-dialog";
 import { type SortKey } from "./sort";
 
 function formatCurrency(value: number) {
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+  return new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
 }
 
 const MONTH_ABBREVIATIONS = [
