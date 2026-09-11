@@ -140,7 +140,7 @@ export function TransactionsTable({
       case "category": {
         const category = transaction.category_id ? categoriesById.get(transaction.category_id) : null;
         return category ? (
-          <span title={category.name}>
+          <span title={category.name} className="inline-flex">
             <CategoryIcon icon={category.icon} className="size-4" />
           </span>
         ) : (

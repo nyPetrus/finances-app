@@ -96,7 +96,7 @@ export function DescriptionsTable({
       case "category": {
         const category = categoriesById.get(mapping.category_id);
         return category ? (
-          <span title={category.name}>
+          <span title={category.name} className="inline-flex">
             <CategoryIcon icon={category.icon} className="size-4" />
           </span>
         ) : (

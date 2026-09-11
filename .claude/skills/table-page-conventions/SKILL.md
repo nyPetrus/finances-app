@@ -136,15 +136,24 @@ list page instead of inventing a fresh layout.
   the same swap-a-button-grid pattern the old `ColorSwatchPicker` used.
   **Category-as-foreign-column is icon-only, no name, no `Badge`, and
   center-aligned.** Classes', Descriptions', and Transactions' `renderCell`
-  "category" case each render just `<span title={category.name}><CategoryIcon
-  icon={category.icon} className="size-4" /></span>` — a bare icon with the
-  name only as a hover tooltip, not a chip. Its `COLUMNS` entry sets
-  `align: "center", cellClassName: "text-center"` (widen each file's
-  `COLUMNS` `align` field type to include `"center"` if it doesn't already,
-  and pass `align={column.align}` through to `SortableTableHead` — Classes
-  and Descriptions didn't wire that prop through at all until this column
+  "category" case each render `<span title={category.name}
+  className="inline-flex"><CategoryIcon icon={category.icon}
+  className="size-4" /></span>` — a bare icon with the name only as a hover
+  tooltip, not a chip. Its `COLUMNS` entry sets `align: "center",
+  cellClassName: "text-center"` (widen each file's `COLUMNS` `align` field
+  type to include `"center"` if it doesn't already, and pass
+  `align={column.align}` through to `SortableTableHead` — Classes and
+  Descriptions didn't wire that prop through at all until this column
   needed it) so the icon sits centered under the header rather than
-  left-aligned like a text column. This is different from the
+  left-aligned like a text column. **The wrapping span's `inline-flex` is
+  load-bearing, not decorative**: Tailwind's preflight sets `svg { display:
+  block }`, so a bare `<CategoryIcon>` is a block box and `text-align:
+  center` on the `<td>` (which only affects inline-level content) has no
+  effect on it — the icon stays pinned left regardless of `cellClassName`.
+  Wrapping it in an `inline-flex` span makes the *span* the inline box that
+  `text-align: center` positions, while the icon lays out fine inside as a
+  flex item. Don't drop that wrapper or swap it for a plain `<span>` when
+  touching this cell. This is different from the
   Categories table's own Name column and Budget's category rows
   (`yearly-grid.tsx`, `monthly-execution.tsx`), which still show the icon
   *next to* the visible name (no `Badge` there either, but the name stays
