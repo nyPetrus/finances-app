@@ -45,8 +45,15 @@ function formatCurrency(value: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 }
 
+const MONTH_ABBREVIATIONS = [
+  "jan", "fev", "mar", "abr", "mai", "jun",
+  "jul", "ago", "set", "out", "nov", "dez",
+];
+
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" }).format(new Date(value));
+  const date = new Date(value);
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  return `${day} - ${MONTH_ABBREVIATIONS[date.getUTCMonth()]}`;
 }
 
 function splitDateTime(iso: string) {
@@ -138,7 +145,9 @@ export function TransactionsTable({
       case "class": {
         const transactionClass = transaction.class_id ? classesById.get(transaction.class_id) : null;
         return transactionClass ? (
-          <span title={transactionClass.name}>{transactionClass.name}</span>
+          <Badge variant="secondary" className="max-w-full gap-1 truncate">
+            {transactionClass.name}
+          </Badge>
         ) : (
           <span className="text-sm text-muted-foreground">—</span>
         );
