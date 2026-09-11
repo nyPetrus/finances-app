@@ -140,10 +140,9 @@ export function TransactionsTable({
       case "category": {
         const category = transaction.category_id ? categoriesById.get(transaction.category_id) : null;
         return category ? (
-          <Badge variant="secondary" className="max-w-full gap-1 truncate">
-            <CategoryIcon icon={category.icon} className="size-3.5 shrink-0" />
-            {category.name}
-          </Badge>
+          <span title={category.name}>
+            <CategoryIcon icon={category.icon} className="size-4" />
+          </span>
         ) : (
           <span className="text-sm text-muted-foreground">Uncategorized</span>
         );
@@ -305,12 +304,13 @@ export function TransactionsTable({
           </TableHeader>
           <TableBody>
             {transactions.map((transaction) => (
-              <TableRow key={transaction.id}>
+              <TableRow key={transaction.id} className="group">
                 <TableCell>
                   <Checkbox
                     checked={selected.has(transaction.id)}
                     onCheckedChange={() => toggleOne(transaction.id)}
                     aria-label={`Select ${transaction.description}`}
+                    className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[checked]:opacity-100"
                   />
                 </TableCell>
                 {visibleColumns.map((column) => (

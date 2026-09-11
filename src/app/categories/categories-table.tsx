@@ -184,12 +184,13 @@ export function CategoriesTable({
           </TableHeader>
           <TableBody>
             {categories.map((category) => (
-              <TableRow key={category.id}>
+              <TableRow key={category.id} className="group">
                 <TableCell>
                   <Checkbox
                     checked={selected.has(category.id)}
                     onCheckedChange={() => toggleOne(category.id)}
                     aria-label={`Select ${category.name}`}
+                    className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[checked]:opacity-100"
                   />
                 </TableCell>
                 {visibleColumns.map((column) => (

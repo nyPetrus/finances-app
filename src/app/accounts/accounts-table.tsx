@@ -278,12 +278,13 @@ export function AccountsTable({
           </TableHeader>
           <TableBody>
             {sorted.map((account) => (
-              <TableRow key={account.id}>
+              <TableRow key={account.id} className="group">
                 <TableCell>
                   <Checkbox
                     checked={selected.has(account.id)}
                     onCheckedChange={() => toggleOne(account.id)}
                     aria-label={`Select ${account.name}`}
+                    className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[checked]:opacity-100"
                   />
                 </TableCell>
                 {visibleColumns.map((column) => (

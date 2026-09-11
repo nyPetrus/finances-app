@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { PencilIcon, Trash2Icon } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -78,10 +77,9 @@ export function ClassesTable({
       case "category": {
         const category = categoriesById.get(classItem.category_id);
         return category ? (
-          <Badge variant="secondary" className="max-w-full gap-1 truncate">
-            <CategoryIcon icon={category.icon} className="size-3.5 shrink-0" />
-            {category.name}
-          </Badge>
+          <span title={category.name}>
+            <CategoryIcon icon={category.icon} className="size-4" />
+          </span>
         ) : (
           <span className="text-sm text-muted-foreground">—</span>
         );
@@ -175,12 +173,13 @@ export function ClassesTable({
           </TableHeader>
           <TableBody>
             {classes.map((classItem) => (
-              <TableRow key={classItem.id}>
+              <TableRow key={classItem.id} className="group">
                 <TableCell>
                   <Checkbox
                     checked={selected.has(classItem.id)}
                     onCheckedChange={() => toggleOne(classItem.id)}
                     aria-label={`Select ${classItem.name}`}
+                    className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[checked]:opacity-100"
                   />
                 </TableCell>
                 {visibleColumns.map((column) => (

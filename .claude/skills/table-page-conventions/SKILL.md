@@ -27,7 +27,15 @@ list page instead of inventing a fresh layout.
   column). It returns `selected`, `allSelected`/`someSelected` (for the
   header checkbox's `checked`/`indeterminate`), `toggleAll`/`toggleOne`,
   `clear`, `selectedRows`, and `soleSelectedRow` (non-null only when exactly
-  one row is checked).
+  one row is checked). **Per-row checkboxes are hidden until hovered or
+  checked** — the header's select-all `Checkbox` stays always visible, but
+  each body row's own `Checkbox` gets `className="opacity-0
+  transition-opacity group-hover:opacity-100 focus-visible:opacity-100
+  data-[checked]:opacity-100"`, and its `<TableRow>` gets `className="group"`
+  so `group-hover` has something to key off. `data-[checked]` (not
+  `data-state`) is Base UI's own attribute for a checked `Checkbox` (see
+  `src/components/ui/checkbox.tsx`) — that's what keeps a selected row's
+  checkbox visible after the mouse moves away.
 - **Row actions live in a toolbar above the table, not a per-row menu.**
   Right-aligned button group: `ColumnsMenu` first, then any page-specific
   bulk actions (Accounts' and Transactions' "Sync" — icon-only
@@ -126,12 +134,19 @@ list page instead of inventing a fresh layout.
   Category dialogs let the user pick one via `<IconSwatchPicker name="icon"
   value={icon} onChange={setIcon} />` (`src/components/icon-swatch-picker.tsx`),
   the same swap-a-button-grid pattern the old `ColorSwatchPicker` used.
-  **Category/class chips**: render with `Badge` (`variant="secondary"`, now
-  a flat neutral style with no per-category tint) with `<CategoryIcon>` as a
-  leading child before the name — see Classes/Descriptions/Transactions'
-  `renderCell` "category" case. The Categories table's own Name column and
-  Budget's category rows (`yearly-grid.tsx`, `monthly-execution.tsx`) show
-  the same icon next to the name, without a Badge wrapper. The Dashboard's
+  **Category-as-foreign-column is icon-only, no name, no `Badge`.**
+  Classes', Descriptions', and Transactions' `renderCell` "category" case
+  each render just `<span title={category.name}><CategoryIcon
+  icon={category.icon} className="size-4" /></span>` — a bare icon with the
+  name only as a hover tooltip, not a chip. This is different from the
+  Categories table's own Name column and Budget's category rows
+  (`yearly-grid.tsx`, `monthly-execution.tsx`), which still show the icon
+  *next to* the visible name (no `Badge` there either, but the name stays
+  on the page) since those are the category's own row, not a foreign-key
+  reference to it. Transactions' Account and Class columns (which have no
+  icon of their own) instead use a `Badge` (`variant="secondary"
+  className="max-w-full gap-1 truncate"`, no leading icon) — see
+  `transactions-column-formatting`. The Dashboard's
   "Spending by category" bar chart still needs a real fill color per bar
   (icons don't work as a chart fill) — it assigns one from `CHART_COLORS`
   (`src/lib/chart-colors.ts`) by bar position, entirely decoupled from

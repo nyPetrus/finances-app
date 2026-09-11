@@ -96,10 +96,9 @@ export function DescriptionsTable({
       case "category": {
         const category = categoriesById.get(mapping.category_id);
         return category ? (
-          <Badge variant="secondary" className="max-w-full gap-1 truncate">
-            <CategoryIcon icon={category.icon} className="size-3.5 shrink-0" />
-            {category.name}
-          </Badge>
+          <span title={category.name}>
+            <CategoryIcon icon={category.icon} className="size-4" />
+          </span>
         ) : (
           <span className="text-sm text-muted-foreground">—</span>
         );
@@ -205,12 +204,13 @@ export function DescriptionsTable({
           </TableHeader>
           <TableBody>
             {mappings.map((mapping) => (
-              <TableRow key={mapping.description}>
+              <TableRow key={mapping.description} className="group">
                 <TableCell>
                   <Checkbox
                     checked={selected.has(mapping.description)}
                     onCheckedChange={() => toggleOne(mapping.description)}
                     aria-label={`Select mapping for ${mapping.description}`}
+                    className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[checked]:opacity-100"
                   />
                 </TableCell>
                 {visibleColumns.map((column) => (
