@@ -18,7 +18,7 @@ These are presentation choices specific to `transactions-table.tsx`'s
   each still keep their own `formatCurrency` copy with currency style and
   the `R$` symbol — don't change those unless asked.
 - **Date drops the year, abbreviates the month, and never wraps**:
-  `formatDate` renders `DD - mmm` (e.g. `11 - set`) via a local
+  `formatDate` renders `DD mmm` (e.g. `11 set`) via a local
   `MONTH_ABBREVIATIONS` array (`["jan", "fev", ..., "dez"]`, no periods),
   reading `getUTCDate()` / `getUTCMonth()` off the transaction's date
   string. The year is omitted because the month/year is already shown in
@@ -26,7 +26,7 @@ These are presentation choices specific to `transactions-table.tsx`'s
   `transactions/page.tsx`). The Date column also sets
   `cellClassName: "whitespace-nowrap"` in `COLUMNS` — needed because the
   shared `TableCell` wraps by default (see `table-page-conventions`), and
-  `DD - mmm` has a space that would otherwise let it break onto two lines
+  `DD mmm` has a space that would otherwise let it break onto two lines
   in a narrow column.
 - **Account and Class render as the same `Badge` chip as Category**
   (`variant="secondary" className="max-w-full gap-1 truncate"`), instead

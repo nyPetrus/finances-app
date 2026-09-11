@@ -52,7 +52,13 @@ function formatCurrency(value: number) {
 }
 
 function formatDateTime(value: string) {
-  return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
+  const date = new Date(value);
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = String(date.getFullYear()).slice(-2);
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
 }
 
 const COLUMNS: {
@@ -61,12 +67,12 @@ const COLUMNS: {
   align?: "right" | "center";
   cellClassName?: string;
 }[] = [
-  { key: "account", label: "Account" },
-  { key: "name", label: "Name", cellClassName: "font-medium" },
-  { key: "source", label: "Source", align: "center", cellClassName: "text-center" },
-  { key: "type", label: "Type", align: "center", cellClassName: "text-center" },
-  { key: "lastSync", label: "Last sync", align: "center", cellClassName: "text-center" },
-  { key: "balance", label: "Balance", align: "right", cellClassName: "text-right" },
+  { key: "account", label: "Account", cellClassName: "truncate" },
+  { key: "name", label: "Name", cellClassName: "truncate font-medium" },
+  { key: "source", label: "Source", align: "center", cellClassName: "text-center whitespace-nowrap" },
+  { key: "type", label: "Type", align: "center", cellClassName: "text-center whitespace-nowrap" },
+  { key: "lastSync", label: "Last sync", align: "center", cellClassName: "text-center whitespace-nowrap" },
+  { key: "balance", label: "Balance", align: "right", cellClassName: "text-right whitespace-nowrap" },
 ];
 
 const DEFAULT_COLUMN_ORDER = COLUMNS.map((column) => column.key);
