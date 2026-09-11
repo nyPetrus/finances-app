@@ -134,11 +134,17 @@ list page instead of inventing a fresh layout.
   Category dialogs let the user pick one via `<IconSwatchPicker name="icon"
   value={icon} onChange={setIcon} />` (`src/components/icon-swatch-picker.tsx`),
   the same swap-a-button-grid pattern the old `ColorSwatchPicker` used.
-  **Category-as-foreign-column is icon-only, no name, no `Badge`.**
-  Classes', Descriptions', and Transactions' `renderCell` "category" case
-  each render just `<span title={category.name}><CategoryIcon
+  **Category-as-foreign-column is icon-only, no name, no `Badge`, and
+  center-aligned.** Classes', Descriptions', and Transactions' `renderCell`
+  "category" case each render just `<span title={category.name}><CategoryIcon
   icon={category.icon} className="size-4" /></span>` — a bare icon with the
-  name only as a hover tooltip, not a chip. This is different from the
+  name only as a hover tooltip, not a chip. Its `COLUMNS` entry sets
+  `align: "center", cellClassName: "text-center"` (widen each file's
+  `COLUMNS` `align` field type to include `"center"` if it doesn't already,
+  and pass `align={column.align}` through to `SortableTableHead` — Classes
+  and Descriptions didn't wire that prop through at all until this column
+  needed it) so the icon sits centered under the header rather than
+  left-aligned like a text column. This is different from the
   Categories table's own Name column and Budget's category rows
   (`yearly-grid.tsx`, `monthly-execution.tsx`), which still show the icon
   *next to* the visible name (no `Badge` there either, but the name stays

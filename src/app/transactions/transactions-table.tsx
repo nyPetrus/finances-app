@@ -63,11 +63,11 @@ function splitDateTime(iso: string) {
   return { date, time };
 }
 
-const COLUMNS: { key: SortKey; label: string; align?: "right"; cellClassName?: string }[] = [
+const COLUMNS: { key: SortKey; label: string; align?: "right" | "center"; cellClassName?: string }[] = [
   { key: "date", label: "Date", cellClassName: "whitespace-nowrap" },
   { key: "description", label: "Description", cellClassName: "truncate font-medium" },
   { key: "account", label: "Account", cellClassName: "truncate" },
-  { key: "category", label: "Category" },
+  { key: "category", label: "Category", align: "center", cellClassName: "text-center" },
   { key: "class", label: "Class", cellClassName: "truncate" },
   { key: "amount", label: "Amount", align: "right", cellClassName: "text-right" },
 ];

@@ -45,10 +45,10 @@ const checkTypeLabels: Record<MappedDescription["check_type"], string> = {
   contains: "Contains",
 };
 
-const COLUMNS: { key: SortKey; label: string; cellClassName?: string }[] = [
+const COLUMNS: { key: SortKey; label: string; align?: "center"; cellClassName?: string }[] = [
   { key: "description", label: "Description", cellClassName: "truncate" },
   { key: "check_type", label: "Operator" },
-  { key: "category", label: "Category" },
+  { key: "category", label: "Category", align: "center", cellClassName: "text-center" },
   { key: "class", label: "Class", cellClassName: "truncate" },
 ];
 
@@ -196,7 +196,7 @@ export function DescriptionsTable({
                 />
               </TableHead>
               {visibleColumns.map((column) => (
-                <SortableTableHead key={column.key} href={sortHref(column.key)} active={sortKey === column.key} dir={sortDir}>
+                <SortableTableHead key={column.key} href={sortHref(column.key)} active={sortKey === column.key} dir={sortDir} align={column.align}>
                   {column.label}
                 </SortableTableHead>
               ))}

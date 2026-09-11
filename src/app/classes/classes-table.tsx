@@ -38,9 +38,9 @@ import { deleteClasses, updateClass } from "./actions";
 import { AddClassDialog } from "./add-class-dialog";
 import { type SortKey } from "./sort";
 
-const COLUMNS: { key: SortKey; label: string; cellClassName?: string }[] = [
+const COLUMNS: { key: SortKey; label: string; align?: "center"; cellClassName?: string }[] = [
   { key: "name", label: "Name", cellClassName: "font-medium" },
-  { key: "category", label: "Category" },
+  { key: "category", label: "Category", align: "center", cellClassName: "text-center" },
 ];
 
 const DEFAULT_COLUMN_ORDER = COLUMNS.map((column) => column.key);
@@ -165,7 +165,7 @@ export function ClassesTable({
                 />
               </TableHead>
               {visibleColumns.map((column) => (
-                <SortableTableHead key={column.key} href={sortHref(column.key)} active={sortKey === column.key} dir={sortDir}>
+                <SortableTableHead key={column.key} href={sortHref(column.key)} active={sortKey === column.key} dir={sortDir} align={column.align}>
                   {column.label}
                 </SortableTableHead>
               ))}
