@@ -64,7 +64,7 @@ function splitDateTime(iso: string) {
 }
 
 const COLUMNS: { key: SortKey; label: string; align?: "right"; cellClassName?: string }[] = [
-  { key: "date", label: "Date" },
+  { key: "date", label: "Date", cellClassName: "whitespace-nowrap" },
   { key: "description", label: "Description", cellClassName: "truncate font-medium" },
   { key: "account", label: "Account", cellClassName: "truncate" },
   { key: "category", label: "Category" },
@@ -129,7 +129,13 @@ export function TransactionsTable({
         return <span title={transaction.description}>{transaction.description}</span>;
       case "account": {
         const account = accountsById.get(transaction.account_id);
-        return <span title={account?.label ?? undefined}>{account?.label ?? "—"}</span>;
+        return account?.label ? (
+          <Badge variant="secondary" className="max-w-full gap-1 truncate">
+            {account.label}
+          </Badge>
+        ) : (
+          <span className="text-sm text-muted-foreground">—</span>
+        );
       }
       case "category": {
         const category = transaction.category_id ? categoriesById.get(transaction.category_id) : null;
