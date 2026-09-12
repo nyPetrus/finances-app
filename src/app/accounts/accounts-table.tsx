@@ -73,9 +73,9 @@ const COLUMNS: {
   headerIcon?: LucideIcon;
   headerIconOnly?: boolean;
 }[] = [
-  { key: "account", label: "Account", cellClassName: "truncate" },
-  { key: "name", label: "Name", cellClassName: "truncate font-medium", headerIcon: LandmarkIcon },
-  { key: "source", label: "Source", cellClassName: "truncate" },
+  { key: "account", label: "Account", cellClassName: "max-w-40 truncate" },
+  { key: "name", label: "Name", cellClassName: "max-w-56 truncate font-medium", headerIcon: LandmarkIcon },
+  { key: "source", label: "Source", cellClassName: "max-w-32 truncate" },
   { key: "type", label: "Type" },
   { key: "lastSync", label: "Last sync", align: "center", cellClassName: "text-center whitespace-nowrap" },
   { key: "balance", label: "Balance", cellClassName: "text-right whitespace-nowrap" },

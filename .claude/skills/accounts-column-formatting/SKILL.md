@@ -24,12 +24,34 @@ description: Use when touching how the Accounts table (src/app/accounts/accounts
 - **Every column keeps its row to a single line, and the table avoids
   horizontal scroll by letting Account/Name/Source shrink instead of
   wrapping.** `COLUMNS` gives Account/Name/Source `cellClassName:
-  "truncate"` (free-text fields that can be arbitrarily long, so they
-  ellipsis under space pressure rather than wrap or force the table wider)
-  and Last sync/Balance `whitespace-nowrap` (structured values that should
+  "max-w-40 truncate"` / `"max-w-56 truncate font-medium"` /
+  `"max-w-32 truncate"` (free-text fields that can be arbitrarily long) and
+  Last sync/Balance `whitespace-nowrap` (structured values that should
   never break across two lines). This overrides the shared `TableCell`'s
   default wrapping (see `table-page-conventions`) specifically for this
-  table.
+  table. **`truncate` alone does nothing here — it needs the `max-w-*`
+  alongside it.** This table uses the default (`auto`) HTML table layout,
+  not `table-fixed` (see `table-page-conventions`'s "Markup" bullet — fixed
+  widths/`<colgroup>` aren't allowed since columns can be hidden/reordered).
+  In `auto` layout, `white-space: nowrap` (part of what `truncate` sets)
+  makes a cell's min-content width equal its full, un-ellipsized width —
+  so the browser never actually shrinks that column to trigger the
+  ellipsis; it just lets the table (and the `overflow-auto` container
+  around it, see `table-page-conventions`'s "Markup" bullet) grow wider
+  instead, which is exactly the horizontal-scroll problem `truncate` was
+  supposed to prevent. An explicit `max-w-*` on the cell caps how far the
+  column is allowed to grow, which is what actually gives `truncate`
+  something to clip against; the table still lets the column render wider
+  than that cap when there's slack (e.g. all values on screen happen to be
+  short) since the `max-w-*` only participates as an upper bound in the
+  layout algorithm, not a fixed width — so short data isn't cropped
+  unnecessarily. If a value still doesn't fit even after truncating, the
+  whole point is that it *shouldn't* force the table wider — reach for a
+  tighter `max-w-*` before reaching for `overflow-x-auto`. The page
+  (`src/app/accounts/page.tsx`) also uses `max-w-5xl` (matching
+  Transactions, the widest list page) rather than a narrower container, to
+  give these three columns enough room that typical values render in full
+  without needing to lean on the ellipsis at all.
 - **Account, Source, and Type render as a `Badge` chip**
   (`variant="secondary"`), the same treatment as the Categories table's
   Type column (see `table-page-conventions`). Account and Source additionally
