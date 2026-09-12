@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { LandmarkIcon, RefreshCwIcon, TagIcon, TagsIcon, Trash2Icon, type LucideIcon } from "lucide-react";
+import { LandmarkIcon, TagIcon, TagsIcon, Trash2Icon, type LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -223,10 +223,7 @@ export function DashboardTransactionsTable({
     toggleAll,
     toggleOne,
     clear: clearSelection,
-    selectedRows: selectedTransactions,
   } = useRowSelection(sortedTransactions, (transaction) => transaction.id);
-
-  const syncEligibleCount = selectedTransactions.filter((t) => t.category_id).length;
 
   function openEditDialog(transaction: Transaction) {
     setActionError(null);
@@ -249,21 +246,6 @@ export function DashboardTransactionsTable({
         setMappingPrefill(description);
       } catch (err) {
         setActionError(err instanceof Error ? err.message : "Failed to save transaction.");
-      }
-    });
-  }
-
-  function handleSync() {
-    setActionError(null);
-    startSync(async () => {
-      try {
-        const count = await syncDescriptionsFromTransactions(Array.from(selected));
-        clearSelection();
-        toast.success(
-          count === 1 ? "Description saved — 1 transaction categorized." : `Description saved — ${count} transactions categorized.`,
-        );
-      } catch (err) {
-        setActionError(err instanceof Error ? err.message : "Failed to sync descriptions.");
       }
     });
   }
@@ -338,16 +320,6 @@ export function DashboardTransactionsTable({
           </Button>
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon-sm"
-            disabled={syncEligibleCount === 0 || isSyncing}
-            onClick={handleSync}
-            aria-label="Sync"
-            title="Sync"
-          >
-            <RefreshCwIcon className={isSyncing ? "animate-spin" : undefined} />
-          </Button>
           {selected.size > 0 && (
             <span className="text-sm text-muted-foreground">{selected.size} selected</span>
           )}

@@ -104,19 +104,23 @@ list page instead of inventing a fresh layout.
     `deleteAccounts([account.id])`), inside the existing `startDelete`
     transition.
   - `onSync` is only passed on tables that have a sync concept at all
-    (Accounts, Transactions) and only when that specific row is eligible
-    (Accounts: `account.is_automatic && account.pluggy_item_id`;
-    Transactions: `transaction.category_id`) — passing `undefined` omits
-    the Sync item from the menu entirely. It calls the existing single-item
-    sync path (`syncPluggyItem`/`syncDescriptionsFromTransactions` scoped to
-    that one id), inside the existing `startSync` transition.
+    (Accounts, Transactions — and Transactions' Dashboard-embedded copy,
+    `dashboard-transactions-table.tsx`, see `dashboard-conventions`) and
+    only when that specific row is eligible (Accounts: `account.is_automatic
+    && account.pluggy_item_id`; Transactions: `transaction.category_id`) —
+    passing `undefined` omits the Sync item from the menu entirely. It calls
+    the existing single-item sync path (`syncPluggyItem`/
+    `syncDescriptionsFromTransactions` scoped to that one id), inside the
+    existing `startSync` transition. **Transactions has no *bulk* toolbar
+    Sync any more** (see below) — row-level `onSync` is the only way to
+    sync a description there now.
   Menu item order is Edit, Sync (if present), a `DropdownMenuSeparator`,
   then Delete with `variant="destructive"`. Items carry their own icon +
   visible text label, so they don't need `title`.
   **The edit dialog is keyed off that `editing<X>` state, not
   `soleSelectedRow`** — `useRowSelection`'s `soleSelectedRow` is no longer
   destructured in any table (bulk `selected`/`toggleAll`/`toggleOne`/
-  `clear`/`selectedRows` are still used for bulk Delete/Sync). The dialog's
+  `clear` are still used for bulk Delete — and Accounts' bulk Sync). The dialog's
   `open` is `editing<X> !== null`, `onOpenChange` and a successful save both
   `setEditing<X>(null)`; guard its render on `{editing<X> && <Dialog ...>}`
   so it has data to prefill from and unmounts cleanly once closed.
@@ -128,23 +132,35 @@ list page instead of inventing a fresh layout.
   `window.confirm(...)` before calling the bulk delete action). "+" sits
   immediately to the left of "Delete". Right (`className="ml-auto flex
   items-center gap-2"`) = table-specific buttons, i.e. ones that don't apply
-  to every table — Accounts' "Connect bank" (`ConnectBankButton`, moved into
-  this zone from the page header) and both Accounts' and Transactions'
-  "Sync" (icon-only `RefreshCwIcon`, `variant="outline"` `size="icon-sm"`,
-  spinning via `className={isSyncing ? "animate-spin" : undefined}` while
-  pending — this is the *bulk* Sync, still driven by `selected`/
-  `selectedRows`), followed by `{selected.size > 0 && <span>{selected.size}
+  to every table — currently just Accounts' "Connect bank"
+  (`ConnectBankButton`, moved into this zone from the page header) and
+  Accounts' own bulk "Sync" (icon-only `RefreshCwIcon`, `variant="outline"`
+  `size="icon-sm"`, spinning via `className={isSyncing ? "animate-spin" :
+  undefined}` while pending, driven by `selected`/`selectedRows` — Pluggy
+  bank sync is genuinely a multi-account bulk operation). **Transactions
+  used to have a bulk "Sync" button here too, for
+  `syncDescriptionsFromTransactions`, and no longer does** — since that
+  action is inherently per-transaction anyway (each row either has a
+  category to sync from or it doesn't), the per-row `RowActionsMenu`'s
+  `onSync` item is the only way to trigger it now, on both
+  `transactions-table.tsx` and its Dashboard-embedded copy. Don't
+  reintroduce a bulk Sync button for a table whose sync action is already
+  fully covered by the per-row menu — Accounts' case is different because
+  one Pluggy `pluggy_item_id` sync covers every account under that
+  connection, which is a real bulk operation, not just "loop the per-row
+  action over a selection." Right zone's content, whatever it is, is
+  followed by `{selected.size > 0 && <span>{selected.size}
   selected</span>}` (no `ml-auto` on the span itself now — the zone div
   carries it) — render nothing (not a filler placeholder string) when
   nothing's selected. A table with no specific buttons (Categories, Classes,
-  Descriptions) still renders this right-hand div; it just ends up empty
-  except for the selected-count span. There is no "Edit" button in the
-  toolbar anywhere — it's redundant now that every row has its own Edit via
-  the "⋮" menu. Icon-only toolbar buttons need `aria-label` *and* `title`
-  set to the plain action word ("Columns", "Sync", "Delete", "Connect
-  bank") for the same reason "Add" buttons do (see below) — `ColumnsMenu`'s
-  trigger needs this pair too, it's easy to forget since it has no visible
-  label either.
+  Descriptions, and now Transactions) still renders this right-hand div; it
+  just ends up empty except for the selected-count span. There is no "Edit"
+  button in the toolbar anywhere — it's redundant now that every row has
+  its own Edit via the "⋮" menu. Icon-only toolbar buttons need
+  `aria-label` *and* `title` set to the plain action word ("Columns",
+  "Sync", "Delete", "Connect bank") for the same reason "Add" buttons do
+  (see below) — `ColumnsMenu`'s trigger needs this pair too, it's easy to
+  forget since it has no visible label either.
   **The toolbar (and thus "+") must render even when the row list is
   empty** — the empty-state message (`"No categories yet."` etc.) replaces
   only the `<Table>` markup via a ternary, never the surrounding toolbar, so
