@@ -1,6 +1,6 @@
 ---
 name: dashboard-conventions
-description: Use when touching the Dashboard (src/app/page.tsx) — its stat cards, the "Income x Expenses x Transfers" monthly chart, the three category-breakdown bar charts (Expenses/Income/Transfer by category) and their sequential color scales, or the click-a-bar-to-filter embedded transactions table. Bespoke to this one page, not part of the shared table-page-conventions architecture (though the embedded table borrows heavily from it).
+description: Use when touching the Dashboard (src/app/page.tsx) — its stat cards, the "Income x Expenses x Transfers" monthly chart, the three category-breakdown bar charts (titled "Expenses"/"Income"/"Transfer", in an asymmetric 2-column grid) and their sequential color scales, or the click-a-bar-to-filter embedded transactions table. Bespoke to this one page, not part of the shared table-page-conventions architecture (though the embedded table borrows heavily from it).
 ---
 
 # Dashboard conventions
@@ -10,7 +10,24 @@ Income/Expenses/Transfers bar chart, three category-breakdown bar charts,
 and a transactions table that only appears once a bar is clicked. No page
 here shows a `(year)`/`— {year}` suffix in a card or chart title — the
 page-level year nav (`← {year} {year+1} →` next to the `<h1>`) already
-establishes it once.
+establishes it once. The three category-breakdown cards are titled just
+"Expenses"/"Income"/"Transfer" (no "by category" suffix either — the
+`CategoryBarChart` inside each one already makes clear it's a per-category
+breakdown).
+
+- **The three category cards sit in an asymmetric 2-column grid, not 3
+  equal columns**, in `dashboard-category-explorer.tsx`: `className="grid
+  grid-cols-1 gap-4 md:grid-cols-2"` on the wrapping div, with the Expenses
+  `Card` given `md:row-span-2` and no `items-start` on the grid (the
+  default `stretch` is what makes Expenses' card background actually fill
+  both rows — `items-start` would just top-align its own content instead
+  and defeat the two-block look). DOM order is still Expenses, Income,
+  Transfer — that alone is enough for CSS Grid's auto-placement to land
+  Income top-right and Transfer bottom-right once Expenses claims column 1
+  for both rows; no explicit `grid-column`/`grid-row` needed on the other
+  two. If the three ever need to go back to equal-width columns, that's
+  reverting to `grid-cols-1 items-start gap-4 md:grid-cols-3` and dropping
+  the `row-span-2`, not adding more grid properties on top.
 
 - **`R$` is reserved for the 4 stat cards; nothing else on this page shows
   a currency symbol.** `page.tsx`'s own `formatCurrency` (used only by the

@@ -71,10 +71,10 @@ export function DashboardCategoryExplorer({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-3">
-        <Card>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Card className="md:row-span-2">
           <CardHeader>
-            <CardTitle>Expenses by category</CardTitle>
+            <CardTitle>Expenses</CardTitle>
           </CardHeader>
           <CardContent>
             {expensesData.length === 0 ? (
@@ -86,7 +86,7 @@ export function DashboardCategoryExplorer({
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Income by category</CardTitle>
+            <CardTitle>Income</CardTitle>
           </CardHeader>
           <CardContent>
             {incomeData.length === 0 ? (
@@ -98,7 +98,7 @@ export function DashboardCategoryExplorer({
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Transfer by category</CardTitle>
+            <CardTitle>Transfer</CardTitle>
           </CardHeader>
           <CardContent>
             {transferData.length === 0 ? (
