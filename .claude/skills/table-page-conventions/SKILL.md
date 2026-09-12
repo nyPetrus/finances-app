@@ -204,7 +204,18 @@ list page instead of inventing a fresh layout.
   component (not passed down as a prop — functions aren't serializable
   across the server/client boundary), since header cells now render
   client-side to respect column order/visibility; it must preserve any
-  page-level filters in the URL (Transactions' `month`).
+  page-level filters in the URL (Transactions' `month`). **This is
+  URL-driven sort, the default for all 5 dedicated table pages.**
+  `SortableTableHead` (`src/components/sortable-table-head.tsx`) also
+  accepts an `onSort: () => void` instead of `href`, as a discriminated
+  union (exactly one of the two) — this renders a `<button>` instead of a
+  `Link`, for a table that sorts in place via local state rather than
+  navigating. The only current user is the Dashboard's embedded filtered
+  table (`dashboard-transactions-table.tsx`, see `dashboard-conventions`) —
+  a page-level table should still prefer `href`/URL sort unless it has the
+  same reason not to (the Dashboard table's sort state would otherwise be
+  lost by navigating to `/transactions`, which also wouldn't reflect its
+  category filter).
 - **"Add" buttons are icon-only**, a `PlusIcon` (`lucide-react`) with no
   label text and `variant="ghost"` — e.g. `AddAccountDialog`'s
   `DialogTrigger` renders `<Button variant="ghost" size="icon"
@@ -295,11 +306,14 @@ list page instead of inventing a fresh layout.
   reference to it. Transactions' Account and Class columns (which have no
   icon of their own) instead use a `Badge` (`variant="secondary"
   className="max-w-full gap-1 truncate"`, no leading icon) — see
-  `transactions-column-formatting`. The Dashboard's
-  "Spending by category" bar chart still needs a real fill color per bar
-  (icons don't work as a chart fill) — it assigns one from `CHART_COLORS`
-  (`src/lib/chart-colors.ts`) by bar position, entirely decoupled from
-  categories; don't wire that back to a per-category property.
+  `transactions-column-formatting`. The Dashboard's three category-breakdown
+  bar charts (Expenses/Income/Transfer by category) still need a real fill
+  color per bar (icons don't work as a chart fill) — each assigns one via
+  `sequentialColor()` (`src/lib/chart-colors.ts`), entirely decoupled from
+  categories; don't wire that back to a per-category property. See
+  `dashboard-conventions` for the color derivation and
+  `amount-color-conventions` for how it ties back to the Dashboard's other
+  red/green/gray usage.
 - **Mutations**: bulk actions take an array (`deleteAccounts(ids: string[])`,
   `deleteMappedDescriptions(descriptions: string[])`, etc.) and delete/update
   via `.in(...)`, guarded by `.eq("user_id", user.id)` like every other

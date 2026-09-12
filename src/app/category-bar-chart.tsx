@@ -25,10 +25,14 @@ function ChartTooltip({
   );
 }
 
-export function SpendingByCategoryChart({
+export function CategoryBarChart({
   data,
+  selectedKey,
+  onSelect,
 }: {
-  data: { name: string; amount: number; color: string }[];
+  data: { key: string; name: string; amount: number; color: string }[];
+  selectedKey?: string;
+  onSelect?: (key: string) => void;
 }) {
   const height = Math.max(120, data.length * 36);
 
@@ -47,7 +51,13 @@ export function SpendingByCategoryChart({
         <Tooltip content={<ChartTooltip />} cursor={{ fill: "#89878114" }} />
         <Bar dataKey="amount" radius={[0, 4, 4, 0]} maxBarSize={18}>
           {data.map((entry) => (
-            <Cell key={entry.name} fill={entry.color} />
+            <Cell
+              key={entry.key}
+              fill={entry.color}
+              opacity={!selectedKey || entry.key === selectedKey ? 1 : 0.35}
+              onClick={() => onSelect?.(entry.key)}
+              style={{ cursor: onSelect ? "pointer" : undefined }}
+            />
           ))}
           <LabelList
             dataKey="amount"

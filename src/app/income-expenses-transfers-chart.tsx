@@ -10,9 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-
-const PLANNED_COLOR = "#2a78d6";
-const ACTUAL_COLOR = "#eb6834";
+import { EXPENSE_FLAT, INCOME_FLAT, TRANSFER_FLAT } from "@/lib/chart-colors";
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
@@ -49,10 +47,10 @@ function ChartTooltip({
   );
 }
 
-export function BudgetVsActualChart({
+export function IncomeExpensesTransfersChart({
   data,
 }: {
-  data: { month: string; planned: number; actual: number }[];
+  data: { month: string; income: number; expenses: number; transfers: number }[];
 }) {
   return (
     <ResponsiveContainer width="100%" height={280}>
@@ -78,8 +76,9 @@ export function BudgetVsActualChart({
           iconSize={8}
           wrapperStyle={{ fontSize: 12, color: "#52514e" }}
         />
-        <Bar dataKey="planned" name="Planned" fill={PLANNED_COLOR} radius={[4, 4, 0, 0]} maxBarSize={18} />
-        <Bar dataKey="actual" name="Actual" fill={ACTUAL_COLOR} radius={[4, 4, 0, 0]} maxBarSize={18} />
+        <Bar dataKey="income" name="Income" fill={INCOME_FLAT} radius={[4, 4, 0, 0]} maxBarSize={18} />
+        <Bar dataKey="expenses" name="Expenses" fill={EXPENSE_FLAT} radius={[4, 4, 0, 0]} maxBarSize={18} />
+        <Bar dataKey="transfers" name="Transfers" fill={TRANSFER_FLAT} radius={[4, 4, 0, 0]} maxBarSize={18} />
       </BarChart>
     </ResponsiveContainer>
   );
