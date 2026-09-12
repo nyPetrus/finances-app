@@ -37,7 +37,7 @@ list page instead of inventing a fresh layout.
   `src/components/ui/checkbox.tsx`) — that's what keeps a selected row's
   checkbox visible after the mouse moves away.
 - **Row actions live in a toolbar above the table, not a per-row menu.**
-  Right-aligned button group: `ColumnsMenu` first, then any page-specific
+  Left-aligned button group: `ColumnsMenu` first, then any page-specific
   bulk actions (Accounts' and Transactions' "Sync" — icon-only
   `RefreshCwIcon`, `variant="outline"` `size="icon-sm"`, spinning via
   `className={isSyncing ? "animate-spin" : undefined}` while pending), then
@@ -50,7 +50,7 @@ list page instead of inventing a fresh layout.
   immediately to the left of "Delete" on every table page. Icon-only
   toolbar buttons need `aria-label` *and* `title` set to the plain action
   word ("Sync", "Edit", "Delete") for the same reason "Add" buttons do (see
-  below). A left-aligned
+  below). A right-aligned (`ml-auto`)
   `{selected.size > 0 && <span>{selected.size} selected</span>}` fills the
   other side of the toolbar — render nothing (not a filler placeholder
   string) when nothing's selected. The edit dialog is a plain

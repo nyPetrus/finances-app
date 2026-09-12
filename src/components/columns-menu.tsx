@@ -30,7 +30,7 @@ export function ColumnsMenu<K extends string>({
       <DropdownMenuTrigger render={<Button variant="outline" size="icon-sm" />}>
         <Columns3Icon />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-48">
+      <DropdownMenuContent align="start" className="min-w-48">
         {orderedColumns.map((column, index) => (
           <div key={column.key} className="flex items-center gap-1.5 rounded-md px-1.5 py-1">
             <Checkbox

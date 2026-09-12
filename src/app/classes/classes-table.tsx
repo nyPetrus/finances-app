@@ -120,10 +120,7 @@ export function ClassesTable({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        {selected.size > 0 && (
-          <span className="text-sm text-muted-foreground">{selected.size} selected</span>
-        )}
-        <div className="ml-auto flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />
           <Button
             variant="outline"
@@ -147,6 +144,9 @@ export function ClassesTable({
             <Trash2Icon />
           </Button>
         </div>
+        {selected.size > 0 && (
+          <span className="ml-auto text-sm text-muted-foreground">{selected.size} selected</span>
+        )}
       </div>
       {actionError && <p className="text-sm text-destructive">{actionError}</p>}
 
