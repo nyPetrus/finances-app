@@ -33,10 +33,13 @@ description: Use when writing or touching code that inserts/updates a transactio
   `open`/`onOpenChange` (falls back to its own internal `useState` when
   omitted — the normal Descriptions-page usage), `defaultDescription` (the
   Input's `defaultValue`), and `showTrigger` (set `false` to suppress its
-  own "+" `DialogTrigger` when something else is opening it). The only
-  external caller is Transactions' edit dialog's "Save and sync
-  description" button (`transactions-table.tsx`): it saves the row like
-  the normal "Save" button (same `updateTransaction` call, same
+  own "+" `DialogTrigger` when something else is opening it). The external
+  callers are Transactions' edit dialog's "Save and sync description"
+  button (`transactions-table.tsx`) and the Dashboard's embedded
+  transactions table's identical button (`dashboard-transactions-table.tsx`
+  — a separate copy of the same edit dialog, see `dashboard-conventions`;
+  the two are kept in sync by hand, not by sharing code): each saves the
+  row like the normal "Save" button (same `updateTransaction` call, same
   `startSaveEdit` transition), then reads the *saved* description straight
   off the just-submitted `FormData` (`.trim().toLowerCase()`, matching
   what `updateTransaction` itself just persisted) into a `mappingPrefill`

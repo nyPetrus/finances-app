@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { LandmarkIcon, RefreshCwIcon, TagIcon, TagsIcon, Trash2Icon, type LucideIcon } from "lucide-react";
@@ -41,6 +41,7 @@ import { useColumnPreferences } from "@/hooks/use-column-preferences";
 import type { Account, Category, Class, Transaction } from "@/lib/supabase/types";
 import { deleteTransactions, syncDescriptionsFromTransactions, updateTransaction } from "./transactions/actions";
 import { AddTransactionDialog } from "./transactions/add-transaction-dialog";
+import { AddMappingDialog } from "./descriptions/add-mapping-dialog";
 import { type SortKey } from "./transactions/sort";
 
 function formatCurrency(value: number) {
@@ -108,6 +109,8 @@ export function DashboardTransactionsTable({
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [editCategoryId, setEditCategoryId] = useState<string | null>(null);
   const [editClassId, setEditClassId] = useState<string | null>(null);
+  const [mappingPrefill, setMappingPrefill] = useState<string | null>(null);
+  const editFormRef = useRef<HTMLFormElement>(null);
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const { hidden: hiddenColumns, order: columnOrder, toggle: toggleColumn, move: moveColumn } =
@@ -230,6 +233,24 @@ export function DashboardTransactionsTable({
     setEditCategoryId(transaction.category_id);
     setEditClassId(transaction.class_id);
     setEditingTransaction(transaction);
+  }
+
+  function handleSaveAndSyncDescription() {
+    const form = editFormRef.current;
+    if (!form) return;
+    if (!form.reportValidity()) return;
+    const formData = new FormData(form);
+    setActionError(null);
+    startSaveEdit(async () => {
+      try {
+        await updateTransaction(formData);
+        const description = (formData.get("description") as string).trim().toLowerCase();
+        setEditingTransaction(null);
+        setMappingPrefill(description);
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : "Failed to save transaction.");
+      }
+    });
   }
 
   function handleSync() {
@@ -404,6 +425,7 @@ export function DashboardTransactionsTable({
             </DialogHeader>
             <form
               id={`edit-transaction-${editingTransaction.id}`}
+              ref={editFormRef}
               action={(formData) => {
                 setActionError(null);
                 startSaveEdit(async () => {
@@ -527,6 +549,14 @@ export function DashboardTransactionsTable({
                 </div>
               </div>
               <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleSaveAndSyncDescription}
+                  disabled={isSavingEdit}
+                >
+                  Save and sync description
+                </Button>
                 <Button type="submit" form={`edit-transaction-${editingTransaction.id}`} disabled={isSavingEdit}>
                   {isSavingEdit ? "Saving…" : "Save"}
                 </Button>
@@ -534,6 +564,19 @@ export function DashboardTransactionsTable({
             </form>
           </DialogContent>
         </Dialog>
+      )}
+
+      {mappingPrefill !== null && (
+        <AddMappingDialog
+          categories={categories}
+          classes={classes}
+          defaultDescription={mappingPrefill}
+          open
+          onOpenChange={(next) => {
+            if (!next) setMappingPrefill(null);
+          }}
+          showTrigger={false}
+        />
       )}
     </div>
   );

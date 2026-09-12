@@ -96,4 +96,10 @@ establishes it once.
   instead of `href` — see `table-page-conventions`'s "Sorting" bullet for
   the `onSort`/`href` split. It takes an already-filtered `transactions`
   array as a prop; the explorer does the filtering, this component only
-  renders and sorts it.
+  renders and sorts it. **Being a copy, not a shared component, means a
+  `TransactionsTable` feature doesn't automatically show up here** — the
+  edit dialog's "Save and sync description" button and the
+  `AddMappingDialog` handoff (see `transaction-description-rules`) had to
+  be added to this file too, separately, when they were added to
+  `transactions-table.tsx`. When touching one edit dialog, check whether
+  the same change belongs in the other.
