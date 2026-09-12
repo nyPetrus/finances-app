@@ -28,9 +28,17 @@ These are presentation choices specific to `transactions-table.tsx`'s
   shared `TableCell` wraps by default (see `table-page-conventions`), and
   `DD mmm` has a space that would otherwise let it break onto two lines
   in a narrow column.
-- **Account and Class render as the same `Badge` chip as Category**
+- **Account and Class render as a `Badge` chip**
   (`variant="secondary" className="max-w-full gap-1 truncate"`), instead
-  of plain text — for visual consistency across the badge-style columns.
-  Unlike Category's badge, neither has a leading `CategoryIcon`, since
-  `Account` and `Class` (`src/lib/supabase/types.ts`) have no `icon` field
-  of their own — only `Category` does.
+  of plain text. Unlike Category (which is icon-only, no `Badge` — see
+  `table-page-conventions`'s "Category-as-foreign-column" bullet), neither
+  has a leading `CategoryIcon`, since `Account` and `Class`
+  (`src/lib/supabase/types.ts`) have no `icon` field of their own — only
+  `Category` does.
+- **Account, Category, and Class headers are icon-only** (`LandmarkIcon`,
+  `TagIcon`, `TagsIcon` respectively — see `table-page-conventions`'s
+  "Column header icons" bullet), even though only Category's *cell* is
+  icon-only — Account and Class still render their cell as a `Badge` chip
+  per the bullet above. The header icon and the cell rendering are
+  independent choices; don't assume a column's header icon implies its
+  cell dropped the `Badge`.

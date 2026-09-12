@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Account } from "@/lib/supabase/types";
 import { AccountsTable } from "./accounts-table";
-import { ConnectBankButton } from "./connect-bank-button";
 import { isSortKey, type SortKey } from "./sort";
 
 // syncPluggyItem now waits on a live bank update (via Pluggy's updateItem),
@@ -26,10 +25,7 @@ export default async function AccountsPage({
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Accounts</h1>
-        <ConnectBankButton />
-      </div>
+      <h1 className="text-2xl font-semibold">Accounts</h1>
 
       <AccountsTable accounts={allAccounts} sortKey={sortKey} sortDir={sortDir} />
     </div>

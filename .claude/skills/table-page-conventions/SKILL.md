@@ -1,6 +1,6 @@
 ---
 name: table-page-conventions
-description: Use when adding a new list-style page or touching an existing one (Transactions, Categories, Classes, Descriptions, Accounts) — table markup, row selection, the toolbar (Sync/Edit/Add/Delete), column show/hide & reorder, sorting, add/edit dialogs, category/class chip rendering, or bulk mutations. Encodes this app's shared list-page architecture so new pages match instead of inventing a fresh layout.
+description: Use when adding a new list-style page or touching an existing one (Transactions, Categories, Classes, Descriptions, Accounts) — table markup, row selection, the two-zone toolbar (generic Columns/Add/Delete vs. table-specific buttons), the per-row "⋮" actions menu (Edit/Sync/Delete), column show/hide & reorder, column header icons, sorting, add/edit dialogs, category/class chip rendering, or bulk mutations. Encodes this app's shared list-page architecture so new pages match instead of inventing a fresh layout.
 ---
 
 # Table page conventions
@@ -27,8 +27,10 @@ list page instead of inventing a fresh layout.
   column). It returns `selected`, `allSelected`/`someSelected` (for the
   header checkbox's `checked`/`indeterminate`), `toggleAll`/`toggleOne`,
   `clear`, `selectedRows`, and `soleSelectedRow` (non-null only when exactly
-  one row is checked). **Per-row checkboxes are hidden until hovered or
-  checked** — the header's select-all `Checkbox` stays always visible, but
+  one row is checked) — none of the 5 tables destructure `soleSelectedRow`
+  any more (Edit no longer depends on checkbox selection, see below), but
+  the hook still returns it for a future consumer that might need it.
+  **Per-row checkboxes are hidden until hovered or checked** — the header's select-all `Checkbox` stays always visible, but
   each body row's own `Checkbox` gets `className="opacity-0
   transition-opacity group-hover:opacity-100 focus-visible:opacity-100
   data-[checked]:opacity-100"`, and its `<TableRow>` gets `className="group"`
@@ -36,28 +38,67 @@ list page instead of inventing a fresh layout.
   `data-state`) is Base UI's own attribute for a checked `Checkbox` (see
   `src/components/ui/checkbox.tsx`) — that's what keeps a selected row's
   checkbox visible after the mouse moves away.
-- **Row actions live in a toolbar above the table, not a per-row menu.**
-  Left-aligned button group: `ColumnsMenu` first, then any page-specific
-  bulk actions (Accounts' and Transactions' "Sync" — icon-only
-  `RefreshCwIcon`, `variant="outline"` `size="icon-sm"`, spinning via
-  `className={isSyncing ? "animate-spin" : undefined}` while pending), then
-  "Edit" (icon-only `PencilIcon`, same `outline`/`icon-sm` styling; disabled
-  unless `soleSelectedRow` is set; opens a dialog scoped to that one row),
-  then the page's "Add" dialog trigger (see below), then "Delete" — now also
-  icon-only (`Trash2Icon`, `variant="ghost"` `size="icon-sm"`, no red
-  fill/destructive styling; disabled when nothing's selected; confirms via
-  `window.confirm(...)` before calling a bulk delete action). "+" sits
-  immediately to the left of "Delete" on every table page. Icon-only
-  toolbar buttons need `aria-label` *and* `title` set to the plain action
-  word ("Sync", "Edit", "Delete") for the same reason "Add" buttons do (see
-  below). A right-aligned (`ml-auto`)
-  `{selected.size > 0 && <span>{selected.size} selected</span>}` fills the
-  other side of the toolbar — render nothing (not a filler placeholder
-  string) when nothing's selected. The edit dialog is a plain
-  `Dialog`/`DialogContent` (no `DialogTrigger`) whose `open` state is local,
-  opened by the toolbar Edit button's `onClick`; guard its render on
-  `soleSelectedRow` (`{soleSelectedRow && <Dialog ...>}`) so it has data to
-  prefill from and unmounts cleanly once the dialog closes.
+- **Per-row actions live in a "⋮" menu, one column after the checkbox
+  column — not in the toolbar.** `RowActionsMenu`
+  (`src/components/row-actions-menu.tsx`) is a `DropdownMenu` (Base UI, same
+  primitives `ColumnsMenu` uses) whose trigger is `<Button variant="ghost"
+  size="icon-sm" aria-label="Row actions" title="Row actions"><MoreVerticalIcon
+  /></Button>`. Unlike the per-row `Checkbox` (hover-revealed, see below),
+  **this trigger is always visible** — it's the only way to reach a single
+  row's Edit, so it has to be reachable without hovering (keyboard, touch).
+  Render one unlabeled `<TableHead className="w-0" />` right after the
+  checkbox header, and one `<TableCell>` right after the checkbox cell in
+  every body row, holding `<RowActionsMenu onEdit={...} onDelete={...}
+  onSync={...} disabled={isSyncing || isDeleting} />` scoped to that row:
+  - `onEdit` sets a per-row `editing<X>: <Row> | null` state (e.g.
+    `editingAccount`) instead of relying on checkbox selection.
+  - `onDelete` confirms via `window.confirm("Delete this account? ...")`
+    (singular wording — this is a single row, not a bulk op) then calls the
+    existing bulk delete action with a one-element array (e.g.
+    `deleteAccounts([account.id])`), inside the existing `startDelete`
+    transition.
+  - `onSync` is only passed on tables that have a sync concept at all
+    (Accounts, Transactions) and only when that specific row is eligible
+    (Accounts: `account.is_automatic && account.pluggy_item_id`;
+    Transactions: `transaction.category_id`) — passing `undefined` omits
+    the Sync item from the menu entirely. It calls the existing single-item
+    sync path (`syncPluggyItem`/`syncDescriptionsFromTransactions` scoped to
+    that one id), inside the existing `startSync` transition.
+  Menu item order is Edit, Sync (if present), a `DropdownMenuSeparator`,
+  then Delete with `variant="destructive"`. Items carry their own icon +
+  visible text label, so they don't need `title`.
+  **The edit dialog is keyed off that `editing<X>` state, not
+  `soleSelectedRow`** — `useRowSelection`'s `soleSelectedRow` is no longer
+  destructured in any table (bulk `selected`/`toggleAll`/`toggleOne`/
+  `clear`/`selectedRows` are still used for bulk Delete/Sync). The dialog's
+  `open` is `editing<X> !== null`, `onOpenChange` and a successful save both
+  `setEditing<X>(null)`; guard its render on `{editing<X> && <Dialog ...>}`
+  so it has data to prefill from and unmounts cleanly once closed.
+- **The toolbar above the table is split into two zones.** Left = generic,
+  present on every table: `ColumnsMenu`, the page's "Add" dialog trigger
+  (see below), then "Delete" (`Trash2Icon`, `variant="ghost"`
+  `size="icon-sm"`, no red fill/destructive styling — that's reserved for
+  the row-menu's Delete item; disabled when nothing's selected; confirms via
+  `window.confirm(...)` before calling the bulk delete action). "+" sits
+  immediately to the left of "Delete". Right (`className="ml-auto flex
+  items-center gap-2"`) = table-specific buttons, i.e. ones that don't apply
+  to every table — Accounts' "Connect bank" (`ConnectBankButton`, moved into
+  this zone from the page header) and both Accounts' and Transactions'
+  "Sync" (icon-only `RefreshCwIcon`, `variant="outline"` `size="icon-sm"`,
+  spinning via `className={isSyncing ? "animate-spin" : undefined}` while
+  pending — this is the *bulk* Sync, still driven by `selected`/
+  `selectedRows`), followed by `{selected.size > 0 && <span>{selected.size}
+  selected</span>}` (no `ml-auto` on the span itself now — the zone div
+  carries it) — render nothing (not a filler placeholder string) when
+  nothing's selected. A table with no specific buttons (Categories, Classes,
+  Descriptions) still renders this right-hand div; it just ends up empty
+  except for the selected-count span. There is no "Edit" button in the
+  toolbar anywhere — it's redundant now that every row has its own Edit via
+  the "⋮" menu. Icon-only toolbar buttons need `aria-label` *and* `title`
+  set to the plain action word ("Columns", "Sync", "Delete", "Connect
+  bank") for the same reason "Add" buttons do (see below) — `ColumnsMenu`'s
+  trigger needs this pair too, it's easy to forget since it has no visible
+  label either.
   **The toolbar (and thus "+") must render even when the row list is
   empty** — the empty-state message (`"No categories yet."` etc.) replaces
   only the `<Table>` markup via a ternary, never the surrounding toolbar, so
@@ -72,10 +113,30 @@ list page instead of inventing a fresh layout.
   Render the `ColumnsMenu` component (`src/components/columns-menu.tsx`) in
   the toolbar, passing it the page's `COLUMNS` config and the hook's
   `order`/`hidden`/`toggle`/`move`. Each page defines `COLUMNS` as an array
-  of `{ key: SortKey; label: string; align?; cellClassName? }` and a
-  `renderCell(row, key)` switch, then maps `visibleColumns` (`order`, minus
-  `hidden`) to both the header row (`SortableTableHead`s) and each body row's
-  cells — this keeps the header and cell counts from ever desyncing.
+  of `{ key: SortKey; label: string; align?; cellClassName?; headerIcon?:
+  LucideIcon; headerIconOnly?: boolean }` and a `renderCell(row, key)`
+  switch, then maps `visibleColumns` (`order`, minus `hidden`) to both the
+  header row (`SortableTableHead`s) and each body row's cells — this keeps
+  the header and cell counts from ever desyncing. `ColumnsMenu`'s own
+  show/hide list always reads `column.label` as plain text regardless of
+  `headerIcon` — that field only changes what the *header cell* renders.
+  **Column header icons**: a column whose values are a foreign-key
+  reference to another entity (Category, Class, Account) sets `headerIcon`
+  to that entity's icon and `headerIconOnly: true` — reuse the same icon
+  already assigned to that entity in `sidebar-nav.tsx` (Category =
+  `TagIcon`, Class = `TagsIcon`, Account = `LandmarkIcon`), rendered via the
+  shared `<ColumnHeaderIcon icon={column.headerIcon} label={column.label}
+  iconOnly={column.headerIconOnly} />` (`src/components/column-header-icon.tsx`)
+  as the header cell's children instead of `column.label` directly. The
+  *origin* table's own identity column (Categories'/Classes'/Accounts'
+  "Name") gets the same treatment but with `headerIconOnly` left `false` —
+  icon **and** text, since there's no ambiguity about which entity's icon it
+  is. `ColumnHeaderIcon` puts a `title` (native tooltip) on the icon-only
+  case and an `sr-only` text label for accessibility; the icon+text case
+  needs neither since the label is already visible. Don't change cell
+  rendering or column alignment as part of adding a header icon — it's a
+  header-only change (see the "Category-as-foreign-column" bullet below for
+  how the *cells* render).
 - **Sorting**: still via the shared `SortableTableHead` component
   (`src/components/sortable-table-head.tsx`, `align` is `"left" | "right" |
   "center"`). Each page keeps its own `sort.ts` exporting `SORT_KEYS as
@@ -87,7 +148,7 @@ list page instead of inventing a fresh layout.
   component (not passed down as a prop — functions aren't serializable
   across the server/client boundary), since header cells now render
   client-side to respect column order/visibility; it must preserve any
-  page-level filters in the URL (Transactions' `month`/`account`).
+  page-level filters in the URL (Transactions' `month`).
 - **"Add" buttons are icon-only**, a `PlusIcon` (`lucide-react`) with no
   label text and `variant="ghost"` — e.g. `AddAccountDialog`'s
   `DialogTrigger` renders `<Button variant="ghost" size="icon"
@@ -100,24 +161,37 @@ list page instead of inventing a fresh layout.
   type it adds, and dropping the label removes the only other cue, so both
   the accessible name and the hover tooltip must carry it. The `Add*Dialog`
   component itself is rendered from inside the `<X>Table` client component's
-  toolbar (immediately before "Delete"), not from the server `page.tsx`
-  header — `page.tsx` keeps only the `<h1>` and any page-level, non-row
-  controls (Accounts' `ConnectBankButton`, Descriptions' `SyncButton`,
-  Transactions' month nav). Classes and Descriptions render their `Add*Dialog`
-  unconditionally inside the table (safe because `page.tsx` only mounts the
-  table when categories exist); Transactions swaps its "+" for a "Create an
-  account first" link button when `accounts.length === 0`, using the same
-  `accounts` prop the table already receives.
+  toolbar's left/generic zone, not from the server `page.tsx` header —
+  `page.tsx` keeps only the `<h1>` and any page-level, non-row controls
+  (Descriptions' `SyncButton`/`AutoCategorizeButton`, Transactions' month
+  nav). Accounts' `ConnectBankButton` used to live in `page.tsx` too but now
+  renders inside the table's right/specific toolbar zone, next to "Sync" —
+  see the "Connect bank" bullet below. Classes and Descriptions render their
+  `Add*Dialog` unconditionally inside the table (safe because `page.tsx`
+  only mounts the table when categories exist); Transactions swaps its "+"
+  for a "Create an account first" link button when `accounts.length === 0`,
+  using the same `accounts` prop the table already receives.
+- **"Connect bank" is icon-only too**, `PlugZapIcon` (`lucide-react`),
+  `variant="outline"` `size="icon-sm"` to match the other toolbar icon
+  buttons, `aria-label`/`title="Connect bank"`. `ConnectBankButton`
+  (`src/app/accounts/connect-bank-button.tsx`) keeps its own Pluggy-connect
+  logic (token fetch, the dynamically-imported `PluggyConnect` modal) fully
+  isolated, but takes `onError`/`onConnected` callback props instead of
+  owning its own error state — `AccountsTable` wires `onError={setActionError}`
+  and `onConnected={() => router.refresh()}` so the error surfaces through
+  the same shared `actionError` paragraph as Edit/Delete/Sync, instead of a
+  separate one. It renders first in the right/specific toolbar zone,
+  followed by the bulk "Sync" button.
 - **Edit/Add dialogs**: `Label` + `Input`/`Select` fields per `@/components/ui`.
   Add dialogs (still a standalone `DialogTrigger`-wrapped `Dialog`, e.g.
   `AddAccountDialog`) keep their own local `error` state, shown as
   `{error && <p className="text-sm text-destructive">{error}</p>}` above the
-  footer. Edit dialogs, now part of the toolbar-selection flow, share the
-  table's single `actionError` state instead (also used by Delete/Sync/etc.)
-  — don't duplicate the error paragraph inside the dialog too; the outer one
-  stays visible (dimmed) behind the modal backdrop. Server actions should
-  throw `Error`s with user-facing messages (see the unique-name violation
-  handling in `src/app/categories/actions.ts`).
+  footer. Edit dialogs, now opened from a row's "⋮" menu, share the table's
+  single `actionError` state instead (also used by Delete/Sync/etc.) — don't
+  duplicate the error paragraph inside the dialog too; the outer one stays
+  visible (dimmed) behind the modal backdrop. Server actions should throw
+  `Error`s with user-facing messages (see the unique-name violation handling
+  in `src/app/categories/actions.ts`).
 - **Categories are identified by an icon, not a color.** `categories.icon`
   (text) stores a key into `CATEGORY_ICON_MAP`
   (`src/lib/category-icons.ts`), a curated set of `lucide-react` icons picked
@@ -153,7 +227,11 @@ list page instead of inventing a fresh layout.
   Wrapping it in an `inline-flex` span makes the *span* the inline box that
   `text-align: center` positions, while the icon lays out fine inside as a
   flex item. Don't drop that wrapper or swap it for a plain `<span>` when
-  touching this cell. This is different from the
+  touching this cell. (The column's *header*, above this cell, is a
+  separate icon-only `TagIcon` via `headerIcon`/`ColumnHeaderIcon` — see the
+  "Column header icons" bullet above; don't conflate the two, the header
+  icon is generic/per-column and the cell icon is per-row/per-category.)
+  This is different from the
   Categories table's own Name column and Budget's category rows
   (`yearly-grid.tsx`, `monthly-execution.tsx`), which still show the icon
   *next to* the visible name (no `Badge` there either, but the name stays

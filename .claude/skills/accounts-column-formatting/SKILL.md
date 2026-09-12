@@ -30,3 +30,10 @@ description: Use when touching how the Accounts table (src/app/accounts/accounts
   structured values that should never break across two lines). This
   overrides the shared `TableCell`'s default wrapping (see
   `table-page-conventions`) specifically for this table.
+- **Name is the origin-table identity column, so its header is icon+text**
+  (`LandmarkIcon`, via `headerIcon` — see `table-page-conventions`'s
+  "Column header icons" bullet); Account (the short label column) stays
+  plain text, it isn't the identity column.
+- **"Connect bank" and "Sync" live in this table's own toolbar** (right/
+  specific zone), not in `accounts/page.tsx` — see `table-page-conventions`'s
+  "Connect bank" bullet. `page.tsx` now renders only a plain `<h1>Accounts</h1>`.

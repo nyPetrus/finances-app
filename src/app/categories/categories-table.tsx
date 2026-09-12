@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { PencilIcon, Trash2Icon } from "lucide-react";
+import { TagIcon, Trash2Icon, type LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -31,6 +31,8 @@ import {
 } from "@/components/ui/table";
 import { SortableTableHead } from "@/components/sortable-table-head";
 import { ColumnsMenu } from "@/components/columns-menu";
+import { ColumnHeaderIcon } from "@/components/column-header-icon";
+import { RowActionsMenu } from "@/components/row-actions-menu";
 import { IconSwatchPicker } from "@/components/icon-swatch-picker";
 import { CategoryIcon } from "@/components/category-icon";
 import { useRowSelection } from "@/hooks/use-row-selection";
@@ -46,8 +48,14 @@ const kindLabels: Record<Category["kind"], string> = {
   transfer: "Transfer",
 };
 
-const COLUMNS: { key: SortKey; label: string; cellClassName?: string }[] = [
-  { key: "name", label: "Name", cellClassName: "font-medium" },
+const COLUMNS: {
+  key: SortKey;
+  label: string;
+  cellClassName?: string;
+  headerIcon?: LucideIcon;
+  headerIconOnly?: boolean;
+}[] = [
+  { key: "name", label: "Name", cellClassName: "font-medium", headerIcon: TagIcon },
   { key: "type", label: "Type" },
 ];
 
@@ -79,7 +87,7 @@ export function CategoriesTable({
   const [isDeleting, startDelete] = useTransition();
   const [isSavingEdit, startSaveEdit] = useTransition();
   const [actionError, setActionError] = useState<string | null>(null);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [editIcon, setEditIcon] = useState("");
   const { hidden: hiddenColumns, order: columnOrder, toggle: toggleColumn, move: moveColumn } =
     useColumnPreferences<SortKey>("categories-table", DEFAULT_COLUMN_ORDER);
@@ -96,14 +104,12 @@ export function CategoriesTable({
     toggleAll,
     toggleOne,
     clear: clearSelection,
-    soleSelectedRow: soleSelectedCategory,
   } = useRowSelection(categories, (category) => category.id);
 
-  function openEditDialog() {
-    if (!soleSelectedCategory) return;
+  function openEditDialog(category: Category) {
     setActionError(null);
-    setEditIcon(soleSelectedCategory.icon);
-    setEditDialogOpen(true);
+    setEditIcon(category.icon);
+    setEditingCategory(category);
   }
 
   function handleDelete() {
@@ -123,6 +129,20 @@ export function CategoriesTable({
     });
   }
 
+  function handleDeleteRow(category: Category) {
+    if (!window.confirm(`Delete this category? Transactions in it will become uncategorized.`)) {
+      return;
+    }
+    setActionError(null);
+    startDelete(async () => {
+      try {
+        await deleteCategories([category.id]);
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : "Failed to delete.");
+      }
+    });
+  }
+
   const columnsByKey = new Map(COLUMNS.map((column) => [column.key, column]));
   const visibleColumns = columnOrder
     .map((key) => columnsByKey.get(key)!)
@@ -133,16 +153,6 @@ export function CategoriesTable({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />
-          <Button
-            variant="outline"
-            size="icon-sm"
-            disabled={!soleSelectedCategory}
-            onClick={openEditDialog}
-            aria-label="Edit"
-            title="Edit"
-          >
-            <PencilIcon />
-          </Button>
           <AddCategoryDialog />
           <Button
             variant="ghost"
@@ -175,9 +185,14 @@ export function CategoriesTable({
                   aria-label="Select all categories"
                 />
               </TableHead>
+              <TableHead className="w-0" />
               {visibleColumns.map((column) => (
                 <SortableTableHead key={column.key} href={sortHref(column.key)} active={sortKey === column.key} dir={sortDir}>
-                  {column.label}
+                  {column.headerIcon ? (
+                    <ColumnHeaderIcon icon={column.headerIcon} label={column.label} iconOnly={column.headerIconOnly} />
+                  ) : (
+                    column.label
+                  )}
                 </SortableTableHead>
               ))}
             </TableRow>
@@ -193,6 +208,13 @@ export function CategoriesTable({
                     className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[checked]:opacity-100"
                   />
                 </TableCell>
+                <TableCell>
+                  <RowActionsMenu
+                    onEdit={() => openEditDialog(category)}
+                    onDelete={() => handleDeleteRow(category)}
+                    disabled={isDeleting}
+                  />
+                </TableCell>
                 {visibleColumns.map((column) => (
                   <TableCell key={column.key} className={column.cellClassName}>
                     {renderCell(category, column.key)}
@@ -204,21 +226,20 @@ export function CategoriesTable({
         </Table>
       )}
 
-      {soleSelectedCategory && (
-        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+      {editingCategory && (
+        <Dialog open={editingCategory !== null} onOpenChange={(open) => !open && setEditingCategory(null)}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Edit category</DialogTitle>
             </DialogHeader>
             <form
-              id={`edit-category-${soleSelectedCategory.id}`}
+              id={`edit-category-${editingCategory.id}`}
               action={(formData) => {
                 setActionError(null);
                 startSaveEdit(async () => {
                   try {
                     await updateCategory(formData);
-                    setEditDialogOpen(false);
-                    clearSelection();
+                    setEditingCategory(null);
                   } catch (err) {
                     setActionError(err instanceof Error ? err.message : "Failed to update category.");
                   }
@@ -226,14 +247,14 @@ export function CategoriesTable({
               }}
               className="flex flex-col gap-4"
             >
-              <input type="hidden" name="id" value={soleSelectedCategory.id} />
+              <input type="hidden" name="id" value={editingCategory.id} />
               <div className="flex flex-col gap-2">
                 <Label htmlFor="name">Name</Label>
-                <Input id="name" name="name" defaultValue={soleSelectedCategory.name} required />
+                <Input id="name" name="name" defaultValue={editingCategory.name} required />
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="kind">Type</Label>
-                <Select name="kind" defaultValue={soleSelectedCategory.kind}>
+                <Select name="kind" defaultValue={editingCategory.kind}>
                   <SelectTrigger id="kind">
                     <SelectValue />
                   </SelectTrigger>
@@ -249,7 +270,7 @@ export function CategoriesTable({
                 <IconSwatchPicker name="icon" value={editIcon} onChange={setEditIcon} />
               </div>
               <DialogFooter>
-                <Button type="submit" form={`edit-category-${soleSelectedCategory.id}`} disabled={isSavingEdit}>
+                <Button type="submit" form={`edit-category-${editingCategory.id}`} disabled={isSavingEdit}>
                   {isSavingEdit ? "Saving…" : "Save"}
                 </Button>
               </DialogFooter>

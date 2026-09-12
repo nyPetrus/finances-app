@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { PencilIcon, RefreshCwIcon, Trash2Icon } from "lucide-react";
+import { LandmarkIcon, RefreshCwIcon, Trash2Icon, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -31,11 +31,14 @@ import {
 } from "@/components/ui/table";
 import { SortableTableHead } from "@/components/sortable-table-head";
 import { ColumnsMenu } from "@/components/columns-menu";
+import { ColumnHeaderIcon } from "@/components/column-header-icon";
+import { RowActionsMenu } from "@/components/row-actions-menu";
 import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
 import type { Account } from "@/lib/supabase/types";
 import { deleteAccounts, updateAccount } from "./actions";
 import { AddAccountDialog } from "./add-account-dialog";
+import { ConnectBankButton } from "./connect-bank-button";
 import { syncPluggyItem } from "./pluggy-actions";
 import { type SortKey } from "./sort";
 
@@ -66,9 +69,11 @@ const COLUMNS: {
   label: string;
   align?: "right" | "center";
   cellClassName?: string;
+  headerIcon?: LucideIcon;
+  headerIconOnly?: boolean;
 }[] = [
   { key: "account", label: "Account", cellClassName: "truncate" },
-  { key: "name", label: "Name", cellClassName: "truncate font-medium" },
+  { key: "name", label: "Name", cellClassName: "truncate font-medium", headerIcon: LandmarkIcon },
   { key: "source", label: "Source", align: "center", cellClassName: "text-center whitespace-nowrap" },
   { key: "type", label: "Type", align: "center", cellClassName: "text-center whitespace-nowrap" },
   { key: "lastSync", label: "Last sync", align: "center", cellClassName: "text-center whitespace-nowrap" },
@@ -112,7 +117,7 @@ export function AccountsTable({
   const [isDeleting, startDelete] = useTransition();
   const [isSavingEdit, startSaveEdit] = useTransition();
   const [actionError, setActionError] = useState<string | null>(null);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const { hidden: hiddenColumns, order: columnOrder, toggle: toggleColumn, move: moveColumn } =
     useColumnPreferences<SortKey>("accounts-table", DEFAULT_COLUMN_ORDER);
 
@@ -156,7 +161,6 @@ export function AccountsTable({
     toggleOne,
     clear: clearSelection,
     selectedRows: selectedAccounts,
-    soleSelectedRow: soleSelectedAccount,
   } = useRowSelection(sorted, (account) => account.id);
 
   const syncableItemIds = Array.from(
@@ -199,6 +203,33 @@ export function AccountsTable({
     });
   }
 
+  function handleDeleteRow(account: Account) {
+    if (!window.confirm(`Delete this account? This will also delete all of its transactions.`)) {
+      return;
+    }
+    setActionError(null);
+    startDelete(async () => {
+      try {
+        await deleteAccounts([account.id]);
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : "Failed to delete.");
+      }
+    });
+  }
+
+  function handleSyncRow(account: Account) {
+    if (!account.pluggy_item_id) return;
+    setActionError(null);
+    startSync(async () => {
+      try {
+        await syncPluggyItem(account.pluggy_item_id as string);
+        router.refresh();
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : "Failed to sync.");
+      }
+    });
+  }
+
   const columnsByKey = new Map(COLUMNS.map((column) => [column.key, column]));
   const visibleColumns = columnOrder
     .map((key) => columnsByKey.get(key)!)
@@ -209,26 +240,6 @@ export function AccountsTable({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />
-          <Button
-            variant="outline"
-            size="icon-sm"
-            disabled={syncableItemIds.length === 0 || isSyncing || isDeleting}
-            onClick={handleSync}
-            aria-label="Sync"
-            title="Sync"
-          >
-            <RefreshCwIcon className={isSyncing ? "animate-spin" : undefined} />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon-sm"
-            disabled={!soleSelectedAccount || isSyncing || isDeleting}
-            onClick={() => setEditDialogOpen(true)}
-            aria-label="Edit"
-            title="Edit"
-          >
-            <PencilIcon />
-          </Button>
           <AddAccountDialog />
           <Button
             variant="ghost"
@@ -241,9 +252,22 @@ export function AccountsTable({
             <Trash2Icon />
           </Button>
         </div>
-        {selected.size > 0 && (
-          <span className="ml-auto text-sm text-muted-foreground">{selected.size} selected</span>
-        )}
+        <div className="ml-auto flex items-center gap-2">
+          <ConnectBankButton onError={setActionError} onConnected={() => router.refresh()} />
+          <Button
+            variant="outline"
+            size="icon-sm"
+            disabled={syncableItemIds.length === 0 || isSyncing || isDeleting}
+            onClick={handleSync}
+            aria-label="Sync"
+            title="Sync"
+          >
+            <RefreshCwIcon className={isSyncing ? "animate-spin" : undefined} />
+          </Button>
+          {selected.size > 0 && (
+            <span className="text-sm text-muted-foreground">{selected.size} selected</span>
+          )}
+        </div>
       </div>
       {actionError && <p className="text-sm text-destructive">{actionError}</p>}
 
@@ -263,6 +287,7 @@ export function AccountsTable({
                   aria-label="Select all accounts"
                 />
               </TableHead>
+              <TableHead className="w-0" />
               {visibleColumns.map((column) => (
                 <SortableTableHead
                   key={column.key}
@@ -271,7 +296,11 @@ export function AccountsTable({
                   dir={sortDir}
                   align={column.align}
                 >
-                  {column.label}
+                  {column.headerIcon ? (
+                    <ColumnHeaderIcon icon={column.headerIcon} label={column.label} iconOnly={column.headerIconOnly} />
+                  ) : (
+                    column.label
+                  )}
                 </SortableTableHead>
               ))}
             </TableRow>
@@ -287,6 +316,18 @@ export function AccountsTable({
                     className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[checked]:opacity-100"
                   />
                 </TableCell>
+                <TableCell>
+                  <RowActionsMenu
+                    onEdit={() => setEditingAccount(account)}
+                    onDelete={() => handleDeleteRow(account)}
+                    onSync={
+                      account.is_automatic && account.pluggy_item_id
+                        ? () => handleSyncRow(account)
+                        : undefined
+                    }
+                    disabled={isSyncing || isDeleting}
+                  />
+                </TableCell>
                 {visibleColumns.map((column) => (
                   <TableCell key={column.key} className={column.cellClassName}>
                     {renderCell(account, column.key)}
@@ -298,21 +339,20 @@ export function AccountsTable({
         </Table>
       )}
 
-      {soleSelectedAccount && (
-        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+      {editingAccount && (
+        <Dialog open={editingAccount !== null} onOpenChange={(open) => !open && setEditingAccount(null)}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Edit account</DialogTitle>
             </DialogHeader>
             <form
-              id={`edit-account-${soleSelectedAccount.id}`}
+              id={`edit-account-${editingAccount.id}`}
               action={(formData) => {
                 setActionError(null);
                 startSaveEdit(async () => {
                   try {
                     await updateAccount(formData);
-                    setEditDialogOpen(false);
-                    clearSelection();
+                    setEditingAccount(null);
                   } catch (err) {
                     setActionError(err instanceof Error ? err.message : "Failed to save account.");
                   }
@@ -320,24 +360,24 @@ export function AccountsTable({
               }}
               className="flex flex-col gap-4"
             >
-              <input type="hidden" name="id" value={soleSelectedAccount.id} />
+              <input type="hidden" name="id" value={editingAccount.id} />
               <div className="flex flex-col gap-2">
                 <Label htmlFor="label">Account</Label>
                 <Input
                   id="label"
                   name="label"
                   placeholder="Short label for this account"
-                  defaultValue={soleSelectedAccount.label ?? ""}
+                  defaultValue={editingAccount.label ?? ""}
                   autoFocus
                 />
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="name">Name</Label>
-                <Input id="name" name="name" defaultValue={soleSelectedAccount.name} required />
+                <Input id="name" name="name" defaultValue={editingAccount.name} required />
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="type">Type</Label>
-                <Select name="type" defaultValue={soleSelectedAccount.type}>
+                <Select name="type" defaultValue={editingAccount.type}>
                   <SelectTrigger id="type">
                     <SelectValue />
                   </SelectTrigger>
@@ -353,7 +393,7 @@ export function AccountsTable({
               <DialogFooter>
                 <Button
                   type="submit"
-                  form={`edit-account-${soleSelectedAccount.id}`}
+                  form={`edit-account-${editingAccount.id}`}
                   disabled={isSavingEdit}
                 >
                   {isSavingEdit ? "Saving…" : "Save"}

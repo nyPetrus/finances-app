@@ -3,7 +3,7 @@
 import { useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { PencilIcon, RefreshCwIcon, Trash2Icon } from "lucide-react";
+import { LandmarkIcon, RefreshCwIcon, TagIcon, TagsIcon, Trash2Icon, type LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -33,6 +33,8 @@ import {
 } from "@/components/ui/table";
 import { SortableTableHead } from "@/components/sortable-table-head";
 import { ColumnsMenu } from "@/components/columns-menu";
+import { ColumnHeaderIcon } from "@/components/column-header-icon";
+import { RowActionsMenu } from "@/components/row-actions-menu";
 import { CategoryIcon } from "@/components/category-icon";
 import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
@@ -63,12 +65,26 @@ function splitDateTime(iso: string) {
   return { date, time };
 }
 
-const COLUMNS: { key: SortKey; label: string; align?: "right" | "center"; cellClassName?: string }[] = [
+const COLUMNS: {
+  key: SortKey;
+  label: string;
+  align?: "right" | "center";
+  cellClassName?: string;
+  headerIcon?: LucideIcon;
+  headerIconOnly?: boolean;
+}[] = [
   { key: "date", label: "Date", cellClassName: "whitespace-nowrap" },
   { key: "description", label: "Description", cellClassName: "truncate font-medium" },
-  { key: "account", label: "Account", cellClassName: "truncate" },
-  { key: "category", label: "Category", align: "center", cellClassName: "text-center" },
-  { key: "class", label: "Class", cellClassName: "truncate" },
+  { key: "account", label: "Account", cellClassName: "truncate", headerIcon: LandmarkIcon, headerIconOnly: true },
+  {
+    key: "category",
+    label: "Category",
+    align: "center",
+    cellClassName: "text-center",
+    headerIcon: TagIcon,
+    headerIconOnly: true,
+  },
+  { key: "class", label: "Class", cellClassName: "truncate", headerIcon: TagsIcon, headerIconOnly: true },
   { key: "amount", label: "Amount", align: "right", cellClassName: "text-right" },
 ];
 
@@ -97,7 +113,7 @@ export function TransactionsTable({
   const [isDeleting, startDelete] = useTransition();
   const [isSavingEdit, startSaveEdit] = useTransition();
   const [actionError, setActionError] = useState<string | null>(null);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [editCategoryId, setEditCategoryId] = useState<string | null>(null);
   const [editClassId, setEditClassId] = useState<string | null>(null);
   const { hidden: hiddenColumns, order: columnOrder, toggle: toggleColumn, move: moveColumn } =
@@ -175,17 +191,15 @@ export function TransactionsTable({
     toggleOne,
     clear: clearSelection,
     selectedRows: selectedTransactions,
-    soleSelectedRow: soleSelectedTransaction,
   } = useRowSelection(transactions, (transaction) => transaction.id);
 
   const syncEligibleCount = selectedTransactions.filter((t) => t.category_id).length;
 
-  function openEditDialog() {
-    if (!soleSelectedTransaction) return;
+  function openEditDialog(transaction: Transaction) {
     setActionError(null);
-    setEditCategoryId(soleSelectedTransaction.category_id);
-    setEditClassId(soleSelectedTransaction.class_id);
-    setEditDialogOpen(true);
+    setEditCategoryId(transaction.category_id);
+    setEditClassId(transaction.class_id);
+    setEditingTransaction(transaction);
   }
 
   function handleSync() {
@@ -218,6 +232,32 @@ export function TransactionsTable({
     });
   }
 
+  function handleDeleteRow(transaction: Transaction) {
+    if (!window.confirm(`Delete this transaction?`)) return;
+    setActionError(null);
+    startDelete(async () => {
+      try {
+        await deleteTransactions([transaction.id]);
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : "Failed to delete.");
+      }
+    });
+  }
+
+  function handleSyncRow(transaction: Transaction) {
+    setActionError(null);
+    startSync(async () => {
+      try {
+        const count = await syncDescriptionsFromTransactions([transaction.id]);
+        toast.success(
+          count === 1 ? "Description saved — 1 transaction categorized." : `Description saved — ${count} transactions categorized.`,
+        );
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : "Failed to sync descriptions.");
+      }
+    });
+  }
+
   const columnsByKey = new Map(COLUMNS.map((column) => [column.key, column]));
   const visibleColumns = columnOrder
     .map((key) => columnsByKey.get(key)!)
@@ -228,26 +268,6 @@ export function TransactionsTable({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />
-          <Button
-            variant="outline"
-            size="icon-sm"
-            disabled={syncEligibleCount === 0 || isSyncing}
-            onClick={handleSync}
-            aria-label="Sync"
-            title="Sync"
-          >
-            <RefreshCwIcon className={isSyncing ? "animate-spin" : undefined} />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon-sm"
-            disabled={!soleSelectedTransaction}
-            onClick={openEditDialog}
-            aria-label="Edit"
-            title="Edit"
-          >
-            <PencilIcon />
-          </Button>
           {accounts.length > 0 ? (
             <AddTransactionDialog accounts={accounts} categories={categories} classes={classes} />
           ) : (
@@ -266,9 +286,21 @@ export function TransactionsTable({
             <Trash2Icon />
           </Button>
         </div>
-        {selected.size > 0 && (
-          <span className="ml-auto text-sm text-muted-foreground">{selected.size} selected</span>
-        )}
+        <div className="ml-auto flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon-sm"
+            disabled={syncEligibleCount === 0 || isSyncing}
+            onClick={handleSync}
+            aria-label="Sync"
+            title="Sync"
+          >
+            <RefreshCwIcon className={isSyncing ? "animate-spin" : undefined} />
+          </Button>
+          {selected.size > 0 && (
+            <span className="text-sm text-muted-foreground">{selected.size} selected</span>
+          )}
+        </div>
       </div>
       {actionError && <p className="text-sm text-destructive">{actionError}</p>}
 
@@ -286,6 +318,7 @@ export function TransactionsTable({
                   aria-label="Select all transactions"
                 />
               </TableHead>
+              <TableHead className="w-0" />
               {visibleColumns.map((column) => (
                 <SortableTableHead
                   key={column.key}
@@ -294,7 +327,11 @@ export function TransactionsTable({
                   dir={sortDir}
                   align={column.align}
                 >
-                  {column.label}
+                  {column.headerIcon ? (
+                    <ColumnHeaderIcon icon={column.headerIcon} label={column.label} iconOnly={column.headerIconOnly} />
+                  ) : (
+                    column.label
+                  )}
                 </SortableTableHead>
               ))}
             </TableRow>
@@ -310,6 +347,14 @@ export function TransactionsTable({
                     className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[checked]:opacity-100"
                   />
                 </TableCell>
+                <TableCell>
+                  <RowActionsMenu
+                    onEdit={() => openEditDialog(transaction)}
+                    onDelete={() => handleDeleteRow(transaction)}
+                    onSync={transaction.category_id ? () => handleSyncRow(transaction) : undefined}
+                    disabled={isSyncing || isDeleting}
+                  />
+                </TableCell>
                 {visibleColumns.map((column) => (
                   <TableCell key={column.key} className={column.cellClassName}>
                     {renderCell(transaction, column.key)}
@@ -321,21 +366,20 @@ export function TransactionsTable({
         </Table>
       )}
 
-      {soleSelectedTransaction && (
-        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+      {editingTransaction && (
+        <Dialog open={editingTransaction !== null} onOpenChange={(open) => !open && setEditingTransaction(null)}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Edit transaction</DialogTitle>
             </DialogHeader>
             <form
-              id={`edit-transaction-${soleSelectedTransaction.id}`}
+              id={`edit-transaction-${editingTransaction.id}`}
               action={(formData) => {
                 setActionError(null);
                 startSaveEdit(async () => {
                   try {
                     await updateTransaction(formData);
-                    setEditDialogOpen(false);
-                    clearSelection();
+                    setEditingTransaction(null);
                   } catch (err) {
                     setActionError(err instanceof Error ? err.message : "Failed to update transaction.");
                   }
@@ -343,13 +387,13 @@ export function TransactionsTable({
               }}
               className="flex flex-col gap-4"
             >
-              <input type="hidden" name="id" value={soleSelectedTransaction.id} />
+              <input type="hidden" name="id" value={editingTransaction.id} />
               <div className="flex flex-col gap-2">
                 <Label htmlFor="description">Description</Label>
                 <Input
                   id="description"
                   name="description"
-                  defaultValue={soleSelectedTransaction.description}
+                  defaultValue={editingTransaction.description}
                   required
                 />
               </div>
@@ -360,7 +404,7 @@ export function TransactionsTable({
                     id="date"
                     name="date"
                     type="date"
-                    defaultValue={splitDateTime(soleSelectedTransaction.date).date}
+                    defaultValue={splitDateTime(editingTransaction.date).date}
                     required
                   />
                 </div>
@@ -370,7 +414,7 @@ export function TransactionsTable({
                     id="time"
                     name="time"
                     type="time"
-                    defaultValue={splitDateTime(soleSelectedTransaction.date).time}
+                    defaultValue={splitDateTime(editingTransaction.date).time}
                   />
                 </div>
                 <div className="flex flex-col gap-2">
@@ -380,14 +424,14 @@ export function TransactionsTable({
                     name="amount"
                     type="number"
                     step="0.01"
-                    defaultValue={soleSelectedTransaction.amount}
+                    defaultValue={editingTransaction.amount}
                     required
                   />
                 </div>
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="account_id">Account</Label>
-                <Select name="account_id" defaultValue={soleSelectedTransaction.account_id}>
+                <Select name="account_id" defaultValue={editingTransaction.account_id}>
                   <SelectTrigger id="account_id">
                     <SelectValue />
                   </SelectTrigger>
@@ -453,7 +497,7 @@ export function TransactionsTable({
                 </div>
               </div>
               <DialogFooter>
-                <Button type="submit" form={`edit-transaction-${soleSelectedTransaction.id}`} disabled={isSavingEdit}>
+                <Button type="submit" form={`edit-transaction-${editingTransaction.id}`} disabled={isSavingEdit}>
                   {isSavingEdit ? "Saving…" : "Save"}
                 </Button>
               </DialogFooter>

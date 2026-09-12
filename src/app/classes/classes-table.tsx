@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { PencilIcon, Trash2Icon } from "lucide-react";
+import { TagIcon, TagsIcon, Trash2Icon, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -30,6 +30,8 @@ import {
 } from "@/components/ui/table";
 import { SortableTableHead } from "@/components/sortable-table-head";
 import { ColumnsMenu } from "@/components/columns-menu";
+import { ColumnHeaderIcon } from "@/components/column-header-icon";
+import { RowActionsMenu } from "@/components/row-actions-menu";
 import { CategoryIcon } from "@/components/category-icon";
 import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
@@ -38,9 +40,23 @@ import { deleteClasses, updateClass } from "./actions";
 import { AddClassDialog } from "./add-class-dialog";
 import { type SortKey } from "./sort";
 
-const COLUMNS: { key: SortKey; label: string; align?: "center"; cellClassName?: string }[] = [
-  { key: "name", label: "Name", cellClassName: "font-medium" },
-  { key: "category", label: "Category", align: "center", cellClassName: "text-center" },
+const COLUMNS: {
+  key: SortKey;
+  label: string;
+  align?: "center";
+  cellClassName?: string;
+  headerIcon?: LucideIcon;
+  headerIconOnly?: boolean;
+}[] = [
+  { key: "name", label: "Name", cellClassName: "font-medium", headerIcon: TagsIcon },
+  {
+    key: "category",
+    label: "Category",
+    align: "center",
+    cellClassName: "text-center",
+    headerIcon: TagIcon,
+    headerIconOnly: true,
+  },
 ];
 
 const DEFAULT_COLUMN_ORDER = COLUMNS.map((column) => column.key);
@@ -59,7 +75,7 @@ export function ClassesTable({
   const [isDeleting, startDelete] = useTransition();
   const [isSavingEdit, startSaveEdit] = useTransition();
   const [actionError, setActionError] = useState<string | null>(null);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingClass, setEditingClass] = useState<Class | null>(null);
   const { hidden: hiddenColumns, order: columnOrder, toggle: toggleColumn, move: moveColumn } =
     useColumnPreferences<SortKey>("classes-table", DEFAULT_COLUMN_ORDER);
 
@@ -94,7 +110,6 @@ export function ClassesTable({
     toggleAll,
     toggleOne,
     clear: clearSelection,
-    soleSelectedRow: soleSelectedClass,
   } = useRowSelection(classes, (classItem) => classItem.id);
 
   function handleDelete() {
@@ -112,6 +127,18 @@ export function ClassesTable({
     });
   }
 
+  function handleDeleteRow(classItem: Class) {
+    if (!window.confirm(`Delete this class?`)) return;
+    setActionError(null);
+    startDelete(async () => {
+      try {
+        await deleteClasses([classItem.id]);
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : "Failed to delete.");
+      }
+    });
+  }
+
   const columnsByKey = new Map(COLUMNS.map((column) => [column.key, column]));
   const visibleColumns = columnOrder
     .map((key) => columnsByKey.get(key)!)
@@ -122,16 +149,6 @@ export function ClassesTable({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />
-          <Button
-            variant="outline"
-            size="icon-sm"
-            disabled={!soleSelectedClass}
-            onClick={() => setEditDialogOpen(true)}
-            aria-label="Edit"
-            title="Edit"
-          >
-            <PencilIcon />
-          </Button>
           <AddClassDialog categories={categories} />
           <Button
             variant="ghost"
@@ -164,9 +181,14 @@ export function ClassesTable({
                   aria-label="Select all classes"
                 />
               </TableHead>
+              <TableHead className="w-0" />
               {visibleColumns.map((column) => (
                 <SortableTableHead key={column.key} href={sortHref(column.key)} active={sortKey === column.key} dir={sortDir} align={column.align}>
-                  {column.label}
+                  {column.headerIcon ? (
+                    <ColumnHeaderIcon icon={column.headerIcon} label={column.label} iconOnly={column.headerIconOnly} />
+                  ) : (
+                    column.label
+                  )}
                 </SortableTableHead>
               ))}
             </TableRow>
@@ -182,6 +204,13 @@ export function ClassesTable({
                     className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[checked]:opacity-100"
                   />
                 </TableCell>
+                <TableCell>
+                  <RowActionsMenu
+                    onEdit={() => setEditingClass(classItem)}
+                    onDelete={() => handleDeleteRow(classItem)}
+                    disabled={isDeleting}
+                  />
+                </TableCell>
                 {visibleColumns.map((column) => (
                   <TableCell key={column.key} className={column.cellClassName}>
                     {renderCell(classItem, column.key)}
@@ -193,21 +222,20 @@ export function ClassesTable({
         </Table>
       )}
 
-      {soleSelectedClass && (
-        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+      {editingClass && (
+        <Dialog open={editingClass !== null} onOpenChange={(open) => !open && setEditingClass(null)}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Edit class</DialogTitle>
             </DialogHeader>
             <form
-              id={`edit-class-${soleSelectedClass.id}`}
+              id={`edit-class-${editingClass.id}`}
               action={(formData) => {
                 setActionError(null);
                 startSaveEdit(async () => {
                   try {
                     await updateClass(formData);
-                    setEditDialogOpen(false);
-                    clearSelection();
+                    setEditingClass(null);
                   } catch (err) {
                     setActionError(err instanceof Error ? err.message : "Failed to update class.");
                   }
@@ -215,14 +243,14 @@ export function ClassesTable({
               }}
               className="flex flex-col gap-4"
             >
-              <input type="hidden" name="id" value={soleSelectedClass.id} />
+              <input type="hidden" name="id" value={editingClass.id} />
               <div className="flex flex-col gap-2">
                 <Label htmlFor="name">Name</Label>
-                <Input id="name" name="name" defaultValue={soleSelectedClass.name} required />
+                <Input id="name" name="name" defaultValue={editingClass.name} required />
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="category_id">Category</Label>
-                <Select name="category_id" defaultValue={soleSelectedClass.category_id}>
+                <Select name="category_id" defaultValue={editingClass.category_id}>
                   <SelectTrigger id="category_id">
                     <SelectValue />
                   </SelectTrigger>
@@ -236,7 +264,7 @@ export function ClassesTable({
                 </Select>
               </div>
               <DialogFooter>
-                <Button type="submit" form={`edit-class-${soleSelectedClass.id}`} disabled={isSavingEdit}>
+                <Button type="submit" form={`edit-class-${editingClass.id}`} disabled={isSavingEdit}>
                   {isSavingEdit ? "Saving…" : "Save"}
                 </Button>
               </DialogFooter>

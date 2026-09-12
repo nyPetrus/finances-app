@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { PencilIcon, Trash2Icon } from "lucide-react";
+import { TagIcon, TagsIcon, Trash2Icon, type LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -31,6 +31,8 @@ import {
 } from "@/components/ui/table";
 import { SortableTableHead } from "@/components/sortable-table-head";
 import { ColumnsMenu } from "@/components/columns-menu";
+import { ColumnHeaderIcon } from "@/components/column-header-icon";
+import { RowActionsMenu } from "@/components/row-actions-menu";
 import { CategoryIcon } from "@/components/category-icon";
 import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
@@ -45,11 +47,25 @@ const checkTypeLabels: Record<MappedDescription["check_type"], string> = {
   contains: "Contains",
 };
 
-const COLUMNS: { key: SortKey; label: string; align?: "center"; cellClassName?: string }[] = [
+const COLUMNS: {
+  key: SortKey;
+  label: string;
+  align?: "center";
+  cellClassName?: string;
+  headerIcon?: LucideIcon;
+  headerIconOnly?: boolean;
+}[] = [
   { key: "description", label: "Description", cellClassName: "truncate" },
   { key: "check_type", label: "Operator" },
-  { key: "category", label: "Category", align: "center", cellClassName: "text-center" },
-  { key: "class", label: "Class", cellClassName: "truncate" },
+  {
+    key: "category",
+    label: "Category",
+    align: "center",
+    cellClassName: "text-center",
+    headerIcon: TagIcon,
+    headerIconOnly: true,
+  },
+  { key: "class", label: "Class", cellClassName: "truncate", headerIcon: TagsIcon, headerIconOnly: true },
 ];
 
 const DEFAULT_COLUMN_ORDER = COLUMNS.map((column) => column.key);
@@ -70,7 +86,7 @@ export function DescriptionsTable({
   const [isDeleting, startDelete] = useTransition();
   const [isSavingEdit, startSaveEdit] = useTransition();
   const [actionError, setActionError] = useState<string | null>(null);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingMapping, setEditingMapping] = useState<MappedDescription | null>(null);
   const [editCategoryId, setEditCategoryId] = useState<string | null>(null);
   const [editClassId, setEditClassId] = useState<string | null>(null);
   const { hidden: hiddenColumns, order: columnOrder, toggle: toggleColumn, move: moveColumn } =
@@ -117,15 +133,13 @@ export function DescriptionsTable({
     toggleAll,
     toggleOne,
     clear: clearSelection,
-    soleSelectedRow: soleSelectedMapping,
   } = useRowSelection(mappings, (mapping) => mapping.description);
 
-  function openEditDialog() {
-    if (!soleSelectedMapping) return;
+  function openEditDialog(mapping: MappedDescription) {
     setActionError(null);
-    setEditCategoryId(soleSelectedMapping.category_id);
-    setEditClassId(soleSelectedMapping.class_id);
-    setEditDialogOpen(true);
+    setEditCategoryId(mapping.category_id);
+    setEditClassId(mapping.class_id);
+    setEditingMapping(mapping);
   }
 
   function handleDelete() {
@@ -143,6 +157,18 @@ export function DescriptionsTable({
     });
   }
 
+  function handleDeleteRow(mapping: MappedDescription) {
+    if (!window.confirm(`Delete this mapping?`)) return;
+    setActionError(null);
+    startDelete(async () => {
+      try {
+        await deleteMappedDescriptions([mapping.description]);
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : "Failed to delete.");
+      }
+    });
+  }
+
   const columnsByKey = new Map(COLUMNS.map((column) => [column.key, column]));
   const visibleColumns = columnOrder
     .map((key) => columnsByKey.get(key)!)
@@ -153,16 +179,6 @@ export function DescriptionsTable({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />
-          <Button
-            variant="outline"
-            size="icon-sm"
-            disabled={!soleSelectedMapping}
-            onClick={openEditDialog}
-            aria-label="Edit"
-            title="Edit"
-          >
-            <PencilIcon />
-          </Button>
           <AddMappingDialog categories={categories} classes={classes} />
           <Button
             variant="ghost"
@@ -195,9 +211,14 @@ export function DescriptionsTable({
                   aria-label="Select all mappings"
                 />
               </TableHead>
+              <TableHead className="w-0" />
               {visibleColumns.map((column) => (
                 <SortableTableHead key={column.key} href={sortHref(column.key)} active={sortKey === column.key} dir={sortDir} align={column.align}>
-                  {column.label}
+                  {column.headerIcon ? (
+                    <ColumnHeaderIcon icon={column.headerIcon} label={column.label} iconOnly={column.headerIconOnly} />
+                  ) : (
+                    column.label
+                  )}
                 </SortableTableHead>
               ))}
             </TableRow>
@@ -213,6 +234,13 @@ export function DescriptionsTable({
                     className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[checked]:opacity-100"
                   />
                 </TableCell>
+                <TableCell>
+                  <RowActionsMenu
+                    onEdit={() => openEditDialog(mapping)}
+                    onDelete={() => handleDeleteRow(mapping)}
+                    disabled={isDeleting}
+                  />
+                </TableCell>
                 {visibleColumns.map((column) => (
                   <TableCell key={column.key} className={column.cellClassName}>
                     {renderCell(mapping, column.key)}
@@ -224,21 +252,20 @@ export function DescriptionsTable({
         </Table>
       )}
 
-      {soleSelectedMapping && (
-        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+      {editingMapping && (
+        <Dialog open={editingMapping !== null} onOpenChange={(open) => !open && setEditingMapping(null)}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Edit mapping</DialogTitle>
             </DialogHeader>
             <form
-              id={`edit-mapping-${soleSelectedMapping.description}`}
+              id={`edit-mapping-${editingMapping.description}`}
               action={(formData) => {
                 setActionError(null);
                 startSaveEdit(async () => {
                   try {
                     await updateMappedDescription(formData);
-                    setEditDialogOpen(false);
-                    clearSelection();
+                    setEditingMapping(null);
                   } catch (err) {
                     setActionError(err instanceof Error ? err.message : "Failed to update mapping.");
                   }
@@ -246,19 +273,19 @@ export function DescriptionsTable({
               }}
               className="flex flex-col gap-4"
             >
-              <input type="hidden" name="original_description" value={soleSelectedMapping.description} />
+              <input type="hidden" name="original_description" value={editingMapping.description} />
               <div className="flex flex-col gap-2">
                 <Label htmlFor="description">Description</Label>
                 <Input
                   id="description"
                   name="description"
-                  defaultValue={soleSelectedMapping.description}
+                  defaultValue={editingMapping.description}
                   required
                 />
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="check_type">Operator</Label>
-                <Select name="check_type" defaultValue={soleSelectedMapping.check_type}>
+                <Select name="check_type" defaultValue={editingMapping.check_type}>
                   <SelectTrigger id="check_type">
                     <SelectValue />
                   </SelectTrigger>
@@ -320,7 +347,7 @@ export function DescriptionsTable({
                 </Select>
               </div>
               <DialogFooter>
-                <Button type="submit" form={`edit-mapping-${soleSelectedMapping.description}`} disabled={isSavingEdit}>
+                <Button type="submit" form={`edit-mapping-${editingMapping.description}`} disabled={isSavingEdit}>
                   {isSavingEdit ? "Saving…" : "Save"}
                 </Button>
               </DialogFooter>

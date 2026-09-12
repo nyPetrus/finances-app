@@ -27,7 +27,9 @@ export function ColumnsMenu<K extends string>({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<Button variant="outline" size="icon-sm" />}>
+      <DropdownMenuTrigger
+        render={<Button variant="outline" size="icon-sm" aria-label="Columns" title="Columns" />}
+      >
         <Columns3Icon />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="min-w-48">
