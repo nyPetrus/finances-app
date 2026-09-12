@@ -12,6 +12,17 @@ here shows a `(year)`/`— {year}` suffix in a card or chart title — the
 page-level year nav (`← {year} {year+1} →` next to the `<h1>`) already
 establishes it once.
 
+- **`R$` is reserved for the 4 stat cards; nothing else on this page shows
+  a currency symbol.** `page.tsx`'s own `formatCurrency` (used only by the
+  Balance/Income/Expenses/Net cards) is the one Dashboard copy that keeps
+  `style: "currency", currency: "BRL"`. `income-expenses-transfers-
+  chart.tsx`'s and `category-bar-chart.tsx`'s `formatCurrency` (their
+  tooltips and bar labels) and `dashboard-transactions-table.tsx`'s (its
+  Amount column) all use the plain-decimal `Intl.NumberFormat("pt-BR", {
+  minimumFractionDigits: 2, maximumFractionDigits: 2 })` instead — the
+  same no-symbol style Transactions'/Accounts' own tables use (see
+  `transactions-column-formatting`). Don't copy the cards' currency-style
+  `formatCurrency` into a new chart or into the embedded table.
 - **Colors are never hand-picked — they trace back to the app's own
   existing tokens.** `src/lib/chart-colors.ts` exports `EXPENSE_HUE`/
   `INCOME_HUE`/`TRANSFER_HUE` (`{ h, c }` OKLCH hue+chroma pairs) and their

@@ -13,10 +13,13 @@ These are presentation choices specific to `transactions-table.tsx`'s
   maximumFractionDigits: 2 })` (plain decimal style) instead of `style:
   "currency", currency: "BRL"` — it renders `1.234,56`, not `R$ 1.234,56`.
   Accounts' Balance column (`accounts-table.tsx`) mirrors this same
-  no-symbol style (its own local `formatCurrency` copy). Budget's
-  planned/actual/variance, the Dashboard's cards, and the month header
-  each still keep their own `formatCurrency` copy with currency style and
-  the `R$` symbol — don't change those unless asked.
+  no-symbol style (its own local `formatCurrency` copy), and so does the
+  Dashboard's embedded transactions table and its charts (see
+  `dashboard-conventions`) — the `R$` symbol is reserved for the
+  Dashboard's 4 stat cards specifically, not anything chart- or
+  table-shaped. Budget's planned/actual/variance and the month header
+  still keep their own `formatCurrency` copy with currency style and the
+  `R$` symbol — don't change those unless asked.
 - **Date drops the year, abbreviates the month, and never wraps**:
   `formatDate` renders `DD mmm` (e.g. `11 set`) via a local
   `MONTH_ABBREVIATIONS` array (`["jan", "fev", ..., "dez"]`, no periods),
