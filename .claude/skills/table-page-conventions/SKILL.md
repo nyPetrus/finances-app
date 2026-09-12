@@ -137,9 +137,19 @@ list page instead of inventing a fresh layout.
   rendering or column alignment as part of adding a header icon — it's a
   header-only change (see the "Category-as-foreign-column" bullet below for
   how the *cells* render).
-- **Sorting**: still via the shared `SortableTableHead` component
+- **Column header titles are centered by default.** `SortableTableHead`
   (`src/components/sortable-table-head.tsx`, `align` is `"left" | "right" |
-  "center"`). Each page keeps its own `sort.ts` exporting `SORT_KEYS as
+  "center"`) defaults `align` to `"center"` — a column omits `align`
+  entirely in `COLUMNS` unless it needs to deviate from that (nothing
+  currently does; there used to be per-column `align: "center"` overrides
+  before centering became the default, most of which are now redundant but
+  harmless). This is a *header-only* setting — it doesn't touch the body
+  cell's own alignment, which is controlled independently by that column's
+  `cellClassName` (e.g. Transactions' `amount` and Accounts' `balance` have
+  a centered header but keep `cellClassName: "text-right"` on the cell, so
+  the numbers themselves still right-align under a centered title).
+- **Sorting**: still via the shared `SortableTableHead` component. Each
+  page keeps its own `sort.ts` exporting `SORT_KEYS as
   const`, `SortKey`, and `isSortKey`, imported by both `page.tsx` (to parse
   `searchParams`) and the `<X>Table` client component. The actual row order
   is still computed server-side in `page.tsx` with a `switch (sortKey)`

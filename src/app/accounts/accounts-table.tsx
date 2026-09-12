@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { LandmarkIcon, RefreshCwIcon, Trash2Icon, type LucideIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -74,10 +75,10 @@ const COLUMNS: {
 }[] = [
   { key: "account", label: "Account", cellClassName: "truncate" },
   { key: "name", label: "Name", cellClassName: "truncate font-medium", headerIcon: LandmarkIcon },
-  { key: "source", label: "Source", align: "center", cellClassName: "text-center whitespace-nowrap" },
-  { key: "type", label: "Type", align: "center", cellClassName: "text-center whitespace-nowrap" },
+  { key: "source", label: "Source", cellClassName: "truncate" },
+  { key: "type", label: "Type" },
   { key: "lastSync", label: "Last sync", align: "center", cellClassName: "text-center whitespace-nowrap" },
-  { key: "balance", label: "Balance", align: "right", cellClassName: "text-right whitespace-nowrap" },
+  { key: "balance", label: "Balance", cellClassName: "text-right whitespace-nowrap" },
 ];
 
 const DEFAULT_COLUMN_ORDER = COLUMNS.map((column) => column.key);
@@ -85,13 +86,25 @@ const DEFAULT_COLUMN_ORDER = COLUMNS.map((column) => column.key);
 function renderCell(account: Account, key: SortKey) {
   switch (key) {
     case "account":
-      return account.label ?? <span className="text-sm text-muted-foreground">—</span>;
+      return account.label ? (
+        <Badge variant="secondary" className="max-w-full gap-1 truncate">
+          {account.label}
+        </Badge>
+      ) : (
+        <span className="text-sm text-muted-foreground">—</span>
+      );
     case "name":
       return account.name;
     case "source":
-      return account.source ?? "—";
+      return account.source ? (
+        <Badge variant="secondary" className="max-w-full gap-1 truncate">
+          {account.source}
+        </Badge>
+      ) : (
+        <span className="text-sm text-muted-foreground">—</span>
+      );
     case "type":
-      return typeLabels[account.type];
+      return <Badge variant="secondary">{typeLabels[account.type]}</Badge>;
     case "lastSync":
       return account.is_automatic ? (
         formatDateTime(account.updated_at)

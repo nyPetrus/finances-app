@@ -22,14 +22,25 @@ description: Use when touching how the Accounts table (src/app/accounts/accounts
   Unlike the Transactions Date column, the year is kept (2-digit) since
   Accounts has no page-level month/year header to make it redundant.
 - **Every column keeps its row to a single line, and the table avoids
-  horizontal scroll by letting Account/Name shrink instead of wrapping.**
-  `COLUMNS` gives every cell either `truncate` (Account, Name — free-text
-  fields that can be arbitrarily long, so they ellipsis under space
-  pressure rather than wrap or force the table wider) or
-  `whitespace-nowrap` (Source, Type, Last sync, Balance — short,
-  structured values that should never break across two lines). This
-  overrides the shared `TableCell`'s default wrapping (see
-  `table-page-conventions`) specifically for this table.
+  horizontal scroll by letting Account/Name/Source shrink instead of
+  wrapping.** `COLUMNS` gives Account/Name/Source `cellClassName:
+  "truncate"` (free-text fields that can be arbitrarily long, so they
+  ellipsis under space pressure rather than wrap or force the table wider)
+  and Last sync/Balance `whitespace-nowrap` (structured values that should
+  never break across two lines). This overrides the shared `TableCell`'s
+  default wrapping (see `table-page-conventions`) specifically for this
+  table.
+- **Account, Source, and Type render as a `Badge` chip**
+  (`variant="secondary"`), the same treatment as the Categories table's
+  Type column (see `table-page-conventions`). Account and Source additionally
+  get `className="max-w-full gap-1 truncate"` on the `Badge` itself — unlike
+  Categories' Type (a short, bounded enum label), both are free text
+  (`account.label`/`account.source`) that could in principle be long, and
+  `Badge`'s own `w-fit shrink-0` would otherwise let a long value stretch
+  the table wider than its container. Type doesn't need this since
+  `typeLabels` are always short. All three fall back to a plain muted
+  `"—"` span when the value is null (Type is never null, so it never needs
+  the fallback).
 - **Name is the origin-table identity column, so its header is icon+text**
   (`LandmarkIcon`, via `headerIcon` — see `table-page-conventions`'s
   "Column header icons" bullet); Account (the short label column) stays

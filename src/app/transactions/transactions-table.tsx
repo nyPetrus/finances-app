@@ -85,7 +85,7 @@ const COLUMNS: {
     headerIconOnly: true,
   },
   { key: "class", label: "Class", cellClassName: "truncate", headerIcon: TagsIcon, headerIconOnly: true },
-  { key: "amount", label: "Amount", align: "right", cellClassName: "text-right" },
+  { key: "amount", label: "Amount", cellClassName: "text-right" },
 ];
 
 const DEFAULT_COLUMN_ORDER = COLUMNS.map((column) => column.key);

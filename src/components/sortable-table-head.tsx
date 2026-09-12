@@ -6,7 +6,7 @@ export function SortableTableHead({
   href,
   active,
   dir,
-  align = "left",
+  align = "center",
   children,
 }: {
   href: string;
