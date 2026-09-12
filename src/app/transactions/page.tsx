@@ -2,7 +2,6 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import type { Account, Category, Class, Transaction } from "@/lib/supabase/types";
 import { Button } from "@/components/ui/button";
-import { AccountFilter } from "./account-filter";
 import { MonthPicker } from "./month-picker";
 import { TransactionsTable } from "./transactions-table";
 import { isSortKey, type SortKey } from "./sort";
@@ -43,9 +42,9 @@ function currentMonthKey() {
 export default async function TransactionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ month?: string; account?: string; sort?: string; dir?: string }>;
+  searchParams: Promise<{ month?: string; sort?: string; dir?: string }>;
 }) {
-  const { month: monthParam, account: accountParam, sort: sortParam, dir: dirParam } = await searchParams;
+  const { month: monthParam, sort: sortParam, dir: dirParam } = await searchParams;
   const monthKey = monthParam && /^\d{4}-\d{2}$/.test(monthParam) ? monthParam : currentMonthKey();
   const monthStart = `${monthKey}-01`;
   const monthEnd = `${shiftMonth(monthKey, 1)}-01`;
@@ -56,7 +55,6 @@ export default async function TransactionsPage({
 
   function buildHref(overrides: { month?: string; sort?: SortKey; dir?: "asc" | "desc" } = {}) {
     const params = new URLSearchParams({ month: overrides.month ?? monthKey });
-    if (accountParam) params.set("account", accountParam);
     const nextSort = overrides.sort ?? (isSortKey(sortParam) ? sortParam : undefined);
     const nextDir = overrides.dir ?? (isSortKey(sortParam) ? sortDir : undefined);
     if (nextSort) params.set("sort", nextSort);
@@ -66,21 +64,18 @@ export default async function TransactionsPage({
 
   const supabase = await createClient();
 
-  let transactionsQuery = supabase
-    .from("transactions")
-    .select("*")
-    .gte("date", monthStart)
-    .lt("date", monthEnd)
-    .order("date", { ascending: false });
-  if (accountParam) transactionsQuery = transactionsQuery.eq("account_id", accountParam);
-
   const [
     { data: transactions, error: txError },
     { data: accounts, error: accError },
     { data: categories, error: catError },
     { data: classes, error: classError },
   ] = await Promise.all([
-    transactionsQuery,
+    supabase
+      .from("transactions")
+      .select("*")
+      .gte("date", monthStart)
+      .lt("date", monthEnd)
+      .order("date", { ascending: false }),
     supabase.from("accounts").select("*").order("name"),
     supabase.from("categories").select("*").order("name"),
     supabase.from("classes").select("*").order("name"),
@@ -175,13 +170,6 @@ export default async function TransactionsPage({
         </Button>
       </div>
 
-      {allAccounts.length > 0 && (
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Account</span>
-          <AccountFilter accounts={allAccounts} month={monthKey} selectedAccountId={accountParam} />
-        </div>
-      )}
-
       <TransactionsTable
         transactions={sortedTransactions}
         accounts={allAccounts}
@@ -190,7 +178,6 @@ export default async function TransactionsPage({
         sortKey={sortKey}
         sortDir={sortDir}
         monthKey={monthKey}
-        accountParam={accountParam}
         emptyMessage={
           <>
             No transactions in {formatMonthLabel(monthKey)}.{" "}

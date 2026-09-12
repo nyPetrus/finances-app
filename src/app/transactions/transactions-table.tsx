@@ -82,7 +82,6 @@ export function TransactionsTable({
   sortKey,
   sortDir,
   monthKey,
-  accountParam,
   emptyMessage,
 }: {
   transactions: Transaction[];
@@ -92,7 +91,6 @@ export function TransactionsTable({
   sortKey: SortKey;
   sortDir: "asc" | "desc";
   monthKey: string;
-  accountParam: string | undefined;
   emptyMessage: ReactNode;
 }) {
   const [isSyncing, startSync] = useTransition();
@@ -115,7 +113,6 @@ export function TransactionsTable({
   function sortHref(column: SortKey) {
     const nextDir: "asc" | "desc" = sortKey === column && sortDir === "asc" ? "desc" : "asc";
     const params = new URLSearchParams({ month: monthKey });
-    if (accountParam) params.set("account", accountParam);
     params.set("sort", column);
     params.set("dir", nextDir);
     return `/transactions?${params.toString()}`;
