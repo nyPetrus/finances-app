@@ -35,6 +35,11 @@ These are presentation choices specific to `transactions-table.tsx`'s
   has a leading `CategoryIcon`, since `Account` and `Class`
   (`src/lib/supabase/types.ts`) have no `icon` field of their own — only
   `Category` does.
+- **Description, Account, and Class also need a `max-w-*` on the cell
+  alongside `truncate`** (`max-w-64`, `max-w-40`, `max-w-40` respectively
+  in `COLUMNS`' `cellClassName`) — see `table-page-conventions`'s
+  "A column's `cellClassName: truncate`..." bullet for why the `truncate`
+  on the `Badge` itself isn't enough on its own.
 - **Account, Category, and Class headers are icon-only** (`LandmarkIcon`,
   `TagIcon`, `TagsIcon` respectively — see `table-page-conventions`'s
   "Column header icons" bullet), even though only Category's *cell* is

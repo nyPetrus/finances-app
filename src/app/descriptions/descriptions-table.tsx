@@ -55,7 +55,7 @@ const COLUMNS: {
   headerIcon?: LucideIcon;
   headerIconOnly?: boolean;
 }[] = [
-  { key: "description", label: "Description", cellClassName: "truncate" },
+  { key: "description", label: "Description", cellClassName: "max-w-64 truncate" },
   { key: "check_type", label: "Operator" },
   {
     key: "category",
@@ -65,7 +65,7 @@ const COLUMNS: {
     headerIcon: TagIcon,
     headerIconOnly: true,
   },
-  { key: "class", label: "Class", cellClassName: "truncate", headerIcon: TagsIcon, headerIconOnly: true },
+  { key: "class", label: "Class", cellClassName: "max-w-40 truncate", headerIcon: TagsIcon, headerIconOnly: true },
 ];
 
 const DEFAULT_COLUMN_ORDER = COLUMNS.map((column) => column.key);

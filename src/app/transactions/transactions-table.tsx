@@ -74,8 +74,8 @@ const COLUMNS: {
   headerIconOnly?: boolean;
 }[] = [
   { key: "date", label: "Date", cellClassName: "whitespace-nowrap" },
-  { key: "description", label: "Description", cellClassName: "truncate font-medium" },
-  { key: "account", label: "Account", cellClassName: "truncate", headerIcon: LandmarkIcon, headerIconOnly: true },
+  { key: "description", label: "Description", cellClassName: "max-w-64 truncate font-medium" },
+  { key: "account", label: "Account", cellClassName: "max-w-40 truncate", headerIcon: LandmarkIcon, headerIconOnly: true },
   {
     key: "category",
     label: "Category",
@@ -84,7 +84,7 @@ const COLUMNS: {
     headerIcon: TagIcon,
     headerIconOnly: true,
   },
-  { key: "class", label: "Class", cellClassName: "truncate", headerIcon: TagsIcon, headerIconOnly: true },
+  { key: "class", label: "Class", cellClassName: "max-w-40 truncate", headerIcon: TagsIcon, headerIconOnly: true },
   { key: "amount", label: "Amount", cellClassName: "text-right" },
 ];
 

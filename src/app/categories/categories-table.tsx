@@ -55,7 +55,7 @@ const COLUMNS: {
   headerIcon?: LucideIcon;
   headerIconOnly?: boolean;
 }[] = [
-  { key: "name", label: "Name", cellClassName: "font-medium", headerIcon: TagIcon },
+  { key: "name", label: "Name", cellClassName: "max-w-72 font-medium", headerIcon: TagIcon },
   { key: "type", label: "Type" },
 ];
 
@@ -67,7 +67,7 @@ function renderCell(category: Category, key: SortKey) {
       return (
         <div className="flex items-center gap-2">
           <CategoryIcon icon={category.icon} className="size-4 shrink-0 text-muted-foreground" />
-          <span className="truncate">{category.name}</span>
+          <span className="min-w-0 truncate">{category.name}</span>
         </div>
       );
     case "type":

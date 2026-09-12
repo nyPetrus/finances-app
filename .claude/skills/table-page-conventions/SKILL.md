@@ -20,6 +20,52 @@ list page instead of inventing a fresh layout.
   leading column is always an unlabeled `<TableHead className="w-0" />`
   holding a select-all `Checkbox`. Default to one flat, sortable table rather
   than grouped sections.
+- **A column's `cellClassName: "truncate"` must always be paired with a
+  `max-w-*` on that same cell, or it silently does nothing.** This app's
+  tables use the default (`auto`) HTML table layout, not `table-fixed` (see
+  the `Markup` bullet above — fixed widths/`<colgroup>` aren't allowed since
+  columns can be hidden/reordered). In `auto` layout, `white-space: nowrap`
+  (part of what Tailwind's `truncate` sets, alongside `overflow-hidden` and
+  `text-overflow: ellipsis`) makes a cell's *min-content* width equal its
+  full, un-ellipsized width — so the browser never actually gets to shrink
+  that column enough to trigger the ellipsis; it just grows the table (and
+  the `overflow-auto` container around it) wider instead, which reintroduces
+  the horizontal scroll `truncate` was supposed to prevent in the first
+  place. An explicit `max-w-*` on the cell caps how wide the column is
+  *allowed* to grow, which is what actually gives `truncate` something to
+  clip against. The table still lets the column render wider than that cap
+  when there's slack (e.g. every value on screen happens to be short) —
+  `max-w-*` only participates as an upper bound in the layout algorithm, not
+  a fixed width, so short values aren't cropped unnecessarily. If a column
+  wraps a value in a `Badge` (see the "Category-as-foreign-column" bullet
+  below and `transactions-column-formatting`) the `max-w-*` still has to go
+  on the **cell**, not just the `Badge` — the `Badge`'s own `max-w-full` is
+  relative to its parent, so without a capped parent it's still an
+  unbounded 100%. If a cell wraps its content in a flex row (icon + text,
+  e.g. Categories' Name column) the truncating child also needs `min-w-0`
+  alongside `truncate` — flex items default to `min-width: auto`, which for
+  a `nowrap` child is again its full content width, the same underlying
+  problem one level down.
+  Currently applied: Transactions' `description` (`max-w-64`), `account`
+  and `class` (`max-w-40` each, wrapped in a `Badge`); Categories' `name`
+  (`max-w-72` on the cell, `min-w-0 truncate` on the inner span next to the
+  `CategoryIcon`); Descriptions' `description` (`max-w-64`) and `class`
+  (`max-w-40`); Accounts' `account` (`max-w-40`), `name` (`max-w-56`), and
+  `source` (`max-w-32`, also `Badge`-wrapped) — see
+  `accounts-column-formatting`. Classes' `name` column doesn't use
+  `truncate` at all (no `cellClassName` beyond `font-medium`) and is
+  unaffected — it relies on the shared `TableCell`'s default `break-words`
+  wrapping instead, which never causes horizontal overflow since a wrapped
+  line never forces the column wider, just the row taller. Wrapping instead
+  of truncating is a legitimate alternative for a column that doesn't need
+  to guarantee a single line; don't add `truncate`/`max-w-*` to a column
+  that's fine wrapping just for consistency's sake.
+  If a table still needs its container widened after this (rather than
+  tightening a `max-w-*` further), Transactions and Accounts both use
+  `max-w-5xl` on the page (`mx-auto flex w-full max-w-5xl flex-col gap-6
+  p-6`) instead of a narrower one — Categories/Classes keep `max-w-3xl`,
+  Descriptions keeps `max-w-4xl`, since their column counts are lower and
+  they don't need the extra room.
 - **Row selection**: `useRowSelection` (`src/hooks/use-row-selection.ts`) —
   call it with the page's row array and a `getId` function (usually
   `(row) => row.id`; Descriptions keys on `(row) => row.description` since
