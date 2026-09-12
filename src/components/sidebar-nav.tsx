@@ -20,8 +20,8 @@ import { signOut } from "@/app/login/actions";
 
 const links = [
   { href: "/", label: "Dashboard", icon: LayoutDashboardIcon },
-  { href: "/transactions", label: "Transactions", icon: ArrowLeftRightIcon },
   { href: "/budget", label: "Budget", icon: WalletIcon },
+  { href: "/transactions", label: "Transactions", icon: ArrowLeftRightIcon },
   { href: "/categories", label: "Categories", icon: TagIcon },
   { href: "/classes", label: "Classes", icon: TagsIcon },
   { href: "/descriptions", label: "Descriptions", icon: FileTextIcon },
