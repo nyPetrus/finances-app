@@ -109,11 +109,10 @@ export default async function Home({
 
   const incomeByMonth = Array(12).fill(0);
   const expensesByMonth = Array(12).fill(0);
-  const transfersByMonth = Array(12).fill(0);
   for (const t of yearTransactions) {
     const month = Number(t.date.slice(5, 7)) - 1;
     if (isTransfer(t)) {
-      transfersByMonth[month] += Math.abs(t.amount);
+      continue;
     } else if (t.amount > 0) {
       incomeByMonth[month] += t.amount;
     } else {
@@ -124,7 +123,6 @@ export default async function Home({
     month: label,
     income: incomeByMonth[i],
     expenses: expensesByMonth[i],
-    transfers: transfersByMonth[i],
   }));
 
   return (
@@ -189,7 +187,7 @@ export default async function Home({
 
       <Card>
         <CardHeader>
-          <CardTitle>Income x Expenses x Transfers</CardTitle>
+          <CardTitle>Income x Expenses</CardTitle>
         </CardHeader>
         <CardContent>
           <IncomeExpensesTransfersChart data={monthlyChartData} />

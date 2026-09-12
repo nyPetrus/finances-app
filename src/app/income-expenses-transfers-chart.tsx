@@ -10,7 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { EXPENSE_FLAT, INCOME_FLAT, TRANSFER_FLAT } from "@/lib/chart-colors";
+import { EXPENSE_FLAT, INCOME_FLAT } from "@/lib/chart-colors";
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
@@ -50,7 +50,7 @@ function ChartTooltip({
 export function IncomeExpensesTransfersChart({
   data,
 }: {
-  data: { month: string; income: number; expenses: number; transfers: number }[];
+  data: { month: string; income: number; expenses: number }[];
 }) {
   return (
     <ResponsiveContainer width="100%" height={280}>
@@ -78,7 +78,6 @@ export function IncomeExpensesTransfersChart({
         />
         <Bar dataKey="income" name="Income" fill={INCOME_FLAT} radius={[4, 4, 0, 0]} maxBarSize={18} />
         <Bar dataKey="expenses" name="Expenses" fill={EXPENSE_FLAT} radius={[4, 4, 0, 0]} maxBarSize={18} />
-        <Bar dataKey="transfers" name="Transfers" fill={TRANSFER_FLAT} radius={[4, 4, 0, 0]} maxBarSize={18} />
       </BarChart>
     </ResponsiveContainer>
   );
