@@ -56,7 +56,8 @@ const MONTH_ABBREVIATIONS = [
 function formatDate(value: string) {
   const date = new Date(value);
   const day = String(date.getUTCDate()).padStart(2, "0");
-  return `${day} ${MONTH_ABBREVIATIONS[date.getUTCMonth()]}`;
+  const year = String(date.getUTCFullYear()).slice(-2);
+  return `${day} ${MONTH_ABBREVIATIONS[date.getUTCMonth()]} ${year}`;
 }
 
 function splitDateTime(iso: string) {
