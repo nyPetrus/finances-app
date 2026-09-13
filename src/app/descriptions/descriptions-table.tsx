@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { TagIcon, TagsIcon, Trash2Icon, type LucideIcon } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -37,7 +38,12 @@ import { CategoryIcon } from "@/components/category-icon";
 import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
 import type { Category, Class, MappedDescription } from "@/lib/supabase/types";
-import { deleteMappedDescriptions, updateMappedDescription } from "./actions";
+import {
+  deleteMappedDescriptions,
+  syncAllMappedDescriptions,
+  syncMappedDescriptions,
+  updateMappedDescription,
+} from "./actions";
 import { AddMappingDialog } from "./add-mapping-dialog";
 import { type SortKey } from "./sort";
 
@@ -85,10 +91,14 @@ export function DescriptionsTable({
 }) {
   const [isDeleting, startDelete] = useTransition();
   const [isSavingEdit, startSaveEdit] = useTransition();
+  const [isSyncingUnmapped, startSyncUnmapped] = useTransition();
+  const [isSyncingAll, startSyncAll] = useTransition();
   const [actionError, setActionError] = useState<string | null>(null);
   const [editingMapping, setEditingMapping] = useState<MappedDescription | null>(null);
   const [editCategoryId, setEditCategoryId] = useState<string | null>(null);
   const [editClassId, setEditClassId] = useState<string | null>(null);
+  const editFormRef = useRef<HTMLFormElement>(null);
+  const isEditBusy = isSavingEdit || isSyncingUnmapped || isSyncingAll;
   const { hidden: hiddenColumns, order: columnOrder, toggle: toggleColumn, move: moveColumn } =
     useColumnPreferences<SortKey>("descriptions-table", DEFAULT_COLUMN_ORDER);
 
@@ -140,6 +150,46 @@ export function DescriptionsTable({
     setEditCategoryId(mapping.category_id);
     setEditClassId(mapping.class_id);
     setEditingMapping(mapping);
+  }
+
+  function handleSaveAndSortUnmapped() {
+    const form = editFormRef.current;
+    if (!form) return;
+    if (!form.reportValidity()) return;
+    const formData = new FormData(form);
+    setActionError(null);
+    startSyncUnmapped(async () => {
+      try {
+        await updateMappedDescription(formData);
+        const count = await syncMappedDescriptions();
+        setEditingMapping(null);
+        toast.success(
+          count === 1 ? "Mapping saved — 1 transaction categorized." : `Mapping saved — ${count} transactions categorized.`,
+        );
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : "Failed to update mapping.");
+      }
+    });
+  }
+
+  function handleSaveAndSortAll() {
+    const form = editFormRef.current;
+    if (!form) return;
+    if (!form.reportValidity()) return;
+    const formData = new FormData(form);
+    setActionError(null);
+    startSyncAll(async () => {
+      try {
+        await updateMappedDescription(formData);
+        const count = await syncAllMappedDescriptions();
+        setEditingMapping(null);
+        toast.success(
+          count === 1 ? "Mapping saved — 1 transaction sorted." : `Mapping saved — ${count} transactions sorted.`,
+        );
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : "Failed to update mapping.");
+      }
+    });
   }
 
   function handleDelete() {
@@ -260,6 +310,7 @@ export function DescriptionsTable({
             </DialogHeader>
             <form
               id={`edit-mapping-${editingMapping.description}`}
+              ref={editFormRef}
               action={(formData) => {
                 setActionError(null);
                 startSaveEdit(async () => {
@@ -347,7 +398,13 @@ export function DescriptionsTable({
                 </Select>
               </div>
               <DialogFooter>
-                <Button type="submit" form={`edit-mapping-${editingMapping.description}`} disabled={isSavingEdit}>
+                <Button type="button" variant="outline" onClick={handleSaveAndSortAll} disabled={isEditBusy}>
+                  {isSyncingAll ? "Sorting…" : "Create and sort all"}
+                </Button>
+                <Button type="button" variant="outline" onClick={handleSaveAndSortUnmapped} disabled={isEditBusy}>
+                  {isSyncingUnmapped ? "Sorting…" : "Create and sort unmapped"}
+                </Button>
+                <Button type="submit" form={`edit-mapping-${editingMapping.description}`} disabled={isEditBusy}>
                   {isSavingEdit ? "Saving…" : "Save"}
                 </Button>
               </DialogFooter>

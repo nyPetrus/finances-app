@@ -16,12 +16,13 @@ description: Use when writing or touching code that inserts/updates a transactio
   `src/app/descriptions/actions.ts`, sharing a private `applyMappingSet()`
   matcher (`equal_to` beats `starts_with` beats `contains`, longest pattern
   wins within a tier, each transaction claimed by at most one mapping):
-  `syncMappedDescriptions()` (the Descriptions page's "Sync" button, and
-  `AddMappingDialog`'s "Create and sort unmapped") applies the *existing*
+  `syncMappedDescriptions()` (the Descriptions page's "Sync" button, and the
+  "Create and sort unmapped" button in both `AddMappingDialog` and
+  `DescriptionsTable`'s own edit-mapping dialog) applies the *existing*
   `mapped_descriptions` rules to every transaction with `category_id is
-  null`. `syncAllMappedDescriptions()` (`AddMappingDialog`'s "Create and
-  sort all") applies them to *every* transaction regardless of current
-  `category_id`, so a mapping can override a transaction's existing
+  null`. `syncAllMappedDescriptions()` (the "Create and sort all" button in
+  those same two places) applies them to *every* transaction regardless of
+  current `category_id`, so a mapping can override a transaction's existing
   category/class — because it isn't narrowed to a query that's guaranteed
   under Supabase/PostgREST's 1000-row cap the way the uncategorized-only
   query is, it pages through `.range()` instead of a single `.select()`
@@ -69,3 +70,14 @@ description: Use when writing or touching code that inserts/updates a transactio
   needs to run a second async step after creating — `"Create"` alone is
   untouched, still just the plain `action={...}` form submission it always
   was.
+
+- **`DescriptionsTable`'s own edit-mapping dialog** (same file,
+  `src/app/descriptions/descriptions-table.tsx` — a plain inline `Dialog`,
+  not `AddMappingDialog`) has the identical pair of buttons next to `"Save"`,
+  wired the same `ref`-read-`FormData` way but calling
+  `updateMappedDescription` instead of `addMappedDescription` — so editing
+  an existing mapping's description/operator/category/class can immediately
+  re-run it against transactions too, not just creating a new one. The
+  button labels stay `"Create and sort unmapped"` / `"Create and sort all"`
+  even here (an edit, not a create) to match `AddMappingDialog`'s wording
+  exactly, per explicit user request.
