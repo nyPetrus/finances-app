@@ -3,14 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { fetchAllTransactionsInRange } from "@/lib/supabase/fetch-all-transactions";
 import type { Account, Category, Class, Transaction } from "@/lib/supabase/types";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EXPENSE_HUE, INCOME_HUE, TRANSFER_HUE, sequentialColor } from "@/lib/chart-colors";
-import { IncomeExpensesTransfersChart } from "./income-expenses-transfers-chart";
-import { DashboardCategoryExplorer } from "./dashboard-category-explorer";
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
-}
+import { DashboardExplorer } from "./dashboard-explorer";
 
 const MONTH_LABELS = Array.from({ length: 12 }, (_, i) =>
   new Intl.DateTimeFormat("pt-BR", { month: "short" }).format(new Date(2000, i, 1)),
@@ -70,19 +64,32 @@ export default async function Home({
     return !!t.category_id && categoriesById.get(t.category_id)?.kind === "transfer";
   }
 
-  const totalBalance = allAccounts.reduce((sum, a) => sum + a.current_balance, 0);
+  const accountsTotal = allAccounts.reduce((sum, a) => sum + a.current_balance, 0);
 
   const nonTransferYearTransactions = yearTransactions.filter(
     (t) => !isTransfer(t),
   );
 
-  const income = nonTransferYearTransactions
-    .filter((t) => t.amount > 0)
-    .reduce((sum, t) => sum + t.amount, 0);
-  const expenses = nonTransferYearTransactions
-    .filter((t) => t.amount < 0)
-    .reduce((sum, t) => sum + t.amount, 0);
-  const net = income + expenses;
+  // Income/Expenses are classified by the transaction's own category kind,
+  // not by amount sign — a transaction with no category at all falls under
+  // the separate Uncategorized stat instead of either of these.
+  const incomeTotal = yearTransactions.reduce((sum, t) => {
+    if (!t.category_id || categoriesById.get(t.category_id)?.kind !== "income") return sum;
+    return sum + t.amount;
+  }, 0);
+  const expensesTotal = yearTransactions.reduce((sum, t) => {
+    if (!t.category_id || categoriesById.get(t.category_id)?.kind !== "expense") return sum;
+    return sum + t.amount;
+  }, 0);
+  const balanceTotal = incomeTotal + expensesTotal;
+  const transfersTotal = yearTransactions.reduce(
+    (sum, t) => (isTransfer(t) ? sum + Math.abs(t.amount) : sum),
+    0,
+  );
+  const uncategorizedTotal = yearTransactions.reduce(
+    (sum, t) => (t.category_id ? sum : sum + t.amount),
+    0,
+  );
 
   const expensesByCategory = new Map<string, number>();
   const incomeByCategory = new Map<string, number>();
@@ -107,21 +114,14 @@ export default async function Home({
   const incomeChartData = buildCategoryChartData(incomeByCategory, categoriesById, INCOME_HUE);
   const transferChartData = buildCategoryChartData(transferByCategory, categoriesById, TRANSFER_HUE);
 
-  const incomeByMonth = Array(12).fill(0);
   const expensesByMonth = Array(12).fill(0);
   for (const t of yearTransactions) {
+    if (!t.category_id || categoriesById.get(t.category_id)?.kind !== "expense") continue;
     const month = Number(t.date.slice(5, 7)) - 1;
-    if (isTransfer(t)) {
-      continue;
-    } else if (t.amount > 0) {
-      incomeByMonth[month] += t.amount;
-    } else {
-      expensesByMonth[month] += -t.amount;
-    }
+    expensesByMonth[month] += -t.amount;
   }
   const monthlyChartData = MONTH_LABELS.map((label, i) => ({
     month: label,
-    income: incomeByMonth[i],
     expenses: expensesByMonth[i],
   }));
 
@@ -140,65 +140,20 @@ export default async function Home({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-normal text-muted-foreground">
-              Balance
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-xl font-semibold">
-            {formatCurrency(totalBalance)}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-normal text-muted-foreground">
-              Income
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-xl font-semibold text-emerald-600">
-            {formatCurrency(income)}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-normal text-muted-foreground">
-              Expenses
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-xl font-semibold text-destructive">
-            {formatCurrency(expenses)}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-normal text-muted-foreground">
-              Net
-            </CardTitle>
-          </CardHeader>
-          <CardContent
-            className={`text-xl font-semibold ${net >= 0 ? "text-emerald-600" : "text-destructive"}`}
-          >
-            {formatCurrency(net)}
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Income x Expenses</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <IncomeExpensesTransfersChart data={monthlyChartData} />
-        </CardContent>
-      </Card>
-
-      <DashboardCategoryExplorer
+      <DashboardExplorer
         transactions={yearTransactions}
         accounts={allAccounts}
         categories={allCategories}
         classes={allClasses}
+        stats={{
+          income: incomeTotal,
+          expenses: expensesTotal,
+          balance: balanceTotal,
+          accounts: accountsTotal,
+          transfers: transfersTotal,
+          uncategorized: uncategorizedTotal,
+        }}
+        monthlyData={monthlyChartData}
         expensesData={expensesChartData}
         incomeData={incomeChartData}
         transferData={transferChartData}

@@ -1,16 +1,7 @@
 "use client";
 
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Legend,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import { EXPENSE_FLAT, INCOME_FLAT } from "@/lib/chart-colors";
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { EXPENSE_FLAT } from "@/lib/chart-colors";
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
@@ -28,7 +19,7 @@ function ChartTooltip({
   label,
 }: {
   active?: boolean;
-  payload?: { name: string; value: number; color: string }[];
+  payload?: { value: number }[];
   label?: string;
 }) {
   if (!active || !payload?.length) return null;
@@ -36,21 +27,23 @@ function ChartTooltip({
   return (
     <div className="rounded-md border bg-popover px-3 py-2 text-sm shadow-sm">
       <p className="mb-1 font-medium capitalize">{label}</p>
-      {payload.map((entry) => (
-        <p key={entry.name} className="flex items-center gap-2 text-muted-foreground">
-          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color }} />
-          <span className="capitalize">{entry.name}</span>
-          <span className="ml-auto font-medium text-foreground">{formatCurrency(entry.value)}</span>
-        </p>
-      ))}
+      <p className="flex items-center gap-2 text-muted-foreground">
+        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: EXPENSE_FLAT }} />
+        <span>Expenses</span>
+        <span className="ml-auto font-medium text-foreground">{formatCurrency(payload[0].value)}</span>
+      </p>
     </div>
   );
 }
 
-export function IncomeExpensesTransfersChart({
+export function ExpensesByMonthChart({
   data,
+  selectedMonth,
+  onSelect,
 }: {
-  data: { month: string; income: number; expenses: number }[];
+  data: { month: string; expenses: number }[];
+  selectedMonth?: number;
+  onSelect?: (month: number) => void;
 }) {
   return (
     <ResponsiveContainer width="100%" height={280}>
@@ -71,13 +64,16 @@ export function IncomeExpensesTransfersChart({
           width={48}
         />
         <Tooltip content={<ChartTooltip />} cursor={{ fill: "#89878114" }} />
-        <Legend
-          iconType="circle"
-          iconSize={8}
-          wrapperStyle={{ fontSize: 12, color: "#52514e" }}
-        />
-        <Bar dataKey="income" name="Income" fill={INCOME_FLAT} radius={[4, 4, 0, 0]} maxBarSize={18} />
-        <Bar dataKey="expenses" name="Expenses" fill={EXPENSE_FLAT} radius={[4, 4, 0, 0]} maxBarSize={18} />
+        <Bar dataKey="expenses" name="Expenses" fill={EXPENSE_FLAT} radius={[4, 4, 0, 0]} maxBarSize={18}>
+          {data.map((entry, index) => (
+            <Cell
+              key={entry.month}
+              opacity={selectedMonth === undefined || selectedMonth === index ? 1 : 0.35}
+              onClick={() => onSelect?.(index)}
+              style={{ cursor: onSelect ? "pointer" : undefined }}
+            />
+          ))}
+        </Bar>
       </BarChart>
     </ResponsiveContainer>
   );
