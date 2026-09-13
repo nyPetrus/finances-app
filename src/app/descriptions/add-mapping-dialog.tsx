@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Category, Class } from "@/lib/supabase/types";
-import { addMappedDescription, syncMappedDescriptions } from "./actions";
+import { addMappedDescription, syncAllMappedDescriptions, syncMappedDescriptions } from "./actions";
 
 export function AddMappingDialog({
   categories,
@@ -30,6 +30,8 @@ export function AddMappingDialog({
   open: openProp,
   onOpenChange: onOpenChangeProp,
   defaultDescription,
+  defaultCategoryId,
+  defaultClassId,
   showTrigger = true,
 }: {
   categories: Category[];
@@ -37,15 +39,19 @@ export function AddMappingDialog({
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   defaultDescription?: string;
+  defaultCategoryId?: string | null;
+  defaultClassId?: string | null;
   showTrigger?: boolean;
 }) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = openProp ?? internalOpen;
   const setOpen = onOpenChangeProp ?? setInternalOpen;
   const [error, setError] = useState<string | null>(null);
-  const [categoryId, setCategoryId] = useState<string | null>(null);
-  const [classId, setClassId] = useState<string | null>(null);
-  const [isSyncing, startSync] = useTransition();
+  const [categoryId, setCategoryId] = useState<string | null>(defaultCategoryId ?? null);
+  const [classId, setClassId] = useState<string | null>(defaultClassId ?? null);
+  const [isSyncingUnmapped, startSyncUnmapped] = useTransition();
+  const [isSyncingAll, startSyncAll] = useTransition();
+  const isSyncing = isSyncingUnmapped || isSyncingAll;
   const formRef = useRef<HTMLFormElement>(null);
 
   const classesForCategory = categoryId ? classes.filter((c) => c.category_id === categoryId) : [];
@@ -59,19 +65,39 @@ export function AddMappingDialog({
     }
   }
 
-  function handleCreateAndSync() {
+  function handleCreateAndSortUnmapped() {
     const form = formRef.current;
     if (!form) return;
     if (!form.reportValidity()) return;
     const formData = new FormData(form);
     setError(null);
-    startSync(async () => {
+    startSyncUnmapped(async () => {
       try {
         await addMappedDescription(formData);
         const count = await syncMappedDescriptions();
         setOpen(false);
         toast.success(
           count === 1 ? "Mapping created — 1 transaction categorized." : `Mapping created — ${count} transactions categorized.`,
+        );
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to create mapping.");
+      }
+    });
+  }
+
+  function handleCreateAndSortAll() {
+    const form = formRef.current;
+    if (!form) return;
+    if (!form.reportValidity()) return;
+    const formData = new FormData(form);
+    setError(null);
+    startSyncAll(async () => {
+      try {
+        await addMappedDescription(formData);
+        const count = await syncAllMappedDescriptions();
+        setOpen(false);
+        toast.success(
+          count === 1 ? "Mapping created — 1 transaction sorted." : `Mapping created — ${count} transactions sorted.`,
         );
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to create mapping.");
@@ -180,8 +206,11 @@ export function AddMappingDialog({
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleCreateAndSync} disabled={isSyncing}>
-              {isSyncing ? "Syncing…" : "Create and sync"}
+            <Button type="button" variant="outline" onClick={handleCreateAndSortAll} disabled={isSyncing}>
+              {isSyncingAll ? "Sorting…" : "Create and sort all"}
+            </Button>
+            <Button type="button" variant="outline" onClick={handleCreateAndSortUnmapped} disabled={isSyncing}>
+              {isSyncingUnmapped ? "Sorting…" : "Create and sort unmapped"}
             </Button>
             <Button type="submit" form="add-mapping-form" disabled={isSyncing}>
               Create

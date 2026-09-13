@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import type { MappedDescription } from "@/lib/supabase/types";
 
@@ -89,35 +90,22 @@ function normalizeDescription(value: string) {
   return value.trim().toLowerCase();
 }
 
-export async function syncMappedDescriptions() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Unauthorized");
-
-  const [{ data: mappings, error: mapError }, { data: candidates, error: txError }] = await Promise.all([
-    supabase.from("mapped_descriptions").select("*").eq("user_id", user.id),
-    supabase
-      .from("transactions")
-      .select("id, description")
-      .eq("user_id", user.id)
-      .is("category_id", null),
-  ]);
-
-  if (mapError) throw new Error(mapError.message);
-  if (txError) throw new Error(txError.message);
-
-  const allMappings = (mappings ?? []) as MappedDescription[];
-  const allCandidates = (candidates ?? []) as { id: string; description: string }[];
-
+// Matches each candidate transaction against the mapping set — equal_to
+// beats starts_with beats contains, longest pattern wins within a tier, and
+// each transaction is claimed by at most one mapping — then writes the
+// resulting category_id/class_id, grouped into one update per distinct
+// combo. Shared by syncMappedDescriptions (uncategorized transactions only)
+// and syncAllMappedDescriptions (every transaction, so a mapping can also
+// override a transaction's existing category/class).
+async function applyMappingSet(
+  supabase: SupabaseClient,
+  allMappings: MappedDescription[],
+  allCandidates: { id: string; description: string }[],
+) {
   const equalMappings = allMappings.filter((m) => m.check_type === "equal_to");
   const startsWithMappings = allMappings.filter((m) => m.check_type === "starts_with");
   const containsMappings = allMappings.filter((m) => m.check_type === "contains");
 
-  // Each transaction is claimed by at most one mapping, in priority order
-  // (equal_to, then starts_with, then contains) — once matched it's
-  // skipped by the later, lower-priority passes.
   const matchedIds = new Set<string>();
   const updatesByKey = new Map<string, { category_id: string; class_id: string | null; ids: string[] }>();
 
@@ -185,6 +173,80 @@ export async function syncMappedDescriptions() {
     if (error) throw new Error(error.message);
     updatedCount += ids.length;
   }
+
+  return updatedCount;
+}
+
+export async function syncMappedDescriptions() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const [{ data: mappings, error: mapError }, { data: candidates, error: txError }] = await Promise.all([
+    supabase.from("mapped_descriptions").select("*").eq("user_id", user.id),
+    supabase
+      .from("transactions")
+      .select("id, description")
+      .eq("user_id", user.id)
+      .is("category_id", null),
+  ]);
+
+  if (mapError) throw new Error(mapError.message);
+  if (txError) throw new Error(txError.message);
+
+  const updatedCount = await applyMappingSet(
+    supabase,
+    (mappings ?? []) as MappedDescription[],
+    (candidates ?? []) as { id: string; description: string }[],
+  );
+
+  revalidatePath("/transactions");
+  revalidatePath("/descriptions");
+  revalidatePath("/budget");
+  revalidatePath("/");
+
+  return updatedCount;
+}
+
+// Like syncMappedDescriptions, but matches against every transaction rather
+// than only uncategorized ones — so a mapping can also correct transactions
+// that already carry a (different) category/class. Unlike the uncategorized
+// query above, this isn't narrowed by a filter that keeps it well under
+// Supabase/PostgREST's 1000-row cap, so it has to page through with
+// .range() instead of a single .select() — see PITFALLS.md.
+export async function syncAllMappedDescriptions() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { data: mappings, error: mapError } = await supabase
+    .from("mapped_descriptions")
+    .select("*")
+    .eq("user_id", user.id);
+  if (mapError) throw new Error(mapError.message);
+
+  const pageSize = 1000;
+  const allCandidates: { id: string; description: string }[] = [];
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await supabase
+      .from("transactions")
+      .select("id, description")
+      .eq("user_id", user.id)
+      .range(offset, offset + pageSize - 1);
+
+    if (error) throw new Error(error.message);
+    if (!data || data.length === 0) break;
+
+    allCandidates.push(...data);
+
+    if (data.length < pageSize) break;
+  }
+
+  const updatedCount = await applyMappingSet(supabase, (mappings ?? []) as MappedDescription[], allCandidates);
 
   revalidatePath("/transactions");
   revalidatePath("/descriptions");

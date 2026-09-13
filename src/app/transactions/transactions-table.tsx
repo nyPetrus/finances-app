@@ -497,7 +497,7 @@ export function TransactionsTable({
                   onClick={handleSaveAndSyncDescription}
                   disabled={isSavingEdit}
                 >
-                  Save and sync description
+                  Save and map description
                 </Button>
                 <Button type="submit" form={`edit-transaction-${editingTransaction.id}`} disabled={isSavingEdit}>
                   {isSavingEdit ? "Saving…" : "Save"}
@@ -513,6 +513,8 @@ export function TransactionsTable({
           categories={categories}
           classes={classes}
           defaultDescription={mappingPrefill}
+          defaultCategoryId={editCategoryId}
+          defaultClassId={editClassId}
           open
           onOpenChange={(next) => {
             if (!next) setMappingPrefill(null);
