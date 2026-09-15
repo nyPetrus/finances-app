@@ -10,6 +10,7 @@ import {
   LayoutDashboardIcon,
   LogOutIcon,
   MenuIcon,
+  ScaleIcon,
   TagIcon,
   TagsIcon,
   WalletIcon,
@@ -26,6 +27,7 @@ const links = [
   { href: "/classes", label: "Classes", icon: TagsIcon },
   { href: "/descriptions", label: "Descriptions", icon: FileTextIcon },
   { href: "/accounts", label: "Accounts", icon: LandmarkIcon },
+  { href: "/balance", label: "Balance", icon: ScaleIcon },
 ];
 
 const COLLAPSED_STORAGE_KEY = "sidebar-collapsed";
