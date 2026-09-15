@@ -27,6 +27,7 @@ export async function addClass(formData: FormData) {
   if (error) throwFriendlyError(error.message, error.code);
 
   revalidatePath("/classes");
+  revalidatePath("/combinations");
 }
 
 export async function updateClass(formData: FormData) {
@@ -51,6 +52,7 @@ export async function updateClass(formData: FormData) {
   if (error) throwFriendlyError(error.message, error.code);
 
   revalidatePath("/classes");
+  revalidatePath("/combinations");
 }
 
 export async function deleteClasses(ids: string[]) {
@@ -71,4 +73,5 @@ export async function deleteClasses(ids: string[]) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/classes");
+  revalidatePath("/combinations");
 }
