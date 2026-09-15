@@ -251,8 +251,11 @@ export function AccountsTable({
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />
-          <AddAccountMenu onError={setActionError} onConnected={() => router.refresh()} />
+          {selected.size > 0 ? (
+            <span className="text-sm text-muted-foreground">{selected.size} selected</span>
+          ) : (
+            <AddAccountMenu onError={setActionError} onConnected={() => router.refresh()} />
+          )}
           <Button
             variant="outline"
             size="icon-sm"
@@ -263,10 +266,7 @@ export function AccountsTable({
           >
             <RefreshCwIcon className={isSyncing ? "animate-spin" : undefined} />
           </Button>
-        </div>
-        {selected.size > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">{selected.size} selected</span>
+          {selected.size > 0 && (
             <Button
               variant="ghost"
               size="icon-sm"
@@ -277,8 +277,9 @@ export function AccountsTable({
             >
               <Trash2Icon />
             </Button>
-          </div>
-        )}
+          )}
+        </div>
+        <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />
       </div>
       {actionError && <p className="text-sm text-destructive">{actionError}</p>}
 

@@ -1,6 +1,6 @@
 ---
 name: table-page-conventions
-description: Use when adding a new list-style page or touching an existing one (Transactions, Categories, Classes, Descriptions, Accounts) — table markup, row selection, the two-group toolbar (left: Columns/Add plus table-specific buttons; right: a Delete button that only renders when something's selected), the per-row "⋮" actions menu (Edit/Sync/Delete), column show/hide & reorder, column header icons, sorting, add/edit dialogs, category/class chip rendering, or bulk mutations. Encodes this app's shared list-page architecture so new pages match instead of inventing a fresh layout.
+description: Use when adding a new list-style page or touching an existing one (Transactions, Categories, Classes, Descriptions, Accounts) — table markup, row selection, the two-group toolbar (left: Add-or-"N selected" swap, table-specific buttons, then Delete last, only when something's selected; right: just Columns), the per-row "⋮" actions menu (Edit/Sync/Delete), column show/hide & reorder, column header icons, sorting, add/edit dialogs, category/class chip rendering, or bulk mutations. Encodes this app's shared list-page architecture so new pages match instead of inventing a fresh layout.
 ---
 
 # Table page conventions
@@ -126,40 +126,48 @@ list page instead of inventing a fresh layout.
   so it has data to prefill from and unmounts cleanly once closed.
 - **The toolbar above the table has two button groups, left and right,
   spread apart by an outer `<div className="flex items-center
-  justify-between">`.** The **left** group (`<div className="flex
-  items-center gap-2">`, always rendered) holds every generic/table-specific
-  button that isn't Delete: `ColumnsMenu`, the page's "Add" dialog trigger
-  (see below), then any table-specific buttons — currently Accounts' own
-  bulk "Sync" (icon-only `RefreshCwIcon`, `variant="outline"` `size="icon-sm"`,
-  spinning via `className={isSyncing ? "animate-spin" : undefined}` while
-  pending, driven by `selected`/`selectedRows` — Pluggy bank sync is
-  genuinely a multi-account bulk operation; "Connect bank" used to be a
-  separate toolbar button here too but is now reachable only via the "+"
-  menu, see the "Accounts' '+' is a menu" bullet below) and Descriptions'
-  own `SyncButton` (applies existing `mapped_descriptions` rules to every
-  uncategorized transaction, see `transaction-description-rules`).
-  **"Delete" lives in a separate, second group on the right** (`<div
-  className="flex items-center gap-2">`, immediately following a
-  `text-sm text-muted-foreground` `"{selected.size} selected"` span in the
-  same group) that's **only rendered at all when `selected.size > 0`** —
-  Delete isn't just disabled while nothing's selected any more, the button
-  (and its "N selected" label) don't exist in the DOM until there's a
-  selection, so there's nothing to accidentally click. It stays
-  `Trash2Icon`, `variant="ghost"` `size="icon-sm"`, no red fill/destructive
-  styling (that's reserved for the row-menu's Delete item), `disabled` now
-  only guards the in-flight-mutation case (`isDeleting`, plus whatever
-  other transition that table's toolbar already tracks — e.g. Accounts'
-  `isSyncing`) since the `selected.size === 0` guard is redundant once the
-  button only mounts when there's a selection. Confirms via
-  `window.confirm(...)` before calling the bulk delete action, same as
-  always. The outer `justify-between` is what pushes this right-hand group
-  to the far right while keeping both groups vertically centered on the
-  same row as the left group — don't add `ml-auto` inside it, that's the
-  outer flex's job now (previously the "N selected" span carried its own
-  `ml-auto` as a lone conditional child; now it's just a plain child of the
-  right group, which itself only renders when selected). **Transactions
-  used to have a bulk "Sync" button in the left group too, for
-  `syncDescriptionsFromTransactions`, and no longer does** — since that
+  justify-between">`.** The **right** group is just `ColumnsMenu` alone, no
+  wrapping div needed since it's the only thing there — the outer
+  `justify-between` is what pushes it to the far right while keeping it
+  vertically aligned with the left group on the same row. Everything else
+  lives in the **left** group (`<div className="flex items-center
+  gap-2">`, always rendered — this is what keeps "+" reachable even when
+  the row list is empty, see below), in this order:
+  1. **Either the page's "Add" dialog trigger, or a `"{selected.size}
+     selected"` label in that exact same slot** — `{selected.size > 0 ? (
+     <span className="text-sm text-muted-foreground">{selected.size}
+     selected</span> ) : ( <Add*Dialog /> )}`. Selecting a row swaps "+" out
+     for the count, in place, rather than showing both side by side.
+     Transactions nests one more level here: when nothing's selected it's
+     still choosing between `AddTransactionDialog` and the "Create an
+     account first" link button depending on `accounts.length`, exactly as
+     before — that inner choice is unrelated to the selection swap, it only
+     applies to the "nothing selected" branch.
+  2. **Any table-specific buttons**, unaffected by selection — currently
+     Accounts' own bulk "Sync" (icon-only `RefreshCwIcon`,
+     `variant="outline"` `size="icon-sm"`, spinning via
+     `className={isSyncing ? "animate-spin" : undefined}` while pending,
+     driven by `selected`/`selectedRows` — Pluggy bank sync is genuinely a
+     multi-account bulk operation; "Connect bank" used to be a separate
+     toolbar button here too but is now reachable only via the "+" menu,
+     see the "Accounts' '+' is a menu" bullet below) and Descriptions' own
+     `SyncButton` (applies existing `mapped_descriptions` rules to every
+     uncategorized transaction, see `transaction-description-rules`).
+  3. **"Delete" last, and only rendered at all when `selected.size > 0`** —
+     `{selected.size > 0 && <Button ...>Trash2Icon</Button>}`, no wrapping
+     wrapper needed since it's a single conditional child alongside its
+     left-group siblings. Not just disabled while nothing's selected, the
+     button doesn't exist in the DOM until there's a selection, so there's
+     nothing to accidentally click. Stays `Trash2Icon`, `variant="ghost"`
+     `size="icon-sm"`, no red fill/destructive styling (that's reserved for
+     the row-menu's Delete item); `disabled` now only guards the
+     in-flight-mutation case (`isDeleting`, plus whatever other transition
+     that table's toolbar already tracks — e.g. Accounts' `isSyncing`)
+     since the `selected.size === 0` guard is redundant once the button
+     only mounts when there's a selection. Confirms via `window.confirm(...)`
+     before calling the bulk delete action, same as always.
+  **Transactions used to have a bulk "Sync" button in the left group too,
+  for `syncDescriptionsFromTransactions`, and no longer does** — since that
   action is inherently per-transaction anyway (each row either has a
   category to sync from or it doesn't), the per-row `RowActionsMenu`'s
   `onSync` item is the only way to trigger it now, on both

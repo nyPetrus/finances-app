@@ -148,12 +148,12 @@ export function ClassesTable({
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />
-          <AddClassDialog categories={categories} />
-        </div>
-        {selected.size > 0 && (
-          <div className="flex items-center gap-2">
+          {selected.size > 0 ? (
             <span className="text-sm text-muted-foreground">{selected.size} selected</span>
+          ) : (
+            <AddClassDialog categories={categories} />
+          )}
+          {selected.size > 0 && (
             <Button
               variant="ghost"
               size="icon-sm"
@@ -164,8 +164,9 @@ export function ClassesTable({
             >
               <Trash2Icon />
             </Button>
-          </div>
-        )}
+          )}
+        </div>
+        <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />
       </div>
       {actionError && <p className="text-sm text-destructive">{actionError}</p>}
 
