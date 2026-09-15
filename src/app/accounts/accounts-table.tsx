@@ -38,8 +38,7 @@ import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
 import type { Account } from "@/lib/supabase/types";
 import { deleteAccounts, updateAccount } from "./actions";
-import { AddAccountDialog } from "./add-account-dialog";
-import { ConnectBankButton } from "./connect-bank-button";
+import { AddAccountMenu } from "./add-account-menu";
 import { syncPluggyItem } from "./pluggy-actions";
 import { type SortKey } from "./sort";
 
@@ -253,7 +252,7 @@ export function AccountsTable({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />
-          <AddAccountDialog />
+          <AddAccountMenu onError={setActionError} onConnected={() => router.refresh()} />
           <Button
             variant="ghost"
             size="icon-sm"
@@ -264,7 +263,6 @@ export function AccountsTable({
           >
             <Trash2Icon />
           </Button>
-          <ConnectBankButton onError={setActionError} onConnected={() => router.refresh()} />
           <Button
             variant="outline"
             size="icon-sm"

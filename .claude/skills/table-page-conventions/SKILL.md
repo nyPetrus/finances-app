@@ -133,11 +133,13 @@ list page instead of inventing a fresh layout.
   that's reserved for the row-menu's Delete item; disabled when nothing's
   selected; confirms via `window.confirm(...)` before calling the bulk
   delete action), then any table-specific buttons immediately after
-  "Delete" — currently Accounts' "Connect bank" (`ConnectBankButton`) then
-  its own bulk "Sync" (icon-only `RefreshCwIcon`, `variant="outline"`
-  `size="icon-sm"`, spinning via `className={isSyncing ? "animate-spin" :
-  undefined}` while pending, driven by `selected`/`selectedRows` — Pluggy
-  bank sync is genuinely a multi-account bulk operation), and Descriptions'
+  "Delete" — currently Accounts' own bulk "Sync" (icon-only `RefreshCwIcon`,
+  `variant="outline"` `size="icon-sm"`, spinning via `className={isSyncing
+  ? "animate-spin" : undefined}` while pending, driven by
+  `selected`/`selectedRows` — Pluggy bank sync is genuinely a multi-account
+  bulk operation; "Connect bank" used to be a separate toolbar button here
+  too but is now reachable only via the "+" menu, see the "Accounts' '+' is
+  a menu" bullet below), and Descriptions'
   own `SyncButton` (applies existing `mapped_descriptions` rules to every
   uncategorized transaction, see `transaction-description-rules`). "+" sits
   immediately to the left of "Delete"; any table-specific buttons sit
@@ -159,10 +161,10 @@ list page instead of inventing a fresh layout.
   placeholder string) when nothing's selected. There is no "Edit" button in
   the toolbar anywhere — it's redundant now that every row has its own Edit
   via the "⋮" menu. Icon-only toolbar buttons need `aria-label` *and*
-  `title` set to the plain action word ("Columns", "Sync", "Delete",
-  "Connect bank") for the same reason "Add" buttons do (see below) —
-  `ColumnsMenu`'s trigger needs this pair too, it's easy to forget since it
-  has no visible label either.
+  `title` set to the plain action word ("Columns", "Sync", "Delete") for
+  the same reason "Add" buttons do (see below) — `ColumnsMenu`'s trigger
+  needs this pair too, it's easy to forget since it has no visible label
+  either.
   **The toolbar (and thus "+") must render even when the row list is
   empty** — the empty-state message (`"No categories yet."` etc.) replaces
   only the `<Table>` markup via a ternary, never the surrounding toolbar, so
@@ -249,25 +251,35 @@ list page instead of inventing a fresh layout.
   toolbar button group, not from the server `page.tsx` header — `page.tsx`
   keeps only the `<h1>` and any page-level, non-row controls (Transactions'
   month nav — Descriptions' `SyncButton` used to live in `page.tsx` too but
-  now renders inside the table's own toolbar, see below). Accounts'
-  `ConnectBankButton` used to live in `page.tsx` too but now renders inside
-  the table's toolbar, next to "Sync" — see the "Connect bank" bullet below.
-  Classes and Descriptions render their `Add*Dialog` unconditionally inside
-  the table (safe because `page.tsx` only mounts the table when categories
-  exist); Transactions swaps its "+" for a "Create an account first" link
-  button when `accounts.length === 0`, using the same `accounts` prop the
-  table already receives.
-- **"Connect bank" is icon-only too**, `PlugZapIcon` (`lucide-react`),
-  `variant="outline"` `size="icon-sm"` to match the other toolbar icon
-  buttons, `aria-label`/`title="Connect bank"`. `ConnectBankButton`
-  (`src/app/accounts/connect-bank-button.tsx`) keeps its own Pluggy-connect
-  logic (token fetch, the dynamically-imported `PluggyConnect` modal) fully
-  isolated, but takes `onError`/`onConnected` callback props instead of
-  owning its own error state — `AccountsTable` wires `onError={setActionError}`
-  and `onConnected={() => router.refresh()}` so the error surfaces through
-  the same shared `actionError` paragraph as Edit/Delete/Sync, instead of a
-  separate one. It renders in the toolbar right after "Delete", followed by
-  the bulk "Sync" button.
+  now renders inside the table's own toolbar, see below). Classes and
+  Descriptions render their `Add*Dialog` unconditionally inside the table
+  (safe because `page.tsx` only mounts the table when categories exist);
+  Transactions swaps its "+" for a "Create an account first" link button
+  when `accounts.length === 0`, using the same `accounts` prop the table
+  already receives.
+- **Accounts' "+" is a menu, not a plain dialog trigger** —
+  `AddAccountMenu` (`src/app/accounts/add-account-menu.tsx`) replaces what
+  used to be two separate toolbar entries (a standalone `AddAccountDialog`
+  and a standalone "Connect bank" `ConnectBankButton`, both now deleted).
+  Same `<Button variant="ghost" size="icon" aria-label="Add account"
+  title="Add account"><PlusIcon /></Button>` trigger, but it opens a
+  `DropdownMenu` (same primitives as `RowActionsMenu`) with two items:
+  "Manually" (`PencilIcon`, sets local `manualOpen` state true, which opens
+  the same plain-`Dialog` manual-entry form the old `AddAccountDialog`
+  used to own — unchanged fields/behavior, just relocated) and "Connect to
+  bank" (`PlugZapIcon`, calls the same Pluggy-connect flow the old
+  `ConnectBankButton` used to own — fetch a connect token via
+  `getPluggyConnectToken`, then render the dynamically-imported
+  `PluggyConnect` modal once the token resolves). `AddAccountMenu` takes
+  the same `onError`/`onConnected` callback props `ConnectBankButton` used
+  to take — `AccountsTable` still wires `onError={setActionError}` and
+  `onConnected={() => router.refresh()}` — so a failure from either path
+  (manual validation is separate, this is specifically the Pluggy-connect
+  error path) surfaces through the same shared `actionError` paragraph as
+  Edit/Delete/Sync. There is no more standalone "Connect bank" toolbar
+  button on any table — don't reintroduce one; the bulk "Sync" button
+  (for already-connected accounts) is the only Pluggy-specific button left
+  in the toolbar proper, immediately after "Delete".
 - **Edit/Add dialogs**: `Label` + `Input`/`Select` fields per `@/components/ui`.
   Add dialogs (still a standalone `DialogTrigger`-wrapped `Dialog`, e.g.
   `AddAccountDialog`) keep their own local `error` state, shown as
