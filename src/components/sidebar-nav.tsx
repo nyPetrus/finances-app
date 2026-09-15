@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   ArrowLeftRightIcon,
   FileTextIcon,
+  FlaskConicalIcon,
   LandmarkIcon,
   LayoutDashboardIcon,
   LogOutIcon,
@@ -26,6 +27,7 @@ const links = [
   { href: "/classes", label: "Classes", icon: TagsIcon },
   { href: "/descriptions", label: "Descriptions", icon: FileTextIcon },
   { href: "/accounts", label: "Accounts", icon: LandmarkIcon },
+  { href: "/test-conventions", label: "Test Conventios", icon: FlaskConicalIcon },
 ];
 
 const COLLAPSED_STORAGE_KEY = "sidebar-collapsed";
