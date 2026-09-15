@@ -50,7 +50,7 @@ function TreeRows({
         return (
           <Fragment key={row.key}>
             <tr className="border-b last:border-0">
-              <td className="overflow-hidden bg-background px-2 py-2">
+              <td className="max-w-56 overflow-hidden bg-background px-2 py-2">
                 <div className="flex items-center gap-1.5" style={{ paddingLeft: `${depth * 1.25}rem` }}>
                   {hasChildren ? (
                     <button
@@ -111,14 +111,7 @@ export function MonthlyBreakdownTable({ rows }: { rows: MonthlyRow[] }) {
 
   return (
     <div className="overflow-x-auto rounded-md border">
-      <table className="w-full table-fixed border-collapse text-sm">
-        <colgroup>
-          <col className="w-[16%]" />
-          {MONTH_LABELS.map((label) => (
-            <col key={label} className="w-[6%]" />
-          ))}
-          <col className="w-[12%]" />
-        </colgroup>
+      <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="border-b bg-muted/50">
             <th className="bg-muted/50 px-2 py-2" />

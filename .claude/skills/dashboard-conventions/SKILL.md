@@ -133,14 +133,28 @@ for first if a chart ever returns.
     arrows) when it actually has children, and Class rows never do (this is
     the bottom of the hierarchy — "I can see at maximum at class level" was
     an explicit requirement, don't add a 4th level).
-  - **This table is plain `<table>`/`table-fixed`/`<colgroup>` markup
-    (mirroring `budget/yearly-grid.tsx`'s month-grid, not shadcn's
-    `Table`/`SortableTableHead`/`table-page-conventions`'s `auto`-layout
-    rule)** — the column set here (label + 12 fixed months + Total) is
-    static and never hidden/reordered, so the reasoning behind
-    `table-page-conventions`'s "no `table-fixed`" rule (columns can be
-    hidden/reordered at runtime) doesn't apply. Don't route this through
-    `ColumnsMenu`/`useColumnPreferences`.
+  - **This table is plain `<table>` markup, `table-layout: auto` (no
+    `table-fixed`, no `<colgroup>`) per explicit user request** — columns
+    size to their own content instead of a fixed 16%/6%×12/12% split, so
+    a long Category/Class label (or a month with an unusually wide number)
+    can make its column wider, shrinking the others in response; the user
+    explicitly accepted that columns shift as rows expand/collapse in
+    exchange for numbers/labels fitting tightly instead of floating in
+    fixed-width cells. The label cell still caps growth at `max-w-56
+    truncate` (on the `<td>` itself, not just the inner `span` — see
+    `table-page-conventions`'s `truncate`+`max-w-*` rule, which applies
+    here too even though this table doesn't use shadcn's `Table`) so one
+    very long label can't crush the 12 month columns down to nothing; the
+    month/Total cells stay `whitespace-nowrap` so their own natural
+    (numeric) content width is what auto-layout sizes them to. Despite the
+    styling difference from `table-page-conventions`'s `auto`-layout rule
+    for shadcn tables (no `<colgroup>`/fixed widths there either, for a
+    different reason — columns can be hidden/reordered at runtime), the
+    *outcome* is now consistent between the two: neither table hand-fixes
+    column widths any more. The column set here (label + 12 months +
+    Total) is still static and never hidden/reordered — don't route this
+    through `ColumnsMenu`/`useColumnPreferences`, that's unrelated to why
+    it dropped `table-fixed`.
   - **Deliberately not wired into the stat cards' click-to-filter
     `Selection` state below** — clicking a row's "+" only expands/collapses
     it locally; it doesn't select anything or affect
