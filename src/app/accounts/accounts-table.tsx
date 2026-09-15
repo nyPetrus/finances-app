@@ -78,11 +78,12 @@ const COLUMNS: {
   { key: "type", label: "Type" },
   { key: "lastSync", label: "Last sync", align: "center", cellClassName: "text-center whitespace-nowrap" },
   { key: "balance", label: "Balance", cellClassName: "text-right whitespace-nowrap" },
+  { key: "transactions", label: "Transactions", cellClassName: "text-right whitespace-nowrap" },
 ];
 
 const DEFAULT_COLUMN_ORDER = COLUMNS.map((column) => column.key);
 
-function renderCell(account: Account, key: SortKey) {
+function renderCell(account: Account, key: SortKey, transactionsTotalByAccount: Record<string, number>) {
   switch (key) {
     case "account":
       return account.label ? (
@@ -112,15 +113,19 @@ function renderCell(account: Account, key: SortKey) {
       );
     case "balance":
       return formatCurrency(account.current_balance);
+    case "transactions":
+      return formatCurrency(transactionsTotalByAccount[account.id] ?? 0);
   }
 }
 
 export function AccountsTable({
   accounts,
+  transactionsTotalByAccount,
   sortKey,
   sortDir,
 }: {
   accounts: Account[];
+  transactionsTotalByAccount: Record<string, number>;
   sortKey: SortKey;
   sortDir: "asc" | "desc";
 }) {
@@ -160,10 +165,14 @@ export function AccountsTable({
         case "balance":
           cmp = a.current_balance - b.current_balance;
           break;
+        case "transactions":
+          cmp =
+            (transactionsTotalByAccount[a.id] ?? 0) - (transactionsTotalByAccount[b.id] ?? 0);
+          break;
       }
       return sortDir === "asc" ? cmp : -cmp;
     });
-  }, [accounts, sortKey, sortDir]);
+  }, [accounts, sortKey, sortDir, transactionsTotalByAccount]);
 
   const {
     selected,
@@ -342,7 +351,7 @@ export function AccountsTable({
                 </TableCell>
                 {visibleColumns.map((column) => (
                   <TableCell key={column.key} className={column.cellClassName}>
-                    {renderCell(account, column.key)}
+                    {renderCell(account, column.key, transactionsTotalByAccount)}
                   </TableCell>
                 ))}
               </TableRow>

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { fetchAllTransactionsInRange } from "@/lib/supabase/fetch-all-transactions";
 import type { Account } from "@/lib/supabase/types";
 import { AccountsTable } from "./accounts-table";
 import { isSortKey, type SortKey } from "./sort";
@@ -17,17 +18,31 @@ export default async function AccountsPage({
   const sortDir: "asc" | "desc" = dirParam === "desc" ? "desc" : "asc";
 
   const supabase = await createClient();
-  const { data: accounts, error } = await supabase.from("accounts").select("*");
+  const [{ data: accounts, error }, transactions] = await Promise.all([
+    supabase.from("accounts").select("*"),
+    fetchAllTransactionsInRange(supabase, "0001-01-01", "9999-12-31"),
+  ]);
 
   if (error) throw new Error(error.message);
 
   const allAccounts = (accounts ?? []) as Account[];
 
+  const transactionsTotalByAccount: Record<string, number> = {};
+  for (const transaction of transactions) {
+    transactionsTotalByAccount[transaction.account_id] =
+      (transactionsTotalByAccount[transaction.account_id] ?? 0) + transaction.amount;
+  }
+
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-6">
       <h1 className="text-2xl font-semibold">Accounts</h1>
 
-      <AccountsTable accounts={allAccounts} sortKey={sortKey} sortDir={sortDir} />
+      <AccountsTable
+        accounts={allAccounts}
+        transactionsTotalByAccount={transactionsTotalByAccount}
+        sortKey={sortKey}
+        sortDir={sortDir}
+      />
     </div>
   );
 }
