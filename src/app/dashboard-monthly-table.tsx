@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useState } from "react";
-import { MinusIcon, PlusIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 import { CategoryIcon } from "@/components/category-icon";
 import { cn } from "@/lib/utils";
 import type { MonthlyRow } from "./dashboard-monthly-breakdown";
@@ -59,7 +59,7 @@ function TreeRows({
                       aria-label={isExpanded ? `Collapse ${row.label}` : `Expand ${row.label}`}
                       className="flex size-4 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
                     >
-                      {isExpanded ? <MinusIcon className="size-3" /> : <PlusIcon className="size-3" />}
+                      {isExpanded ? <ChevronDownIcon className="size-3" /> : <ChevronRightIcon className="size-3" />}
                     </button>
                   ) : (
                     <span className="inline-block size-4 shrink-0" />

@@ -73,14 +73,19 @@ for first if a chart ever returns.
 - **`R$` is reserved for the 6 stat cards; nothing else on this page shows
   a currency symbol.** `dashboard-explorer.tsx`'s own `formatCurrency`
   (used only by `StatCard`) is the one Dashboard copy that keeps `style:
-  "currency", currency: "BRL"`. `dashboard-monthly-table.tsx`'s and
-  `dashboard-transactions-table.tsx`'s own `formatCurrency` copies (the
-  breakdown table's cells, the embedded table's Amount column) use the
-  plain-decimal `Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2,
-  maximumFractionDigits: 2 })` instead — the same no-symbol style
+  "currency", currency: "BRL"` and 2 decimal places. The other two
+  `formatCurrency` copies are both plain-decimal (no `R$`) but no longer
+  match each other on decimals: `dashboard-monthly-table.tsx`'s (the
+  breakdown table's cells) keeps `minimumFractionDigits: 2,
+  maximumFractionDigits: 2`, the same no-symbol style
   Transactions'/Accounts' own tables use (see
-  `transactions-column-formatting`). Don't copy the cards' currency-style
-  `formatCurrency` into a new addition here.
+  `transactions-column-formatting`); `dashboard-transactions-table.tsx`'s
+  (the embedded table's Amount column) uses `minimumFractionDigits: 0,
+  maximumFractionDigits: 0` instead — whole numbers only, rounded, per
+  explicit user request specific to that one table. Don't copy either
+  pattern onto the other table without checking which one actually applies
+  — this is a real, intentional difference between the two now, not
+  something to "fix" into consistency.
 - **The monthly breakdown table (`dashboard-monthly-breakdown.ts` +
   `dashboard-monthly-table.tsx`) sits directly below the stat-card grid,
   above the click-to-filter embedded table.** It's a 3-level expand/collapse
@@ -128,11 +133,18 @@ for first if a chart ever returns.
     logic.
   - **Expand state defaults to fully collapsed** (`useState<Set<string>>(new
     Set())` in `MonthlyBreakdownTable`) — only the 3-4 Type rows are
-    visible on first render; a row only shows a "+"/"−" toggle
-    (`PlusIcon`/`MinusIcon`, not `ChevronRight`/`SortableTableHead`'s sort
-    arrows) when it actually has children, and Class rows never do (this is
-    the bottom of the hierarchy — "I can see at maximum at class level" was
-    an explicit requirement, don't add a 4th level).
+    visible on first render; a row only shows a toggle button when it
+    actually has children, and Class rows never do (this is the bottom of
+    the hierarchy — "I can see at maximum at class level" was an explicit
+    requirement, don't add a 4th level). **The toggle is
+    `ChevronRightIcon`/`ChevronDownIcon` (collapsed/expanded)** — it used
+    to be `PlusIcon`/`MinusIcon`, deliberately *not* chevrons (to avoid
+    visual confusion with `SortableTableHead`'s own chevron-based sort
+    arrows elsewhere in the app), but that was reversed per explicit user
+    request. If sort-arrow confusion ever comes up again as a real
+    complaint, that's the tradeoff being made here — don't silently revert
+    to Plus/Minus without checking with the user first, since it was an
+    explicit ask both times.
   - **This table is plain `<table>` markup, `table-layout: auto` (no
     `table-fixed`, no `<colgroup>`) per explicit user request** — columns
     size to their own content instead of a fixed 16%/6%×12/12% split, so

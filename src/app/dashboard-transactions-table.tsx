@@ -45,7 +45,7 @@ import { AddMappingDialog } from "./descriptions/add-mapping-dialog";
 import { type SortKey } from "./transactions/sort";
 
 function formatCurrency(value: number) {
-  return new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+  return new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
 }
 
 const MONTH_ABBREVIATIONS = [
