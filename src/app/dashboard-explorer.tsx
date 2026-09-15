@@ -3,30 +3,10 @@
 import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { CategoryBarChart } from "./category-bar-chart";
-import { ExpensesByMonthChart } from "./expenses-by-month-chart";
 import { DashboardTransactionsTable } from "./dashboard-transactions-table";
 import type { Account, Category, Class, Transaction } from "@/lib/supabase/types";
 
-type ChartEntry = { key: string; name: string; amount: number; color: string };
-
 type StatKey = "income" | "expenses" | "balance" | "accounts" | "transfers" | "uncategorized";
-
-type Selection =
-  | { kind: "stat"; stat: StatKey }
-  | { kind: "category"; group: "expense"; key: string }
-  | { kind: "month"; month: number };
-
-function selectionId(selection: Selection): string {
-  switch (selection.kind) {
-    case "stat":
-      return `stat:${selection.stat}`;
-    case "category":
-      return `category:${selection.group}:${selection.key}`;
-    case "month":
-      return `month:${selection.month}`;
-  }
-}
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
@@ -77,47 +57,25 @@ export function DashboardExplorer({
   categories,
   classes,
   stats,
-  monthlyData,
-  expensesData,
 }: {
   transactions: Transaction[];
   accounts: Account[];
   categories: Category[];
   classes: Class[];
   stats: Record<StatKey, number>;
-  monthlyData: { month: string; expenses: number }[];
-  expensesData: ChartEntry[];
 }) {
-  const [selection, setSelection] = useState<Selection | undefined>(undefined);
+  const [selectedStat, setSelectedStat] = useState<StatKey | undefined>(undefined);
 
   const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
 
-  function handleSelect(next: Selection) {
-    setSelection((prev) => (prev && selectionId(prev) === selectionId(next) ? undefined : next));
+  function handleSelect(stat: StatKey) {
+    setSelectedStat((prev) => (prev === stat ? undefined : stat));
   }
 
   const filteredTransactions = useMemo(() => {
-    if (!selection) return [];
+    if (!selectedStat) return [];
 
-    if (selection.kind === "category") {
-      const { key } = selection;
-      return transactions.filter((t) => {
-        const matchesKey = key === "uncategorized" ? !t.category_id : t.category_id === key;
-        if (!matchesKey) return false;
-        const category = t.category_id ? categoriesById.get(t.category_id) : null;
-        return t.amount < 0 && category?.kind !== "transfer";
-      });
-    }
-
-    if (selection.kind === "month") {
-      return transactions.filter((t) => {
-        if (Number(t.date.slice(5, 7)) - 1 !== selection.month) return false;
-        const category = t.category_id ? categoriesById.get(t.category_id) : null;
-        return category?.kind === "expense";
-      });
-    }
-
-    switch (selection.stat) {
+    switch (selectedStat) {
       case "income":
         return transactions.filter((t) => {
           const category = t.category_id ? categoriesById.get(t.category_id) : null;
@@ -143,7 +101,7 @@ export function DashboardExplorer({
       case "accounts":
         return transactions;
     }
-  }, [selection, transactions, categoriesById]);
+  }, [selectedStat, transactions, categoriesById]);
 
   const balanceColor =
     stats.balance > 0 ? "text-emerald-600" : stats.balance < 0 ? "text-destructive" : "text-muted-foreground";
@@ -155,74 +113,44 @@ export function DashboardExplorer({
           title="Income"
           value={stats.income}
           colorClassName="text-emerald-600"
-          selected={selection?.kind === "stat" && selection.stat === "income"}
-          onClick={() => handleSelect({ kind: "stat", stat: "income" })}
+          selected={selectedStat === "income"}
+          onClick={() => handleSelect("income")}
         />
         <StatCard
           title="Expenses"
           value={stats.expenses}
           colorClassName="text-destructive"
-          selected={selection?.kind === "stat" && selection.stat === "expenses"}
-          onClick={() => handleSelect({ kind: "stat", stat: "expenses" })}
+          selected={selectedStat === "expenses"}
+          onClick={() => handleSelect("expenses")}
         />
         <StatCard
           title="Balance"
           value={stats.balance}
           colorClassName={balanceColor}
-          selected={selection?.kind === "stat" && selection.stat === "balance"}
-          onClick={() => handleSelect({ kind: "stat", stat: "balance" })}
+          selected={selectedStat === "balance"}
+          onClick={() => handleSelect("balance")}
         />
         <StatCard
           title="Accounts"
           value={stats.accounts}
-          selected={selection?.kind === "stat" && selection.stat === "accounts"}
-          onClick={() => handleSelect({ kind: "stat", stat: "accounts" })}
+          selected={selectedStat === "accounts"}
+          onClick={() => handleSelect("accounts")}
         />
         <StatCard
           title="Transfers"
           value={stats.transfers}
-          selected={selection?.kind === "stat" && selection.stat === "transfers"}
-          onClick={() => handleSelect({ kind: "stat", stat: "transfers" })}
+          selected={selectedStat === "transfers"}
+          onClick={() => handleSelect("transfers")}
         />
         <StatCard
           title="Uncategorized"
           value={stats.uncategorized}
-          selected={selection?.kind === "stat" && selection.stat === "uncategorized"}
-          onClick={() => handleSelect({ kind: "stat", stat: "uncategorized" })}
+          selected={selectedStat === "uncategorized"}
+          onClick={() => handleSelect("uncategorized")}
         />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Expenses by month</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ExpensesByMonthChart
-            data={monthlyData}
-            selectedMonth={selection?.kind === "month" ? selection.month : undefined}
-            onSelect={(month) => handleSelect({ kind: "month", month })}
-          />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Expenses</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {expensesData.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No expenses yet.</p>
-          ) : (
-            <CategoryBarChart
-              data={expensesData}
-              selectedKey={selection?.kind === "category" && selection.group === "expense" ? selection.key : undefined}
-              onSelect={(key) => handleSelect({ kind: "category", group: "expense", key })}
-            />
-          )}
-        </CardContent>
-      </Card>
-
-      {selection ? (
+      {selectedStat ? (
         <DashboardTransactionsTable
           transactions={filteredTransactions}
           accounts={accounts}
@@ -230,7 +158,7 @@ export function DashboardExplorer({
           classes={classes}
         />
       ) : (
-        <p className="text-sm text-muted-foreground">Click a card or bar above to filter transactions.</p>
+        <p className="text-sm text-muted-foreground">Click a card above to filter transactions.</p>
       )}
     </div>
   );
