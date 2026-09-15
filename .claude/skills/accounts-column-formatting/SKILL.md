@@ -13,8 +13,9 @@ description: Use when touching how the Accounts table (src/app/accounts/accounts
   This is local to this file's own `formatCurrency` copy; Budget's
   planned/actual/variance and the month header keep currency style and the
   `R$` symbol — don't change those unless asked. The Dashboard is mixed:
-  only its 4 stat cards keep `R$`, everything chart- or table-shaped there
-  is no-symbol like this file (see `dashboard-conventions`).
+  only its 6 stat cards keep `R$` (see `dashboard-cards`), everything
+  chart- or table-shaped there is no-symbol like this file (see
+  `dashboard-conventions`/`dashboard-monthly-table`).
 - **Last sync is compact and never wraps**: `formatDateTime` builds
   `DD/MM/YY HH:mm` (e.g. `11/09/25 14:30`) manually from `Date` getters
   (local time, not UTC — this is a real timestamp, not a date-only

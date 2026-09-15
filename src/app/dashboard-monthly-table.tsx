@@ -74,11 +74,11 @@ function TreeRows({
               </td>
               {row.months.map((value, i) => (
                 <td key={i} className={cn("whitespace-nowrap px-0.5 py-2 text-right text-xs", rowColor)}>
-                  {formatCurrency(value)}
+                  {value === 0 ? "" : formatCurrency(value)}
                 </td>
               ))}
               <td className={cn("whitespace-nowrap px-2 py-2 text-right text-xs font-medium", rowColor)}>
-                {formatCurrency(row.total)}
+                {row.total === 0 ? "" : formatCurrency(row.total)}
               </td>
             </tr>
             {hasChildren && isExpanded && (

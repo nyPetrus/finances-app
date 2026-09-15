@@ -354,14 +354,13 @@ list page instead of inventing a fresh layout.
   reference to it. Transactions' Account and Class columns (which have no
   icon of their own) instead use a `Badge` (`variant="secondary"
   className="max-w-full gap-1 truncate"`, no leading icon) — see
-  `transactions-column-formatting`. The Dashboard's three category-breakdown
-  bar charts (Expenses/Income/Transfer by category) still need a real fill
-  color per bar (icons don't work as a chart fill) — each assigns one via
-  `sequentialColor()` (`src/lib/chart-colors.ts`), entirely decoupled from
-  categories; don't wire that back to a per-category property. See
-  `dashboard-conventions` for the color derivation and
-  `amount-color-conventions` for how it ties back to the Dashboard's other
-  red/green/gray usage.
+  `transactions-column-formatting`. (The Dashboard used to have three
+  category-breakdown bar charts that needed a real fill color per bar
+  instead of an icon — `sequentialColor()`, `src/lib/chart-colors.ts` —
+  but all were removed per explicit user request; see
+  `dashboard-conventions`'s "removed charts" history and
+  `amount-color-conventions` for what's left of the Dashboard's own
+  red/green/gray usage now that they're gone.)
 - **Mutations**: bulk actions take an array (`deleteAccounts(ids: string[])`,
   `deleteMappedDescriptions(descriptions: string[])`, etc.) and delete/update
   via `.in(...)`, guarded by `.eq("user_id", user.id)` like every other
