@@ -46,7 +46,7 @@ function StatCard({
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-normal text-muted-foreground">{title}</CardTitle>
       </CardHeader>
-      <CardContent className={cn("text-xl font-semibold", colorClassName)}>
+      <CardContent className={cn("text-base font-semibold", colorClassName)}>
         {formatCurrency(value)}
       </CardContent>
     </Card>

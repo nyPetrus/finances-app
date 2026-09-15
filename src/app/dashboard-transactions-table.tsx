@@ -360,7 +360,7 @@ export function DashboardTransactionsTable({
               ))}
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody className="text-xs">
             {sortedTransactions.map((transaction) => (
               <TableRow key={transaction.id} className="group">
                 <TableCell>

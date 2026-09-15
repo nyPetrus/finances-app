@@ -24,6 +24,12 @@ is now unused anywhere in the app as a result — still intentionally kept
 rather than deleted, as an already-derived set of design tokens to reach
 for first if a chart ever returns.
 
+- **`StatCard`'s value line is `text-base` (`CardContent`), its title is
+  `text-sm` (`CardTitle`)** — the value used to be `text-xl`, sized down
+  two Tailwind steps (`xl` → `lg` → `base`) per explicit user request.
+  Don't confuse this with the title, which was never touched and stays a
+  fixed `text-sm text-muted-foreground` regardless of what the value size
+  does.
 - **The 6 stat cards sit in a `grid-cols-2 md:grid-cols-3` grid, DOM order
   Income, Expenses, Balance, Accounts, Transfers, Uncategorized** — on
   `md:` widths that's row 1 = Income/Expenses/Balance, row 2 =
@@ -86,6 +92,17 @@ for first if a chart ever returns.
   Transfer-kind rows (Type/Category/Class alike) sum `Math.abs(amount)`,
   matching the Transfers stat card's own magnitude-not-net rule; every
   other kind sums the signed `amount` as-is.
+  - **`MONTH_LABELS` (`dashboard-monthly-table.tsx`, the column headers) is
+    a plain lowercase array (`["jan", "fev", ..., "dez"]`), not
+    `Intl.DateTimeFormat("pt-BR", { month: "short" })`** — the `Intl`
+    short form renders with a trailing period ("jan.", "fev.", ...) in
+    pt-BR, which showed up as dots on every month column header; a plain
+    array sidesteps that entirely and matches the same
+    `MONTH_ABBREVIATIONS` array `transactions-table.tsx`/
+    `dashboard-transactions-table.tsx` already use for their Date column.
+    The `<th>` still has `className="... capitalize"` so headers display
+    "Jan", "Fev", etc. despite the array being lowercase — don't
+    capitalize the array itself, that would just double up with the CSS.
   - **Row color is inherited down from the Type ancestor, not computed
     per-row.** `dashboard-monthly-table.tsx`'s `TYPE_COLOR` map gives
     `"type:income"` unconditional `text-emerald-600` and `"type:expense"`
@@ -154,3 +171,16 @@ for first if a chart ever returns.
   be added to this file too, separately, when they were added to
   `transactions-table.tsx`. When touching one edit dialog, check whether
   the same change belongs in the other.
+- **The embedded table's row values are one Tailwind step smaller than
+  every other table in the app: `<TableBody className="text-xs">`**,
+  overriding the `text-sm` the shared `<Table>` root sets for every table
+  (`src/components/ui/table.tsx`) — per explicit user request, scoped to
+  just this one table rather than the shared component (which would have
+  shrunk Transactions/Accounts/Categories/Classes/Descriptions too).
+  Column headers are untouched (`<TableHeader>` isn't given `text-xs`, so
+  `TableHead` cells still inherit the table-level `text-sm`) — only body
+  row text shrank, since `text-xs` on `<TableBody>` only cascades to its
+  own descendants. Don't confuse this with the monthly breakdown table's
+  own `text-xs` cells above — those were already `text-xs` independently,
+  on plain `<td>`/`<th>` markup that never went through the shared `Table`
+  component in the first place.

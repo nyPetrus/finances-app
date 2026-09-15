@@ -6,9 +6,10 @@ import { CategoryIcon } from "@/components/category-icon";
 import { cn } from "@/lib/utils";
 import type { MonthlyRow } from "./dashboard-monthly-breakdown";
 
-const MONTH_LABELS = Array.from({ length: 12 }, (_, i) =>
-  new Intl.DateTimeFormat("pt-BR", { month: "short" }).format(new Date(2000, i, 1)),
-);
+const MONTH_LABELS = [
+  "jan", "fev", "mar", "abr", "mai", "jun",
+  "jul", "ago", "set", "out", "nov", "dez",
+];
 
 // Plain-decimal, no R$ — this page reserves the currency symbol for the 6
 // stat cards (see dashboard-conventions).
