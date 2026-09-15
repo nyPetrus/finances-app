@@ -279,22 +279,22 @@ export function TransactionsTable({
               Create an account first
             </Button>
           )}
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            disabled={selected.size === 0 || isDeleting}
-            onClick={handleDelete}
-            aria-label="Delete"
-            title="Delete"
-          >
-            <Trash2Icon />
-          </Button>
         </div>
-        <div className="ml-auto flex items-center gap-2">
-          {selected.size > 0 && (
+        {selected.size > 0 && (
+          <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">{selected.size} selected</span>
-          )}
-        </div>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              disabled={isDeleting}
+              onClick={handleDelete}
+              aria-label="Delete"
+              title="Delete"
+            >
+              <Trash2Icon />
+            </Button>
+          </div>
+        )}
       </div>
       {actionError && <p className="text-sm text-destructive">{actionError}</p>}
 

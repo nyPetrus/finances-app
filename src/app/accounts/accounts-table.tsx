@@ -254,16 +254,6 @@ export function AccountsTable({
           <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />
           <AddAccountMenu onError={setActionError} onConnected={() => router.refresh()} />
           <Button
-            variant="ghost"
-            size="icon-sm"
-            disabled={selected.size === 0 || isSyncing || isDeleting}
-            onClick={handleDelete}
-            aria-label="Delete"
-            title="Delete"
-          >
-            <Trash2Icon />
-          </Button>
-          <Button
             variant="outline"
             size="icon-sm"
             disabled={syncableItemIds.length === 0 || isSyncing || isDeleting}
@@ -275,7 +265,19 @@ export function AccountsTable({
           </Button>
         </div>
         {selected.size > 0 && (
-          <span className="ml-auto text-sm text-muted-foreground">{selected.size} selected</span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">{selected.size} selected</span>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              disabled={isSyncing || isDeleting}
+              onClick={handleDelete}
+              aria-label="Delete"
+              title="Delete"
+            >
+              <Trash2Icon />
+            </Button>
+          </div>
         )}
       </div>
       {actionError && <p className="text-sm text-destructive">{actionError}</p>}
