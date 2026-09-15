@@ -1,21 +1,17 @@
 ---
 name: table-page-conventions
-description: Use when adding a new list-style page or touching an existing one (Transactions, Categories, Classes, Descriptions, Accounts, Combinations) — table markup, row selection, the two-group toolbar (left: Add-or-"N selected" swap, table-specific buttons, then Delete last, only when something's selected; right: just Columns), the per-row "⋮" actions menu (Edit/Sync/Delete), column show/hide & reorder, column header icons, sorting, add/edit dialogs, category/class chip rendering, or bulk mutations. Encodes this app's shared list-page architecture so new pages match instead of inventing a fresh layout.
+description: Use when adding a new list-style page or touching an existing one (Transactions, Categories, Classes, Descriptions, Accounts) — table markup, row selection, the two-group toolbar (left: Add-or-"N selected" swap, table-specific buttons, then Delete last, only when something's selected; right: just Columns), the per-row "⋮" actions menu (Edit/Sync/Delete), column show/hide & reorder, column header icons, sorting, add/edit dialogs, category/class chip rendering, or bulk mutations. Encodes this app's shared list-page architecture so new pages match instead of inventing a fresh layout.
 ---
 
 # Table page conventions
 
 All list-style pages (Transactions, Categories, Classes, Descriptions,
-Accounts, Combinations) follow the same structure: a server `page.tsx` that
-fetches and sorts the rows, handing them to a client `<X>Table` component
+Accounts) follow the same structure: a server `page.tsx` that fetches and
+sorts the rows, handing them to a client `<X>Table` component
 (`accounts-table.tsx`, `categories-table.tsx`, `classes-table.tsx`,
-`descriptions-table.tsx`, `transactions-table.tsx`, `combinations-table.tsx`)
-that owns selection, column preferences, and all row interaction. Match this
-when adding a new list page instead of inventing a fresh layout. (The one
-exception is `/test-conventions`, a debug page that deliberately reuses the
-real `AccountsTable`/`CategoriesTable`/`ClassesTable`/`TransactionsTable`
-components wholesale on 20-row slices instead of owning a table of its own —
-see the last bullet below.)
+`descriptions-table.tsx`, `transactions-table.tsx`) that owns selection,
+column preferences, and all row interaction. Match this when adding a new
+list page instead of inventing a fresh layout.
 
 - **Markup**: shadcn's `Table`/`TableHeader`/`TableBody`/`TableRow`/`TableCell`
   from `@/components/ui/table`, in **auto layout — no `table-fixed` or
@@ -376,35 +372,3 @@ see the last bullet below.)
   that column is read elsewhere as a meaningful timestamp (e.g. Accounts'
   "Last sync" column reads it as "last synced" for automatic accounts —
   relabeling one via the Edit dialog must not bump it).
-- **Combinations (`src/app/combinations/`) isn't backed by its own table —
-  a row is a `Class`, displayed with its parent Category's `kind` as an
-  extra, derived "Type" column** (`COLUMNS` order: Type, Category, Class).
-  `combinations-table.tsx` still gets the full toolbar (Add/Delete/Columns)
-  and per-row "⋮" menu like every other page here, but Add/Edit reuse
-  Classes' own `AddClassDialog` and `updateClass`/`deleteClasses` actions
-  verbatim (imported cross-route from `@/app/classes/...`) rather than
-  duplicating them — so the Add/Edit dialogs themselves still say "class",
-  even though the table's own copy (empty state, delete confirms, dialog
-  titles) says "combination." Because `classes/actions.ts` is shared, its
-  three mutations `revalidatePath` both `/classes` and `/combinations`.
-  Categories with no Classes yet don't get a row at all (there's no
-  synthetic "category, no class" row) — check with whoever's asking before
-  changing that if it ever comes up.
-- **`/test-conventions` is a deliberate exception to "own client table
-  component" above.** It's a debug/QA page (not linked from anywhere a
-  production convention doc would expect) whose entire purpose is
-  eyeballing real data against the conventions documented across these
-  skill files, so it reuses `AccountsTable`/`CategoriesTable`/
-  `ClassesTable`/`TransactionsTable` directly — each fed a real, ≤20-row
-  slice of the signed-in user's own data — instead of hand-building a
-  parallel read-only renderer (an earlier version of this page did exactly
-  that, and got replaced specifically so Add/Delete/Columns didn't have to
-  be re-implemented a second time just to stay in sync with this file).
-  Consequence worth knowing before touching this page: every column
-  header's sort link is still hardcoded to that table's own route
-  (`/accounts?sort=...`, `/categories?sort=...`, ...), so clicking one
-  navigates away from `/test-conventions` rather than reordering in place —
-  that's inherited from the reused components, not a bug local to this
-  page. Column-visibility `localStorage` keys are also shared with the real
-  pages (same `storageKey`s), so hiding a column here hides it there too —
-  intentional, since it's testing the real component's state.
