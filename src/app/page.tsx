@@ -68,7 +68,7 @@ export default async function Home({
   const monthlyBreakdown = buildMonthlyBreakdown(yearTransactions, allCategories, allClasses);
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-6">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Dashboard</h1>
         <div className="flex items-center gap-2">

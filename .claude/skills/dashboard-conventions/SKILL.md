@@ -12,6 +12,17 @@ the 6 stat cards, the monthly breakdown tree table, and the transactions
 table that only appears once a stat card is selected. No page here shows a
 `(year)`/`— {year}` suffix in a card title — the page-level year nav
 (`← {year} {year+1} →` next to the `<h1>`) already establishes it once.
+**The page wrapper is `max-w-6xl`** (`mx-auto flex w-full max-w-6xl
+flex-col gap-6 p-6`), one step wider than the `max-w-5xl`
+Transactions/Accounts use — bumped per explicit user request so the
+embedded transactions table's columns (especially Amount) have more
+breathing room and don't crowd together; the stat-card grid and monthly
+breakdown table get the same extra width as a side effect, which is fine
+since they're column-heavy too. If a future ask needs even more room for
+one of these sections specifically without affecting the others, that's a
+bigger change (breaking a section out of this centered container) — don't
+reach for it unless asked; widening the whole page one more step is the
+established, low-risk move here.
 **There used to be Income/Expenses/Transfer category-breakdown bar charts
 and a monthly bar chart here — all were removed per explicit user
 request** (the last of them in the commit titled "Remove Expenses-by-month
