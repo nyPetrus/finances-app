@@ -14,7 +14,7 @@ const MONTH_LABELS = [
 // Plain-decimal, no R$ — this page reserves the currency symbol for the 6
 // stat cards (see dashboard-conventions).
 function formatCurrency(value: number) {
-  return new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+  return new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
 }
 
 // Mirrors the stat cards' own colors (amount-color-conventions): Income is

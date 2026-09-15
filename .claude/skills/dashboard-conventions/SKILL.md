@@ -74,18 +74,24 @@ for first if a chart ever returns.
   a currency symbol.** `dashboard-explorer.tsx`'s own `formatCurrency`
   (used only by `StatCard`) is the one Dashboard copy that keeps `style:
   "currency", currency: "BRL"` and 2 decimal places. The other two
-  `formatCurrency` copies are both plain-decimal (no `R$`) but no longer
-  match each other on decimals: `dashboard-monthly-table.tsx`'s (the
-  breakdown table's cells) keeps `minimumFractionDigits: 2,
+  `formatCurrency` copies are both plain-decimal (no `R$`) but don't match
+  each other on decimals, per two rounds of explicit, table-specific user
+  requests: `dashboard-transactions-table.tsx`'s (the embedded,
+  click-to-filter table's Amount column) keeps `minimumFractionDigits: 2,
   maximumFractionDigits: 2`, the same no-symbol style
   Transactions'/Accounts' own tables use (see
-  `transactions-column-formatting`); `dashboard-transactions-table.tsx`'s
-  (the embedded table's Amount column) uses `minimumFractionDigits: 0,
-  maximumFractionDigits: 0` instead — whole numbers only, rounded, per
-  explicit user request specific to that one table. Don't copy either
-  pattern onto the other table without checking which one actually applies
-  — this is a real, intentional difference between the two now, not
-  something to "fix" into consistency.
+  `transactions-column-formatting`); `dashboard-monthly-table.tsx`'s (the
+  monthly breakdown table's cells — this is the one the user calls "the
+  dynamic table," since its rows dynamically expand/collapse, *not* the
+  embedded transactions table, which only appears/disappears wholesale on
+  selection — a naming mix-up that caused the two tables' decimal settings
+  to get swapped once before this) uses `minimumFractionDigits: 0,
+  maximumFractionDigits: 0` instead — whole numbers only, rounded. Don't
+  copy either pattern onto the other table without checking which one
+  actually applies, and don't assume "dynamic table" in a future request
+  means the embedded transactions table — confirm which one if it's
+  ambiguous. This is a real, intentional difference between the two now,
+  not something to "fix" into consistency.
 - **The monthly breakdown table (`dashboard-monthly-breakdown.ts` +
   `dashboard-monthly-table.tsx`) sits directly below the stat-card grid,
   above the click-to-filter embedded table.** It's a 3-level expand/collapse
