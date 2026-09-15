@@ -1,8 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Category, Class, MappedDescription } from "@/lib/supabase/types";
-import { AutoCategorizeButton } from "./auto-categorize-button";
 import { DescriptionsTable } from "./descriptions-table";
-import { SyncButton } from "./sync-button";
 import { isSortKey, type SortKey } from "./sort";
 
 const checkTypeLabels: Record<MappedDescription["check_type"], string> = {
@@ -70,13 +68,7 @@ export default async function DescriptionsPage({
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Descriptions</h1>
-        <div className="flex items-center gap-2">
-          <AutoCategorizeButton />
-          <SyncButton />
-        </div>
-      </div>
+      <h1 className="text-2xl font-semibold">Descriptions</h1>
 
       {allCategories.length === 0 ? (
         <p className="text-sm text-muted-foreground">

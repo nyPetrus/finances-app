@@ -264,8 +264,6 @@ export function AccountsTable({
           >
             <Trash2Icon />
           </Button>
-        </div>
-        <div className="ml-auto flex items-center gap-2">
           <ConnectBankButton onError={setActionError} onConnected={() => router.refresh()} />
           <Button
             variant="outline"
@@ -277,10 +275,10 @@ export function AccountsTable({
           >
             <RefreshCwIcon className={isSyncing ? "animate-spin" : undefined} />
           </Button>
-          {selected.size > 0 && (
-            <span className="text-sm text-muted-foreground">{selected.size} selected</span>
-          )}
         </div>
+        {selected.size > 0 && (
+          <span className="ml-auto text-sm text-muted-foreground">{selected.size} selected</span>
+        )}
       </div>
       {actionError && <p className="text-sm text-destructive">{actionError}</p>}
 

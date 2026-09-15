@@ -45,6 +45,7 @@ import {
   updateMappedDescription,
 } from "./actions";
 import { AddMappingDialog } from "./add-mapping-dialog";
+import { SyncButton } from "./sync-button";
 import { type SortKey } from "./sort";
 
 const checkTypeLabels: Record<MappedDescription["check_type"], string> = {
@@ -240,6 +241,7 @@ export function DescriptionsTable({
           >
             <Trash2Icon />
           </Button>
+          <SyncButton />
         </div>
         {selected.size > 0 && (
           <span className="ml-auto text-sm text-muted-foreground">{selected.size} selected</span>

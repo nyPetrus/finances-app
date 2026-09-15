@@ -1,6 +1,6 @@
 ---
 name: table-page-conventions
-description: Use when adding a new list-style page or touching an existing one (Transactions, Categories, Classes, Descriptions, Accounts) — table markup, row selection, the two-zone toolbar (generic Columns/Add/Delete vs. table-specific buttons), the per-row "⋮" actions menu (Edit/Sync/Delete), column show/hide & reorder, column header icons, sorting, add/edit dialogs, category/class chip rendering, or bulk mutations. Encodes this app's shared list-page architecture so new pages match instead of inventing a fresh layout.
+description: Use when adding a new list-style page or touching an existing one (Transactions, Categories, Classes, Descriptions, Accounts) — table markup, row selection, the single toolbar button group (Columns/Add/Delete plus any table-specific buttons, all in one row), the per-row "⋮" actions menu (Edit/Sync/Delete), column show/hide & reorder, column header icons, sorting, add/edit dialogs, category/class chip rendering, or bulk mutations. Encodes this app's shared list-page architecture so new pages match instead of inventing a fresh layout.
 ---
 
 # Table page conventions
@@ -124,43 +124,45 @@ list page instead of inventing a fresh layout.
   `open` is `editing<X> !== null`, `onOpenChange` and a successful save both
   `setEditing<X>(null)`; guard its render on `{editing<X> && <Dialog ...>}`
   so it has data to prefill from and unmounts cleanly once closed.
-- **The toolbar above the table is split into two zones.** Left = generic,
-  present on every table: `ColumnsMenu`, the page's "Add" dialog trigger
-  (see below), then "Delete" (`Trash2Icon`, `variant="ghost"`
-  `size="icon-sm"`, no red fill/destructive styling — that's reserved for
-  the row-menu's Delete item; disabled when nothing's selected; confirms via
-  `window.confirm(...)` before calling the bulk delete action). "+" sits
-  immediately to the left of "Delete". Right (`className="ml-auto flex
-  items-center gap-2"`) = table-specific buttons, i.e. ones that don't apply
-  to every table — currently just Accounts' "Connect bank"
-  (`ConnectBankButton`, moved into this zone from the page header) and
-  Accounts' own bulk "Sync" (icon-only `RefreshCwIcon`, `variant="outline"`
+- **The toolbar above the table is one continuous button group, not split
+  into zones.** All buttons — generic (present on every table) and
+  table-specific (only some tables have them) — live in a single `<div
+  className="flex items-center gap-2">`, in this order: `ColumnsMenu`, the
+  page's "Add" dialog trigger (see below), "Delete" (`Trash2Icon`,
+  `variant="ghost"` `size="icon-sm"`, no red fill/destructive styling —
+  that's reserved for the row-menu's Delete item; disabled when nothing's
+  selected; confirms via `window.confirm(...)` before calling the bulk
+  delete action), then any table-specific buttons immediately after
+  "Delete" — currently Accounts' "Connect bank" (`ConnectBankButton`) then
+  its own bulk "Sync" (icon-only `RefreshCwIcon`, `variant="outline"`
   `size="icon-sm"`, spinning via `className={isSyncing ? "animate-spin" :
   undefined}` while pending, driven by `selected`/`selectedRows` — Pluggy
-  bank sync is genuinely a multi-account bulk operation). **Transactions
-  used to have a bulk "Sync" button here too, for
-  `syncDescriptionsFromTransactions`, and no longer does** — since that
-  action is inherently per-transaction anyway (each row either has a
-  category to sync from or it doesn't), the per-row `RowActionsMenu`'s
-  `onSync` item is the only way to trigger it now, on both
-  `transactions-table.tsx` and its Dashboard-embedded copy. Don't
+  bank sync is genuinely a multi-account bulk operation), and Descriptions'
+  own `SyncButton` (applies existing `mapped_descriptions` rules to every
+  uncategorized transaction, see `transaction-description-rules`). "+" sits
+  immediately to the left of "Delete"; any table-specific buttons sit
+  immediately to its right. **Transactions used to have a bulk "Sync"
+  button here too, for `syncDescriptionsFromTransactions`, and no longer
+  does** — since that action is inherently per-transaction anyway (each row
+  either has a category to sync from or it doesn't), the per-row
+  `RowActionsMenu`'s `onSync` item is the only way to trigger it now, on
+  both `transactions-table.tsx` and its Dashboard-embedded copy. Don't
   reintroduce a bulk Sync button for a table whose sync action is already
   fully covered by the per-row menu — Accounts' case is different because
   one Pluggy `pluggy_item_id` sync covers every account under that
   connection, which is a real bulk operation, not just "loop the per-row
-  action over a selection." Right zone's content, whatever it is, is
-  followed by `{selected.size > 0 && <span>{selected.size}
-  selected</span>}` (no `ml-auto` on the span itself now — the zone div
-  carries it) — render nothing (not a filler placeholder string) when
-  nothing's selected. A table with no specific buttons (Categories, Classes,
-  Descriptions, and now Transactions) still renders this right-hand div; it
-  just ends up empty except for the selected-count span. There is no "Edit"
-  button in the toolbar anywhere — it's redundant now that every row has
-  its own Edit via the "⋮" menu. Icon-only toolbar buttons need
-  `aria-label` *and* `title` set to the plain action word ("Columns",
-  "Sync", "Delete", "Connect bank") for the same reason "Add" buttons do
-  (see below) — `ColumnsMenu`'s trigger needs this pair too, it's easy to
-  forget since it has no visible label either.
+  action over a selection." The button-group div's sibling is
+  `{selected.size > 0 && <span className="ml-auto text-sm
+  text-muted-foreground">{selected.size} selected</span>}` — the `ml-auto`
+  lives on the span itself now (not a wrapping zone div), so it only pushes
+  right when there's actually a selection; render nothing (not a filler
+  placeholder string) when nothing's selected. There is no "Edit" button in
+  the toolbar anywhere — it's redundant now that every row has its own Edit
+  via the "⋮" menu. Icon-only toolbar buttons need `aria-label` *and*
+  `title` set to the plain action word ("Columns", "Sync", "Delete",
+  "Connect bank") for the same reason "Add" buttons do (see below) —
+  `ColumnsMenu`'s trigger needs this pair too, it's easy to forget since it
+  has no visible label either.
   **The toolbar (and thus "+") must render even when the row list is
   empty** — the empty-state message (`"No categories yet."` etc.) replaces
   only the `<Table>` markup via a ternary, never the surrounding toolbar, so
@@ -244,16 +246,17 @@ list page instead of inventing a fresh layout.
   type it adds, and dropping the label removes the only other cue, so both
   the accessible name and the hover tooltip must carry it. The `Add*Dialog`
   component itself is rendered from inside the `<X>Table` client component's
-  toolbar's left/generic zone, not from the server `page.tsx` header —
-  `page.tsx` keeps only the `<h1>` and any page-level, non-row controls
-  (Descriptions' `SyncButton`/`AutoCategorizeButton`, Transactions' month
-  nav). Accounts' `ConnectBankButton` used to live in `page.tsx` too but now
-  renders inside the table's right/specific toolbar zone, next to "Sync" —
-  see the "Connect bank" bullet below. Classes and Descriptions render their
-  `Add*Dialog` unconditionally inside the table (safe because `page.tsx`
-  only mounts the table when categories exist); Transactions swaps its "+"
-  for a "Create an account first" link button when `accounts.length === 0`,
-  using the same `accounts` prop the table already receives.
+  toolbar button group, not from the server `page.tsx` header — `page.tsx`
+  keeps only the `<h1>` and any page-level, non-row controls (Transactions'
+  month nav — Descriptions' `SyncButton` used to live in `page.tsx` too but
+  now renders inside the table's own toolbar, see below). Accounts'
+  `ConnectBankButton` used to live in `page.tsx` too but now renders inside
+  the table's toolbar, next to "Sync" — see the "Connect bank" bullet below.
+  Classes and Descriptions render their `Add*Dialog` unconditionally inside
+  the table (safe because `page.tsx` only mounts the table when categories
+  exist); Transactions swaps its "+" for a "Create an account first" link
+  button when `accounts.length === 0`, using the same `accounts` prop the
+  table already receives.
 - **"Connect bank" is icon-only too**, `PlugZapIcon` (`lucide-react`),
   `variant="outline"` `size="icon-sm"` to match the other toolbar icon
   buttons, `aria-label`/`title="Connect bank"`. `ConnectBankButton`
@@ -263,8 +266,8 @@ list page instead of inventing a fresh layout.
   owning its own error state — `AccountsTable` wires `onError={setActionError}`
   and `onConnected={() => router.refresh()}` so the error surfaces through
   the same shared `actionError` paragraph as Edit/Delete/Sync, instead of a
-  separate one. It renders first in the right/specific toolbar zone,
-  followed by the bulk "Sync" button.
+  separate one. It renders in the toolbar right after "Delete", followed by
+  the bulk "Sync" button.
 - **Edit/Add dialogs**: `Label` + `Input`/`Select` fields per `@/components/ui`.
   Add dialogs (still a standalone `DialogTrigger`-wrapped `Dialog`, e.g.
   `AddAccountDialog`) keep their own local `error` state, shown as
