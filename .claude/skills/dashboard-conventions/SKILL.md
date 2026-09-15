@@ -1,6 +1,6 @@
 ---
 name: dashboard-conventions
-description: Use when touching the Dashboard (src/app/page.tsx, src/app/dashboard-explorer.tsx) — its 6 stat cards, the "Expenses by month" chart, the single "Expenses" category-breakdown bar chart and its sequential color scale, or the click-a-card-or-bar-to-filter embedded transactions table. Bespoke to this one page, not part of the shared table-page-conventions architecture (though the embedded table borrows heavily from it).
+description: Use when touching the Dashboard (src/app/page.tsx, src/app/dashboard-explorer.tsx, src/app/dashboard-monthly-breakdown.ts, src/app/dashboard-monthly-table.tsx) — its 6 stat cards, the Type/Category/Class monthly breakdown tree table, or the click-a-card-to-filter embedded transactions table. Bespoke to this one page, not part of the shared table-page-conventions architecture (though the embedded table borrows heavily from it).
 ---
 
 # Dashboard conventions
@@ -8,20 +8,21 @@ description: Use when touching the Dashboard (src/app/page.tsx, src/app/dashboar
 `src/app/page.tsx` is a year-scoped overview: it's a thin server component
 that fetches the year's data, computes every aggregate, and hands it all to
 `dashboard-explorer.tsx` (`DashboardExplorer`, `"use client"`), which owns
-the 6 stat cards, the "Expenses by month" chart, the single
-"Expenses" category-breakdown bar chart, and the transactions table that
-only appears once something is selected. No page here shows a `(year)`/
-`— {year}` suffix in a card or chart title — the page-level year nav
+the 6 stat cards, the monthly breakdown tree table, and the transactions
+table that only appears once a stat card is selected. No page here shows a
+`(year)`/`— {year}` suffix in a card title — the page-level year nav
 (`← {year} {year+1} →` next to the `<h1>`) already establishes it once.
-The Expenses category-breakdown card is titled just "Expenses" (no "by
-category" suffix either — the `CategoryBarChart` inside it already makes
-clear it's a per-category breakdown). **There used to be Income and
-Transfer category-breakdown cards alongside it, in an asymmetric
-2-column grid — both were removed per explicit user request**; don't
-reintroduce them without a fresh ask, and see the git history around that
-removal (`page.tsx`'s `incomeByCategory`/`transferByCategory` maps and
-`dashboard-explorer.tsx`'s two extra `<Card>`s) if they ever need to come
-back.
+**There used to be Income/Expenses/Transfer category-breakdown bar charts
+and a monthly bar chart here — all were removed per explicit user
+request** (the last of them in the commit titled "Remove Expenses-by-month
+and Expenses (category breakdown) charts from Dashboard"); don't
+reintroduce any of them without a fresh ask, and see git history for
+`expenses-by-month-chart.tsx`/`category-bar-chart.tsx` (both deleted) if
+they ever need to come back. `src/lib/chart-colors.ts` (`EXPENSE_HUE`/
+`INCOME_HUE`/`TRANSFER_HUE`, their `_FLAT` counterparts, `sequentialColor`)
+is now unused anywhere in the app as a result — still intentionally kept
+rather than deleted, as an already-derived set of design tokens to reach
+for first if a chart ever returns.
 
 - **The 6 stat cards sit in a `grid-cols-2 md:grid-cols-3` grid, DOM order
   Income, Expenses, Balance, Accounts, Transfers, Uncategorized** — on
@@ -52,104 +53,86 @@ back.
     accounts would otherwise tend to net toward zero).
   - **Uncategorized** — sum of `amount` (signed, not abs) over transactions
     with no `category_id` at all, regardless of sign.
-- **The Expenses category card is a plain, un-grid-wrapped `<Card>`** in
-  `dashboard-explorer.tsx`, sitting directly between the "Expenses by
-  month" card and the embedded transactions table — no wrapping grid div,
-  no `md:row-span-2` (those existed only to lay out the now-removed
-  Income/Transfer cards alongside it).
-- **`expensesByCategory` (in `page.tsx`, feeding the Expenses
-  category-breakdown chart) keeps its own `"uncategorized"` bucket** — this
-  is deliberately *not* the same thing as the top-level Uncategorized stat
-  card. The stat card is one number covering every categoryless
-  transaction regardless of sign; this chart's bucket exists only so the
-  breakdown can show "how much of Expenses had no category." Don't try to
-  unify them or feed the stat card from this map.
 - **`R$` is reserved for the 6 stat cards; nothing else on this page shows
   a currency symbol.** `dashboard-explorer.tsx`'s own `formatCurrency`
   (used only by `StatCard`) is the one Dashboard copy that keeps `style:
-  "currency", currency: "BRL"`. `expenses-by-month-chart.tsx`'s and
-  `category-bar-chart.tsx`'s `formatCurrency` (their tooltips and bar
-  labels) and `dashboard-transactions-table.tsx`'s (its Amount column) all
-  use the plain-decimal `Intl.NumberFormat("pt-BR", {
-  minimumFractionDigits: 2, maximumFractionDigits: 2 })` instead — the
-  same no-symbol style Transactions'/Accounts' own tables use (see
+  "currency", currency: "BRL"`. `dashboard-monthly-table.tsx`'s and
+  `dashboard-transactions-table.tsx`'s own `formatCurrency` copies (the
+  breakdown table's cells, the embedded table's Amount column) use the
+  plain-decimal `Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2,
+  maximumFractionDigits: 2 })` instead — the same no-symbol style
+  Transactions'/Accounts' own tables use (see
   `transactions-column-formatting`). Don't copy the cards' currency-style
-  `formatCurrency` into a new chart or into the embedded table.
-- **Colors are never hand-picked — they trace back to the app's own
-  existing tokens.** `src/lib/chart-colors.ts` exports `EXPENSE_HUE` (`{ h,
-  c }` OKLCH hue+chroma pair) and its flat single-color counterpart
-  `EXPENSE_FLAT`, derived from `--destructive` (`globals.css`). The file
-  also still exports `INCOME_HUE`/`TRANSFER_HUE`/`INCOME_FLAT`/
-  `TRANSFER_FLAT` (derived from Tailwind's `emerald-600` and
-  `--muted-foreground` respectively) — these are currently unused now that
-  the Income/Transfer breakdown cards are gone, but were left in place as
-  legitimate, already-derived design tokens rather than deleted; reach for
-  them first if a future change needs an income- or transfer-colored chart
-  again, instead of re-deriving new constants. Adding a genuinely new
-  Dashboard color means adding/editing a constant in `chart-colors.ts`, not
-  typing a hex inline in a chart component.
-- **`sequentialColor(hue, rank, count)`** (`src/lib/chart-colors.ts`) is
-  the one-hue, monotone-lightness ramp the Expenses category-breakdown
-  chart uses: `rank` 0 (the highest-value bar, since data is sorted
-  descending before coloring) gets the darkest step, the last rank gets
-  the lightest, linearly interpolated between L 0.35 and 0.82 holding the
-  hue's `h`/`c` fixed. A single-bar chart gets the darkest step. This is
-  deliberately a *computed* ramp (per the `dataviz` skill's "compute it,
-  don't eyeball it") rather than a hand-picked array of hexes —
-  out-of-sRGB-gamut steps are gamut-mapped by the browser automatically,
-  so the function never needs manual clamping. Don't run the `dataviz`
-  skill's categorical palette validator against this ramp — it validates
-  *categorical* (series identity) palettes, and a sequential ramp is
-  expected to fail it by design (adjacent steps sit close on purpose).
-- **The monthly chart is single-series now.** `expenses-by-month-chart.tsx`
-  (renamed from `income-expenses-transfers-chart.tsx`, itself renamed from
-  `budget-vs-actual-chart.tsx` — the Transfers bar was dropped first, then
-  Income too, so it no longer shows anything but Expenses per month) is a
-  single-series `BarChart` using `EXPENSE_FLAT`. Each month's `Bar` is
-  wrapped in its own `Cell` (same per-bar opacity/`onClick` pattern
-  `category-bar-chart.tsx` uses) so it participates in the click-to-filter
-  model below — this is a change from the old "monthly chart is a plain,
-  non-interactive overview" rule; that carve-out no longer applies now that
-  there's only one series and clicking a month is a meaningful filter
-  (that month's Expense-kind transactions). The Expenses category card
-  uses `category-bar-chart.tsx` (renamed/generalized from
-  `spending-by-category-chart.tsx` back when there were three of these
-  cards, not one) — a horizontal `BarChart` parametrized by
-  `data`/`selectedKey`/`onSelect`; keep it generic rather than
-  re-specializing it back to a single hardcoded "Expenses" component, in
-  case a second category-breakdown card returns later.
-- **Category aggregation always includes an `"uncategorized"` bucket for
-  expenses.** `page.tsx` builds `expensesByCategory` in one pass over
-  `nonTransferYearTransactions` (filtered to `amount < 0`), keyed by
-  `category_id ?? "uncategorized"` (an expense transaction can genuinely
-  lack a category). Each chart entry's `key` is exactly this bucket key
-  (`categoryId` or the literal string `"uncategorized"`).
-- **Click-to-filter spans stat cards, the monthly chart, and the Expenses
-  category chart — all through one `Selection` union in
-  `dashboard-explorer.tsx`**, not a bare `selected: string`. The union is
-  `{ kind: "stat"; stat: StatKey }` (the 6 cards) `| { kind: "category";
-  group: "expense"; key: string }` (the Expenses breakdown chart) `| {
-  kind: "month"; month: number }` (the monthly chart). `group` is a
-  single-value literal type now rather than a real discriminant — it's a
-  holdover from when there were three category-breakdown charts and
-  `"uncategorized"` needed disambiguating between them (see git history if
-  Income/Transfer ever come back, since that's exactly the problem
-  `group` was solving and it'll need to widen again). `CategoryBarChart`'s
-  `selectedKey` is computed by checking `selection.kind === "category"`
-  before reading `selection.key` (the `group === "expense"` check is
-  currently always true but kept for that same forward-compatibility
-  reason). `selectionId()` serializes a `Selection` to a string purely so
-  `handleSelect` can toggle off a re-click of the same thing; don't
-  compare `Selection` objects with `===`. When nothing is
-  selected, no table (not even an empty shell) renders — just a muted
-  hint; when something is selected, `DashboardExplorer` filters the full
-  year's `transactions` prop client-side (see the `switch` in its
-  `filteredTransactions` `useMemo` for each kind's exact predicate) and
-  renders `dashboard-transactions-table.tsx` with the result. The
-  `"accounts"` stat has no natural transaction predicate of its own (an
-  account balance isn't a property of a transaction) — clicking it shows
-  every transaction for the year, on the reasoning that every transaction
-  belongs to *some* account.
+  `formatCurrency` into a new addition here.
+- **The monthly breakdown table (`dashboard-monthly-breakdown.ts` +
+  `dashboard-monthly-table.tsx`) sits directly below the stat-card grid,
+  above the click-to-filter embedded table.** It's a 3-level expand/collapse
+  tree — Type (Income/Expenses/Transfers, always shown, plus Uncategorized
+  only when at least one transaction actually has no category) → Category
+  (only categories of that `kind` with at least one transaction this year)
+  → Class (only classes with at least one transaction this year) — with a
+  month column per month plus a trailing Total column (year sum of that
+  row). `buildMonthlyBreakdown()` is a pure function (no `"use client"`,
+  called from `page.tsx`) that does a single pass over `yearTransactions`
+  bucketing into per-type/per-category/per-class month arrays, then builds
+  the `MonthlyRow[]` tree from `categories`/`classes` filtered down to only
+  the ids that pass had at least one transaction — a category or class with
+  zero transactions this year gets no row at all, so expanding "+" never
+  reveals an empty list. **A Category row's months come directly from
+  transactions in that category, not from summing its Class children** —
+  a category can have transactions with no `class_id`, so a category's
+  total can legitimately exceed the sum of its visible Class rows; this is
+  intentional, not a bug to "fix" by adding a synthetic "no class" row.
+  Transfer-kind rows (Type/Category/Class alike) sum `Math.abs(amount)`,
+  matching the Transfers stat card's own magnitude-not-net rule; every
+  other kind sums the signed `amount` as-is.
+  - **Row color is inherited down from the Type ancestor, not computed
+    per-row.** `dashboard-monthly-table.tsx`'s `TYPE_COLOR` map gives
+    `"type:income"` unconditional `text-emerald-600` and `"type:expense"`
+    unconditional `text-destructive` (mirroring those two stat cards'
+    own colors — Expenses being unconditionally red here is the same
+    documented Dashboard exception to the Transactions-table "only
+    positive gets color" rule, see `amount-color-conventions`);
+    `"type:transfer"`/`"type:uncategorized"` get no color (`undefined`,
+    plain foreground, matching those stat cards). Every Category/Class row
+    under a Type just inherits that Type's color via a prop threaded
+    through the recursion — don't give Category/Class rows their own color
+    logic.
+  - **Expand state defaults to fully collapsed** (`useState<Set<string>>(new
+    Set())` in `MonthlyBreakdownTable`) — only the 3-4 Type rows are
+    visible on first render; a row only shows a "+"/"−" toggle
+    (`PlusIcon`/`MinusIcon`, not `ChevronRight`/`SortableTableHead`'s sort
+    arrows) when it actually has children, and Class rows never do (this is
+    the bottom of the hierarchy — "I can see at maximum at class level" was
+    an explicit requirement, don't add a 4th level).
+  - **This table is plain `<table>`/`table-fixed`/`<colgroup>` markup
+    (mirroring `budget/yearly-grid.tsx`'s month-grid, not shadcn's
+    `Table`/`SortableTableHead`/`table-page-conventions`'s `auto`-layout
+    rule)** — the column set here (label + 12 fixed months + Total) is
+    static and never hidden/reordered, so the reasoning behind
+    `table-page-conventions`'s "no `table-fixed`" rule (columns can be
+    hidden/reordered at runtime) doesn't apply. Don't route this through
+    `ColumnsMenu`/`useColumnPreferences`.
+  - **Deliberately not wired into the stat cards' click-to-filter
+    `Selection` state below** — clicking a row's "+" only expands/collapses
+    it locally; it doesn't select anything or affect
+    `DashboardTransactionsTable`. Adding that wiring is a reasonable future
+    ask, not something to assume is already half-done.
+- **Click-to-filter is driven by a single `selectedStat: StatKey |
+  undefined` in `dashboard-explorer.tsx`** — clicking a stat card toggles
+  it (re-clicking the selected one clears it via `handleSelect`'s `prev ===
+  stat ? undefined : stat` check). When nothing is selected, no table (not
+  even an empty shell) renders — just a muted hint; when something is
+  selected, `DashboardExplorer` filters the full year's `transactions` prop
+  client-side (see the `switch` in its `filteredTransactions` `useMemo` for
+  each `StatKey`'s exact predicate) and renders
+  `dashboard-transactions-table.tsx` with the result. The `"accounts"` stat
+  has no natural transaction predicate of its own (an account balance isn't
+  a property of a transaction) — clicking it shows every transaction for
+  the year, on the reasoning that every transaction belongs to *some*
+  account. (This used to be a richer `Selection` union also covering a
+  monthly chart and a category-breakdown chart, both now deleted — see
+  above — so it collapsed back down to just the stat-card case.)
 - **The embedded table is a separate component from `TransactionsTable`,
   not a reuse — deliberately.** `TransactionsTable`'s sort links to
   `/transactions?month=...&sort=...`, which would navigate away from the

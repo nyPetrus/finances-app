@@ -1,0 +1,130 @@
+import type { Category, Class, Transaction } from "@/lib/supabase/types";
+
+// Feeds MonthlyBreakdownTable (dashboard-monthly-table.tsx): a Type/Category/
+// Class tree, one row per node, each carrying its own 12 monthly sums plus a
+// year total. A node is only included if at least one transaction actually
+// falls under it — an all-zero category (say, a Class whose two transactions
+// happen to net to zero) still gets a row, but a category with literally no
+// transactions this year does not, so "+" never expands into an empty list.
+export type MonthlyRow = {
+  key: string;
+  label: string;
+  icon?: string;
+  months: number[];
+  total: number;
+  children?: MonthlyRow[];
+};
+
+const TYPE_LABELS: Record<Category["kind"], string> = {
+  income: "Income",
+  expense: "Expenses",
+  transfer: "Transfers",
+};
+
+const TYPE_ORDER: Category["kind"][] = ["income", "expense", "transfer"];
+
+function emptyMonths(): number[] {
+  return Array(12).fill(0);
+}
+
+function sum(months: number[]) {
+  return months.reduce((a, b) => a + b, 0);
+}
+
+function monthIndex(date: string) {
+  return Number(date.slice(5, 7)) - 1;
+}
+
+export function buildMonthlyBreakdown(
+  transactions: Transaction[],
+  categories: Category[],
+  classes: Class[],
+): MonthlyRow[] {
+  const categoriesById = new Map(categories.map((c) => [c.id, c]));
+
+  const typeMonths: Record<Category["kind"] | "uncategorized", number[]> = {
+    income: emptyMonths(),
+    expense: emptyMonths(),
+    transfer: emptyMonths(),
+    uncategorized: emptyMonths(),
+  };
+  let uncategorizedCount = 0;
+
+  const categoryMonths = new Map<string, number[]>();
+  const classMonths = new Map<string, number[]>();
+
+  for (const transaction of transactions) {
+    const month = monthIndex(transaction.date);
+    const category = transaction.category_id ? categoriesById.get(transaction.category_id) : undefined;
+
+    if (!category) {
+      typeMonths.uncategorized[month] += transaction.amount;
+      uncategorizedCount += 1;
+      continue;
+    }
+
+    // Transfers are summed as magnitude, matching the Transfers stat card
+    // (see dashboard-conventions) — otherwise a transfer's two legs across
+    // the user's own accounts would tend to net toward zero.
+    const value = category.kind === "transfer" ? Math.abs(transaction.amount) : transaction.amount;
+
+    typeMonths[category.kind][month] += value;
+
+    if (!categoryMonths.has(category.id)) categoryMonths.set(category.id, emptyMonths());
+    categoryMonths.get(category.id)![month] += value;
+
+    if (transaction.class_id) {
+      if (!classMonths.has(transaction.class_id)) classMonths.set(transaction.class_id, emptyMonths());
+      classMonths.get(transaction.class_id)![month] += value;
+    }
+  }
+
+  const rows: MonthlyRow[] = TYPE_ORDER.map((kind) => {
+    const categoryRows: MonthlyRow[] = categories
+      .filter((category) => category.kind === kind && categoryMonths.has(category.id))
+      .map((category) => {
+        const months = categoryMonths.get(category.id)!;
+        const classRows: MonthlyRow[] = classes
+          .filter((classItem) => classItem.category_id === category.id && classMonths.has(classItem.id))
+          .map((classItem) => {
+            const classItemMonths = classMonths.get(classItem.id)!;
+            return {
+              key: `class:${classItem.id}`,
+              label: classItem.name,
+              months: classItemMonths,
+              total: sum(classItemMonths),
+            };
+          })
+          .sort((a, b) => a.label.localeCompare(b.label));
+
+        return {
+          key: `category:${category.id}`,
+          label: category.name,
+          icon: category.icon,
+          months,
+          total: sum(months),
+          children: classRows.length > 0 ? classRows : undefined,
+        };
+      })
+      .sort((a, b) => a.label.localeCompare(b.label));
+
+    return {
+      key: `type:${kind}`,
+      label: TYPE_LABELS[kind],
+      months: typeMonths[kind],
+      total: sum(typeMonths[kind]),
+      children: categoryRows.length > 0 ? categoryRows : undefined,
+    };
+  });
+
+  if (uncategorizedCount > 0) {
+    rows.push({
+      key: "type:uncategorized",
+      label: "Uncategorized",
+      months: typeMonths.uncategorized,
+      total: sum(typeMonths.uncategorized),
+    });
+  }
+
+  return rows;
+}

@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { DashboardTransactionsTable } from "./dashboard-transactions-table";
+import { MonthlyBreakdownTable } from "./dashboard-monthly-table";
+import type { MonthlyRow } from "./dashboard-monthly-breakdown";
 import type { Account, Category, Class, Transaction } from "@/lib/supabase/types";
 
 type StatKey = "income" | "expenses" | "balance" | "accounts" | "transfers" | "uncategorized";
@@ -57,12 +59,14 @@ export function DashboardExplorer({
   categories,
   classes,
   stats,
+  monthlyBreakdown,
 }: {
   transactions: Transaction[];
   accounts: Account[];
   categories: Category[];
   classes: Class[];
   stats: Record<StatKey, number>;
+  monthlyBreakdown: MonthlyRow[];
 }) {
   const [selectedStat, setSelectedStat] = useState<StatKey | undefined>(undefined);
 
@@ -149,6 +153,8 @@ export function DashboardExplorer({
           onClick={() => handleSelect("uncategorized")}
         />
       </div>
+
+      <MonthlyBreakdownTable rows={monthlyBreakdown} />
 
       {selectedStat ? (
         <DashboardTransactionsTable
