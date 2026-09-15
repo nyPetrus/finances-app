@@ -78,7 +78,7 @@ export function AddAccountMenu({
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleConnectBank} disabled={isConnecting}>
             <PlugZapIcon />
-            Connect to bank
+            Connect
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
