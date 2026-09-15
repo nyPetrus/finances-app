@@ -14,7 +14,7 @@ type StatKey = "income" | "expenses" | "balance" | "accounts" | "transfers" | "u
 
 type Selection =
   | { kind: "stat"; stat: StatKey }
-  | { kind: "category"; group: "expense" | "income" | "transfer"; key: string }
+  | { kind: "category"; group: "expense"; key: string }
   | { kind: "month"; month: number };
 
 function selectionId(selection: Selection): string {
@@ -79,8 +79,6 @@ export function DashboardExplorer({
   stats,
   monthlyData,
   expensesData,
-  incomeData,
-  transferData,
 }: {
   transactions: Transaction[];
   accounts: Account[];
@@ -89,8 +87,6 @@ export function DashboardExplorer({
   stats: Record<StatKey, number>;
   monthlyData: { month: string; expenses: number }[];
   expensesData: ChartEntry[];
-  incomeData: ChartEntry[];
-  transferData: ChartEntry[];
 }) {
   const [selection, setSelection] = useState<Selection | undefined>(undefined);
 
@@ -104,14 +100,12 @@ export function DashboardExplorer({
     if (!selection) return [];
 
     if (selection.kind === "category") {
-      const { group, key } = selection;
+      const { key } = selection;
       return transactions.filter((t) => {
         const matchesKey = key === "uncategorized" ? !t.category_id : t.category_id === key;
         if (!matchesKey) return false;
         const category = t.category_id ? categoriesById.get(t.category_id) : null;
-        if (group === "expense") return t.amount < 0 && category?.kind !== "transfer";
-        if (group === "income") return t.amount > 0 && category?.kind !== "transfer";
-        return category?.kind === "transfer";
+        return t.amount < 0 && category?.kind !== "transfer";
       });
     }
 
@@ -211,56 +205,22 @@ export function DashboardExplorer({
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <Card className="md:row-span-2">
-          <CardHeader>
-            <CardTitle>Expenses</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {expensesData.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No expenses yet.</p>
-            ) : (
-              <CategoryBarChart
-                data={expensesData}
-                selectedKey={selection?.kind === "category" && selection.group === "expense" ? selection.key : undefined}
-                onSelect={(key) => handleSelect({ kind: "category", group: "expense", key })}
-              />
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Income</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {incomeData.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No income yet.</p>
-            ) : (
-              <CategoryBarChart
-                data={incomeData}
-                selectedKey={selection?.kind === "category" && selection.group === "income" ? selection.key : undefined}
-                onSelect={(key) => handleSelect({ kind: "category", group: "income", key })}
-              />
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Transfer</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {transferData.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No transfers yet.</p>
-            ) : (
-              <CategoryBarChart
-                data={transferData}
-                selectedKey={selection?.kind === "category" && selection.group === "transfer" ? selection.key : undefined}
-                onSelect={(key) => handleSelect({ kind: "category", group: "transfer", key })}
-              />
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Expenses</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {expensesData.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No expenses yet.</p>
+          ) : (
+            <CategoryBarChart
+              data={expensesData}
+              selectedKey={selection?.kind === "category" && selection.group === "expense" ? selection.key : undefined}
+              onSelect={(key) => handleSelect({ kind: "category", group: "expense", key })}
+            />
+          )}
+        </CardContent>
+      </Card>
 
       {selection ? (
         <DashboardTransactionsTable

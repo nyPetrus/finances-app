@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { fetchAllTransactionsInRange } from "@/lib/supabase/fetch-all-transactions";
 import type { Account, Category, Class, Transaction } from "@/lib/supabase/types";
 import { Button } from "@/components/ui/button";
-import { EXPENSE_HUE, INCOME_HUE, TRANSFER_HUE, sequentialColor } from "@/lib/chart-colors";
+import { EXPENSE_HUE, sequentialColor } from "@/lib/chart-colors";
 import { DashboardExplorer } from "./dashboard-explorer";
 
 const MONTH_LABELS = Array.from({ length: 12 }, (_, i) =>
@@ -92,27 +92,14 @@ export default async function Home({
   );
 
   const expensesByCategory = new Map<string, number>();
-  const incomeByCategory = new Map<string, number>();
   for (const t of nonTransferYearTransactions) {
+    if (t.amount >= 0) continue;
+    if (t.category_id && categoriesById.get(t.category_id)?.kind !== "expense") continue;
     const key = t.category_id ?? "uncategorized";
-    if (t.amount < 0) {
-      if (t.category_id && categoriesById.get(t.category_id)?.kind !== "expense") continue;
-      expensesByCategory.set(key, (expensesByCategory.get(key) ?? 0) + -t.amount);
-    } else if (t.amount > 0) {
-      if (t.category_id && categoriesById.get(t.category_id)?.kind !== "income") continue;
-      incomeByCategory.set(key, (incomeByCategory.get(key) ?? 0) + t.amount);
-    }
-  }
-
-  const transferByCategory = new Map<string, number>();
-  for (const t of yearTransactions) {
-    if (!isTransfer(t) || !t.category_id) continue;
-    transferByCategory.set(t.category_id, (transferByCategory.get(t.category_id) ?? 0) + Math.abs(t.amount));
+    expensesByCategory.set(key, (expensesByCategory.get(key) ?? 0) + -t.amount);
   }
 
   const expensesChartData = buildCategoryChartData(expensesByCategory, categoriesById, EXPENSE_HUE);
-  const incomeChartData = buildCategoryChartData(incomeByCategory, categoriesById, INCOME_HUE);
-  const transferChartData = buildCategoryChartData(transferByCategory, categoriesById, TRANSFER_HUE);
 
   const expensesByMonth = Array(12).fill(0);
   for (const t of yearTransactions) {
@@ -155,8 +142,6 @@ export default async function Home({
         }}
         monthlyData={monthlyChartData}
         expensesData={expensesChartData}
-        incomeData={incomeChartData}
-        transferData={transferChartData}
       />
     </div>
   );
