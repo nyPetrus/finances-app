@@ -8,9 +8,12 @@ description: Use when touching the Dashboard's monthly breakdown tree table (das
 `dashboard-monthly-breakdown.ts` (`buildMonthlyBreakdown()`, a pure
 function, no `"use client"`, called from `page.tsx`) + `dashboard-monthly-
 table.tsx` (`MonthlyBreakdownTable`, `"use client"`) together render the
-Type/Category/Class monthly breakdown, sitting directly below the stat-card
-grid (see `dashboard-cards`) and above the click-to-filter embedded table
-(see `dashboard-conventions`).
+Type/Category/Class monthly breakdown, sitting directly below the page's
+year-nav header and above the click-to-filter embedded table (see
+`dashboard-conventions`) — there used to be a 6-card stat grid between the
+two, removed once this table's own Type rows and click-to-filter covered
+the same ground; see `dashboard-conventions`'s "removed-cards" history if
+that ever needs revisiting.
 
 **Naming note**: the user refers to this specific table as "the dynamic
 table" (its rows dynamically expand/collapse). This is a real,
@@ -38,11 +41,11 @@ table is meant if it's ever unclear again.
   exceed the sum of its visible Class rows; this is intentional, not a bug
   to "fix" by adding a synthetic "no class" row. **Every kind, including
   Transfer, sums the signed `amount` as-is** — a 150 transfer out and a
-  150 transfer in nets to 0 here, per explicit user request. This is a
-  deliberate divergence from the Transfers stat card (`dashboard-cards`),
-  which still sums `Math.abs(amount)` (magnitude, not net) so its own two
-  legs don't cancel out — don't "fix" this table to match the card, or
-  vice versa; they're intentionally different views now.
+  150 transfer in nets to 0 here, per explicit user request. (The
+  now-removed Transfers stat card used to sum `Math.abs(amount)`
+  — magnitude, not net — so its own two legs wouldn't cancel out; this
+  table was a deliberate divergence from that even before the card was
+  deleted, see `dashboard-conventions`'s "removed-cards" history.)
 - **A footer `<tfoot>` "Total" row sums straight down each month column,
   plus a grand-total cell in the Total column** — per explicit user
   request, symmetric with each row's own Total *column* (row-wise sum).
@@ -56,9 +59,9 @@ table is meant if it's ever unclear again.
   header (`bg-muted/50` too, but no top border, top of the table) and the
   Type rows above it. This total is a plain arithmetic column-sum of
   signed amounts (Transfers included, see above), not a "Balance"-style
-  figure — don't treat it as interchangeable with the stat cards' Balance
-  value (`dashboard-cards`), which deliberately excludes Transfers
-  entirely rather than netting them in.
+  figure — the now-removed Balance stat card deliberately excluded
+  Transfers entirely rather than netting them in, so don't treat this
+  total as a like-for-like replacement for it.
 - **Values round to whole numbers, no decimals**:
   `dashboard-monthly-table.tsx`'s own `formatCurrency` uses
   `minimumFractionDigits: 0, maximumFractionDigits: 0` — per explicit user
@@ -85,14 +88,15 @@ table is meant if it's ever unclear again.
 - **Row color is inherited down from the Type ancestor, not computed
   per-row.** The `TYPE_COLOR` map gives `"type:income"` unconditional
   `text-emerald-600` and `"type:expense"` unconditional `text-destructive`
-  (mirroring those two stat cards' own colors — Expenses being
-  unconditionally red here is the same documented Dashboard exception to
-  the Transactions-table "only positive gets color" rule, see
-  `amount-color-conventions`); `"type:transfer"`/`"type:uncategorized"`
-  get no color (`undefined`, plain foreground, matching those stat cards).
-  Every Category/Class row under a Type just inherits that Type's color
-  via a prop threaded through the recursion — don't give Category/Class
-  rows their own color logic.
+  (Expenses being unconditionally red here is the same documented
+  Dashboard exception to the Transactions-table "only positive gets color"
+  rule, see `amount-color-conventions` — originally chosen to mirror the
+  now-removed Income/Expenses stat cards' own colors, but this table keeps
+  the rule on its own merits now that those cards are gone);
+  `"type:transfer"`/`"type:uncategorized"` get no color (`undefined`, plain
+  foreground). Every Category/Class row under a Type just inherits that
+  Type's color via a prop threaded through the recursion — don't give
+  Category/Class rows their own color logic.
 - **Expand state defaults to fully collapsed** (`useState<Set<string>>(new
   Set())` in `MonthlyBreakdownTable`) — only the 3-4 Type rows are visible
   on first render; a row only shows a toggle button when it actually has
@@ -125,23 +129,25 @@ table is meant if it's ever unclear again.
   still static and never hidden/reordered — don't route this through
   `ColumnsMenu`/`useColumnPreferences`, that's unrelated to why it dropped
   `table-fixed`.
-- **Now wired into the same click-to-filter state the stat cards use**
-  (per explicit user request — this used to be deliberately unwired, see
-  git history if that ever needs reverting). `dashboard-explorer.tsx`
-  holds a single `selection: { source: "stat"; stat } | { source:
-  "monthly"; value: MonthlySelection } | undefined` — clicking a stat card
-  sets the `"stat"` variant, clicking this table sets the `"monthly"`
-  variant, and the two are mutually exclusive (selecting one clears the
-  other). Every `MonthlyRow` carries its own `kind`/`categoryId`/`classId`
-  (not just its display `key`) so a click handler doesn't need to
-  re-derive them. Clicking a row's label or its Total cell filters to
-  that row's whole year; clicking one of its month cells scopes it to
-  that month too; clicking a month header/footer cell filters to that
-  month across every type (`kind` left `undefined` in the
+- **Drives the embedded transactions table's click-to-filter entirely on
+  its own** — this table used to be deliberately unwired from a separate
+  stat-card click-to-filter, then got wired in alongside the cards, then
+  became the sole driver once the cards were removed (see
+  `dashboard-conventions`'s "removed-cards" history); check git history
+  before assuming either the disconnection or the card-sharing still
+  applies. `dashboard-explorer.tsx` holds a single `selection:
+  MonthlySelection | undefined`, passed to this table as `selected` and
+  updated via its `onSelect` prop. Every `MonthlyRow` carries its own
+  `kind`/`categoryId`/`classId` (not just its display `key`) so a click
+  handler doesn't need to re-derive them. Clicking a row's label or its
+  Total cell filters to that row's whole year; clicking one of its month
+  cells scopes it to that month too; clicking a month header/footer cell
+  filters to that month across every type (`kind` left `undefined` in the
   `MonthlySelection`); clicking the Total header/footer cell shows the
-  full year unrestricted, same as the "Accounts" stat card. Re-clicking
-  the exact same selection clears it, same toggle behavior the stat cards
-  already had. The clicked cell/row/column gets a `ring-2 ring-inset
-  ring-primary` highlight (`SELECTED_CELL` in `dashboard-monthly-table.tsx`)
-  — the expand/collapse chevron button calls `stopPropagation` so toggling
-  a row no longer also changes the filter.
+  full year unrestricted — the same "everything" case the now-removed
+  "Accounts" stat card used to cover. Re-clicking the exact same selection
+  clears it (`monthlySelectionsEqual` in `dashboard-explorer.tsx`). The
+  clicked cell/row/column gets a `ring-2 ring-inset ring-primary`
+  highlight (`SELECTED_CELL` in `dashboard-monthly-table.tsx`) — the
+  expand/collapse chevron button calls `stopPropagation` so toggling a row
+  no longer also changes the filter.

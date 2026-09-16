@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { fetchAllTransactionsInRange } from "@/lib/supabase/fetch-all-transactions";
-import type { Account, Category, Class, Transaction } from "@/lib/supabase/types";
+import type { Account, Category, Class } from "@/lib/supabase/types";
 import { Button } from "@/components/ui/button";
 import { buildMonthlyBreakdown } from "./dashboard-monthly-breakdown";
 import { DashboardExplorer } from "./dashboard-explorer";
@@ -36,34 +36,6 @@ export default async function Home({
   const allAccounts = (accounts ?? []) as Account[];
   const allCategories = (categories ?? []) as Category[];
   const allClasses = (classes ?? []) as Class[];
-  const categoriesById = new Map(allCategories.map((c) => [c.id, c]));
-
-  function isTransfer(t: Transaction) {
-    return !!t.category_id && categoriesById.get(t.category_id)?.kind === "transfer";
-  }
-
-  const accountsTotal = allAccounts.reduce((sum, a) => sum + a.current_balance, 0);
-
-  // Income/Expenses are classified by the transaction's own category kind,
-  // not by amount sign — a transaction with no category at all falls under
-  // the separate Uncategorized stat instead of either of these.
-  const incomeTotal = yearTransactions.reduce((sum, t) => {
-    if (!t.category_id || categoriesById.get(t.category_id)?.kind !== "income") return sum;
-    return sum + t.amount;
-  }, 0);
-  const expensesTotal = yearTransactions.reduce((sum, t) => {
-    if (!t.category_id || categoriesById.get(t.category_id)?.kind !== "expense") return sum;
-    return sum + t.amount;
-  }, 0);
-  const balanceTotal = incomeTotal + expensesTotal;
-  const transfersTotal = yearTransactions.reduce(
-    (sum, t) => (isTransfer(t) ? sum + Math.abs(t.amount) : sum),
-    0,
-  );
-  const uncategorizedTotal = yearTransactions.reduce(
-    (sum, t) => (t.category_id ? sum : sum + t.amount),
-    0,
-  );
 
   const monthlyBreakdown = buildMonthlyBreakdown(yearTransactions, allCategories, allClasses);
 
@@ -87,14 +59,6 @@ export default async function Home({
         accounts={allAccounts}
         categories={allCategories}
         classes={allClasses}
-        stats={{
-          income: incomeTotal,
-          expenses: expensesTotal,
-          balance: balanceTotal,
-          accounts: accountsTotal,
-          transfers: transfersTotal,
-          uncategorized: uncategorizedTotal,
-        }}
         monthlyBreakdown={monthlyBreakdown}
       />
     </div>
