@@ -12,9 +12,23 @@ export type MonthlyRow = {
   label: string;
   icon?: string;
   symbol?: string;
+  kind: Category["kind"] | "uncategorized";
+  categoryId?: string;
+  classId?: string;
   months: number[];
   total: number;
   children?: MonthlyRow[];
+};
+
+// Identifies what a click on the table (dashboard-monthly-table.tsx) should
+// filter the embedded transactions table down to. `kind: undefined` means
+// "any type" (a month-column click); every field undefined means "the whole
+// year, no restriction at all" (a Total-column click).
+export type MonthlySelection = {
+  kind?: Category["kind"] | "uncategorized";
+  categoryId?: string;
+  classId?: string;
+  month?: number;
 };
 
 const TYPE_LABELS: Record<Category["kind"], string> = {
@@ -33,7 +47,7 @@ function sum(months: number[]) {
   return months.reduce((a, b) => a + b, 0);
 }
 
-function monthIndex(date: string) {
+export function monthIndex(date: string) {
   return Number(date.slice(5, 7)) - 1;
 }
 
@@ -93,6 +107,9 @@ export function buildMonthlyBreakdown(
             return {
               key: `class:${classItem.id}`,
               label: classItem.name,
+              kind,
+              categoryId: category.id,
+              classId: classItem.id,
               months: classItemMonths,
               total: sum(classItemMonths),
             };
@@ -106,6 +123,8 @@ export function buildMonthlyBreakdown(
           key: `category:${category.id}`,
           label: category.name,
           icon: category.icon,
+          kind,
+          categoryId: category.id,
           months,
           total: sum(months),
           children: classRows.length > 0 ? classRows : undefined,
@@ -118,6 +137,7 @@ export function buildMonthlyBreakdown(
       key: `type:${kind}`,
       label: TYPE_LABELS[kind],
       symbol: TRANSACTION_TYPE_SYMBOLS[kind],
+      kind,
       months: typeMonths[kind],
       total: sum(typeMonths[kind]),
       children: categoryRows.length > 0 ? categoryRows : undefined,
@@ -128,6 +148,7 @@ export function buildMonthlyBreakdown(
     rows.push({
       key: "type:uncategorized",
       label: "Uncategorized",
+      kind: "uncategorized",
       months: typeMonths.uncategorized,
       total: sum(typeMonths.uncategorized),
     });

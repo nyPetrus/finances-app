@@ -4,7 +4,7 @@ import { Fragment, useState } from "react";
 import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 import { CategoryIcon } from "@/components/category-icon";
 import { cn } from "@/lib/utils";
-import type { MonthlyRow } from "./dashboard-monthly-breakdown";
+import type { MonthlyRow, MonthlySelection } from "./dashboard-monthly-breakdown";
 
 const MONTH_LABELS = [
   "jan", "fev", "mar", "abr", "mai", "jun",
@@ -47,18 +47,36 @@ const TYPE_ROW_BG_TOTAL: Record<string, string | undefined> = {
 // surrounding cells, so the Total column stands out on its own.
 const DEFAULT_TOTAL_BG = "bg-muted/40";
 
+const SELECTED_CELL = "ring-2 ring-inset ring-primary";
+
+// True only when `selected` pins down this exact row (its type/category/
+// class), regardless of which month (or the whole year) is selected within
+// it — used to tell a row-level click (whole year for that row) apart from
+// a single month cell within it.
+function rowMatchesSelection(row: MonthlyRow, selected: MonthlySelection | undefined) {
+  if (!selected || selected.kind === undefined) return false;
+  if (selected.kind !== row.kind) return false;
+  if ((selected.categoryId ?? undefined) !== (row.categoryId ?? undefined)) return false;
+  if ((selected.classId ?? undefined) !== (row.classId ?? undefined)) return false;
+  return true;
+}
+
 function TreeRows({
   rows,
   depth,
   colorClassName,
   expanded,
   onToggle,
+  selected,
+  onSelect,
 }: {
   rows: MonthlyRow[];
   depth: number;
   colorClassName?: string;
   expanded: Set<string>;
   onToggle: (key: string) => void;
+  selected: MonthlySelection | undefined;
+  onSelect: (selection: MonthlySelection) => void;
 }) {
   return (
     <>
@@ -71,6 +89,14 @@ function TreeRows({
         const isClassLevel = depth === 2;
         const isCategoryLevel = depth === 1;
 
+        const rowSelected = rowMatchesSelection(row, selected);
+        const wholeRowSelected = rowSelected && selected?.month === undefined;
+        const rowSelection: MonthlySelection = {
+          kind: row.kind,
+          categoryId: row.categoryId,
+          classId: row.classId,
+        };
+
         return (
           <Fragment key={row.key}>
             <tr
@@ -79,12 +105,22 @@ function TreeRows({
                 isCategoryLevel && "border-t",
               )}
             >
-              <td className={cn("max-w-56 overflow-hidden px-2 py-2", rowBg ?? "bg-background")}>
+              <td
+                onClick={() => onSelect(rowSelection)}
+                className={cn(
+                  "max-w-56 cursor-pointer overflow-hidden px-2 py-2 hover:brightness-95",
+                  rowBg ?? "bg-background",
+                  wholeRowSelected && SELECTED_CELL,
+                )}
+              >
                 <div className="flex items-center gap-1.5" style={{ paddingLeft: `${depth * 1.25}rem` }}>
                   {hasChildren ? (
                     <button
                       type="button"
-                      onClick={() => onToggle(row.key)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggle(row.key);
+                      }}
                       aria-label={isExpanded ? `Collapse ${row.label}` : `Expand ${row.label}`}
                       className="flex size-4 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
                     >
@@ -106,28 +142,39 @@ function TreeRows({
                   </span>
                 </div>
               </td>
-              {row.months.map((value, i) => (
-                <td
-                  key={i}
-                  className={cn(
-                    "whitespace-nowrap px-0.5 py-2 text-right",
-                    isClassLevel ? "text-[11px]" : "text-xs",
-                    rowColor,
-                    rowBg,
-                    rowBg && "font-bold",
-                    isCategoryLevel && "font-semibold",
-                  )}
-                >
-                  {value === 0 ? "" : formatCurrency(value)}
-                </td>
-              ))}
+              {row.months.map((value, i) => {
+                // A row-scoped cell click (this row, this month) or a
+                // column-wide one (any row, this month, no kind at all —
+                // from the header/footer) both light this cell up.
+                const cellSelected =
+                  selected?.month === i && (rowSelected || selected?.kind === undefined);
+                return (
+                  <td
+                    key={i}
+                    onClick={() => onSelect({ ...rowSelection, month: i })}
+                    className={cn(
+                      "cursor-pointer whitespace-nowrap px-0.5 py-2 text-right hover:brightness-95",
+                      isClassLevel ? "text-[11px]" : "text-xs",
+                      rowColor,
+                      rowBg,
+                      rowBg && "font-bold",
+                      isCategoryLevel && "font-semibold",
+                      cellSelected && SELECTED_CELL,
+                    )}
+                  >
+                    {value === 0 ? "" : formatCurrency(value)}
+                  </td>
+                );
+              })}
               <td
+                onClick={() => onSelect(rowSelection)}
                 className={cn(
-                  "whitespace-nowrap px-2 py-2 text-right",
+                  "cursor-pointer whitespace-nowrap px-2 py-2 text-right hover:brightness-95",
                   isClassLevel ? "text-[11px]" : "text-xs",
                   rowColor,
                   totalBg,
                   rowBg ? "font-bold" : isCategoryLevel ? "font-semibold" : "font-medium",
+                  wholeRowSelected && SELECTED_CELL,
                 )}
               >
                 {row.total === 0 ? "" : formatCurrency(row.total)}
@@ -140,6 +187,8 @@ function TreeRows({
                 colorClassName={rowColor}
                 expanded={expanded}
                 onToggle={onToggle}
+                selected={selected}
+                onSelect={onSelect}
               />
             )}
           </Fragment>
@@ -149,7 +198,15 @@ function TreeRows({
   );
 }
 
-export function MonthlyBreakdownTable({ rows }: { rows: MonthlyRow[] }) {
+export function MonthlyBreakdownTable({
+  rows,
+  selected,
+  onSelect,
+}: {
+  rows: MonthlyRow[];
+  selected: MonthlySelection | undefined;
+  onSelect: (selection: MonthlySelection) => void;
+}) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   function toggle(key: string) {
@@ -170,32 +227,66 @@ export function MonthlyBreakdownTable({ rows }: { rows: MonthlyRow[] }) {
   }
   const grandTotal = monthTotals.reduce((sum, value) => sum + value, 0);
 
+  // A month-header/footer click means "this month, any type" — no kind at
+  // all, so it's distinct from a row-scoped cell click even when both
+  // happen to point at the same month index.
+  const columnSelectedMonth = selected?.kind === undefined ? selected?.month : undefined;
+  const totalSelected = !!selected && selected.kind === undefined && selected.month === undefined;
+
   return (
     <div className="overflow-x-auto rounded-md border">
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="border-b bg-muted/70">
             <th className="bg-muted/70 px-2 py-2" />
-            {MONTH_LABELS.map((label) => (
-              <th key={label} className="px-0.5 py-2 text-center text-xs font-medium capitalize">
+            {MONTH_LABELS.map((label, i) => (
+              <th
+                key={label}
+                onClick={() => onSelect({ month: i })}
+                className={cn(
+                  "cursor-pointer px-0.5 py-2 text-center text-xs font-medium capitalize hover:brightness-95",
+                  columnSelectedMonth === i && SELECTED_CELL,
+                )}
+              >
                 {label}
               </th>
             ))}
-            <th className="bg-muted px-2 py-2 text-right text-xs font-medium">Total</th>
+            <th
+              onClick={() => onSelect({})}
+              className={cn(
+                "cursor-pointer bg-muted px-2 py-2 text-right text-xs font-medium hover:brightness-95",
+                totalSelected && SELECTED_CELL,
+              )}
+            >
+              Total
+            </th>
           </tr>
         </thead>
         <tbody>
-          <TreeRows rows={rows} depth={0} expanded={expanded} onToggle={toggle} />
+          <TreeRows rows={rows} depth={0} expanded={expanded} onToggle={toggle} selected={selected} onSelect={onSelect} />
         </tbody>
         <tfoot>
           <tr className="border-t bg-muted/70">
             <td className="px-2 py-2 text-xs font-medium">Total</td>
             {monthTotals.map((value, i) => (
-              <td key={i} className="whitespace-nowrap px-0.5 py-2 text-right text-xs font-medium">
+              <td
+                key={i}
+                onClick={() => onSelect({ month: i })}
+                className={cn(
+                  "cursor-pointer whitespace-nowrap px-0.5 py-2 text-right text-xs font-medium hover:brightness-95",
+                  columnSelectedMonth === i && SELECTED_CELL,
+                )}
+              >
                 {value === 0 ? "" : formatCurrency(value)}
               </td>
             ))}
-            <td className="whitespace-nowrap bg-muted px-2 py-2 text-right text-xs font-medium">
+            <td
+              onClick={() => onSelect({})}
+              className={cn(
+                "cursor-pointer whitespace-nowrap bg-muted px-2 py-2 text-right text-xs font-medium hover:brightness-95",
+                totalSelected && SELECTED_CELL,
+              )}
+            >
               {grandTotal === 0 ? "" : formatCurrency(grandTotal)}
             </td>
           </tr>
