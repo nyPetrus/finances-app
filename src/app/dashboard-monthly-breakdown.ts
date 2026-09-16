@@ -97,7 +97,10 @@ export function buildMonthlyBreakdown(
               total: sum(classItemMonths),
             };
           })
-          .sort((a, b) => a.label.localeCompare(b.label));
+          // Biggest amount first — expense totals are negative (see
+          // amount-color-conventions), so sort by magnitude rather than raw
+          // value, which would otherwise put the smallest expense on top.
+          .sort((a, b) => Math.abs(b.total) - Math.abs(a.total));
 
         return {
           key: `category:${category.id}`,
@@ -108,7 +111,8 @@ export function buildMonthlyBreakdown(
           children: classRows.length > 0 ? classRows : undefined,
         };
       })
-      .sort((a, b) => a.label.localeCompare(b.label));
+      // Same magnitude-desc rule as the Class rows above.
+      .sort((a, b) => Math.abs(b.total) - Math.abs(a.total));
 
     return {
       key: `type:${kind}`,
