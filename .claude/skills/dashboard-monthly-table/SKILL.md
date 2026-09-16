@@ -1,6 +1,6 @@
 ---
 name: dashboard-monthly-table
-description: Use when touching the Dashboard's monthly breakdown tree table (dashboard-monthly-breakdown.ts + dashboard-monthly-table.tsx) — what the user calls "the dynamic table," since its rows dynamically expand/collapse (not the embedded click-to-filter transactions table, which only appears/disappears wholesale — see dashboard-conventions for that one). Covers the Type/Category/Class tree, column auto-sizing, decimal rounding, zero-value empty cells, row color, and the expand/collapse chevrons.
+description: Use when touching the Dashboard's monthly breakdown tree table (dashboard-monthly-breakdown.ts + dashboard-monthly-table.tsx) — what the user calls "the dynamic table," since its rows dynamically expand/collapse (not the embedded click-to-filter transactions table, which only appears/disappears wholesale — see dashboard-conventions for that one). Covers the Type/Category/Class tree, the footer Total row, column auto-sizing, decimal rounding, zero-value empty cells, row color, and the expand/collapse chevrons.
 ---
 
 # Dashboard monthly table ("the dynamic table")
@@ -40,6 +40,22 @@ table is meant if it's ever unclear again.
   (Type/Category/Class alike) sum `Math.abs(amount)`, matching the
   Transfers stat card's own magnitude-not-net rule (`dashboard-cards`);
   every other kind sums the signed `amount` as-is.
+- **A footer `<tfoot>` "Total" row sums straight down each month column,
+  plus a grand-total cell in the Total column** — per explicit user
+  request, symmetric with each row's own Total *column* (row-wise sum).
+  `MonthlyBreakdownTable` computes this itself from the top-level `rows`
+  prop only (`monthTotals`, one pass summing `row.months[i]` across every
+  Type row; `grandTotal` is `monthTotals`'s own sum) — **not** from
+  `TreeRows`, and **not** including Category/Class rows, since those are
+  already folded into their parent Type row's `months`/`total` and would
+  double-count if summed again. Styled `border-t bg-muted/50 font-medium`
+  to read as a spreadsheet-style footer, visually distinct from both the
+  header (`bg-muted/50` too, but no top border, top of the table) and the
+  Type rows above it. This total is a plain arithmetic column-sum, not a
+  "Balance"-style figure — it adds Transfers' `Math.abs` magnitude
+  straight in with Income/Expenses' signed amounts, so don't treat it as
+  interchangeable with the stat cards' Balance value (`dashboard-cards`),
+  which deliberately excludes Transfers for exactly that reason.
 - **Values round to whole numbers, no decimals**:
   `dashboard-monthly-table.tsx`'s own `formatCurrency` uses
   `minimumFractionDigits: 0, maximumFractionDigits: 0` — per explicit user
@@ -51,7 +67,8 @@ table is meant if it's ever unclear again.
   check `value === 0` (`row.total === 0` for the Total cell) and render an
   empty string instead of calling `formatCurrency`. This applies uniformly
   to every row (Type, Category, and Class alike) — don't special-case any
-  one level to still show "0".
+  one level to still show "0". The footer Total row's own cells follow the
+  same rule (`monthTotals[i] === 0` / `grandTotal === 0`).
 - **`MONTH_LABELS` (the column headers) is a plain lowercase array
   (`["jan", "fev", ..., "dez"]`), not `Intl.DateTimeFormat("pt-BR", {
   month: "short" })`** — the `Intl` short form renders with a trailing

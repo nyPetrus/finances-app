@@ -109,6 +109,15 @@ export function MonthlyBreakdownTable({ rows }: { rows: MonthlyRow[] }) {
     });
   }
 
+  // Column sums across the top-level Type rows only — Category/Class rows
+  // are already folded into their parent Type's months/total, so summing
+  // those too would double-count.
+  const monthTotals = Array(12).fill(0);
+  for (const row of rows) {
+    for (let i = 0; i < 12; i++) monthTotals[i] += row.months[i];
+  }
+  const grandTotal = monthTotals.reduce((sum, value) => sum + value, 0);
+
   return (
     <div className="overflow-x-auto rounded-md border">
       <table className="w-full border-collapse text-sm">
@@ -126,6 +135,19 @@ export function MonthlyBreakdownTable({ rows }: { rows: MonthlyRow[] }) {
         <tbody>
           <TreeRows rows={rows} depth={0} expanded={expanded} onToggle={toggle} />
         </tbody>
+        <tfoot>
+          <tr className="border-t bg-muted/50">
+            <td className="px-2 py-2 text-xs font-medium">Total</td>
+            {monthTotals.map((value, i) => (
+              <td key={i} className="whitespace-nowrap px-0.5 py-2 text-right text-xs font-medium">
+                {value === 0 ? "" : formatCurrency(value)}
+              </td>
+            ))}
+            <td className="whitespace-nowrap px-2 py-2 text-right text-xs font-medium">
+              {grandTotal === 0 ? "" : formatCurrency(grandTotal)}
+            </td>
+          </tr>
+        </tfoot>
       </table>
     </div>
   );
