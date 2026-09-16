@@ -54,10 +54,13 @@ table is meant if it's ever unclear again.
   Type row; `grandTotal` is `monthTotals`'s own sum) — **not** from
   `TreeRows`, and **not** including Category/Class rows, since those are
   already folded into their parent Type row's `months`/`total` and would
-  double-count if summed again. Styled `border-t bg-muted/50 font-medium`
-  to read as a spreadsheet-style footer, visually distinct from both the
-  header (`bg-muted/50` too, but no top border, top of the table) and the
-  Type rows above it. This total is a plain arithmetic column-sum of
+  double-count if summed again. Styled `border-t font-medium` — just a
+  rule, no background — to read as a spreadsheet-style footer; the header
+  row is the same (`border-b`, no background, no top border, top of the
+  table). Both used to have a `bg-muted` tint (and the Total column a
+  darker one still) to make them stand out further, but that was removed
+  per explicit user request — don't reintroduce a background on either row
+  without a fresh ask. This total is a plain arithmetic column-sum of
   signed amounts (Transfers included, see above), not a "Balance"-style
   figure — the now-removed Balance stat card deliberately excluded
   Transfers entirely rather than netting them in, so don't treat this

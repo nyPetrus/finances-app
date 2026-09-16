@@ -237,8 +237,8 @@ export function MonthlyBreakdownTable({
     <div className="overflow-x-auto rounded-md border">
       <table className="w-full border-collapse text-sm">
         <thead>
-          <tr className="border-b bg-muted/70">
-            <th className="bg-muted/70 px-2 py-2" />
+          <tr className="border-b">
+            <th className="px-2 py-2" />
             {MONTH_LABELS.map((label, i) => (
               <th
                 key={label}
@@ -254,7 +254,7 @@ export function MonthlyBreakdownTable({
             <th
               onClick={() => onSelect({})}
               className={cn(
-                "cursor-pointer bg-muted px-2 py-2 text-right text-xs font-medium hover:brightness-95",
+                "cursor-pointer px-2 py-2 text-right text-xs font-medium hover:brightness-95",
                 totalSelected && SELECTED_CELL,
               )}
             >
@@ -266,7 +266,7 @@ export function MonthlyBreakdownTable({
           <TreeRows rows={rows} depth={0} expanded={expanded} onToggle={toggle} selected={selected} onSelect={onSelect} />
         </tbody>
         <tfoot>
-          <tr className="border-t bg-muted/70">
+          <tr className="border-t">
             <td className="px-2 py-2 text-xs font-medium">Total</td>
             {monthTotals.map((value, i) => (
               <td
@@ -283,7 +283,7 @@ export function MonthlyBreakdownTable({
             <td
               onClick={() => onSelect({})}
               className={cn(
-                "cursor-pointer whitespace-nowrap bg-muted px-2 py-2 text-right text-xs font-medium hover:brightness-95",
+                "cursor-pointer whitespace-nowrap px-2 py-2 text-right text-xs font-medium hover:brightness-95",
                 totalSelected && SELECTED_CELL,
               )}
             >
