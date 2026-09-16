@@ -28,24 +28,15 @@ const TYPE_COLOR: Record<string, string | undefined> = {
 };
 
 // Type-level row backgrounds (income/expense/transfer only — Uncategorized
-// stays plain) and their darker Total-column variant, per explicit user
-// request to make the Type rows and the Total column stand out.
+// stays plain), per explicit user request to make the Type rows stand out.
+// The Total column shares this same background rather than a darker
+// variant of its own — per explicit user request, it matches the month
+// columns exactly.
 const TYPE_ROW_BG: Record<string, string | undefined> = {
   "type:income": "bg-emerald-50",
   "type:expense": "bg-red-50",
   "type:transfer": "bg-gray-100",
 };
-
-const TYPE_ROW_BG_TOTAL: Record<string, string | undefined> = {
-  "type:income": "bg-emerald-100",
-  "type:expense": "bg-red-100",
-  "type:transfer": "bg-gray-200",
-};
-
-// Fallback Total-column background for every row that isn't a colored Type
-// row (Category/Class/Uncategorized) — a little darker than the plain
-// surrounding cells, so the Total column stands out on its own.
-const DEFAULT_TOTAL_BG = "bg-muted/40";
 
 const SELECTED_CELL = "ring-2 ring-inset ring-primary";
 
@@ -85,7 +76,6 @@ function TreeRows({
         const isExpanded = expanded.has(row.key);
         const rowColor = depth === 0 ? TYPE_COLOR[row.key] : colorClassName;
         const rowBg = depth === 0 ? TYPE_ROW_BG[row.key] : undefined;
-        const totalBg = (depth === 0 && TYPE_ROW_BG_TOTAL[row.key]) || DEFAULT_TOTAL_BG;
         const isClassLevel = depth === 2;
         const isCategoryLevel = depth === 1;
 
@@ -172,7 +162,7 @@ function TreeRows({
                   "cursor-pointer whitespace-nowrap px-2 py-2 text-right hover:brightness-95",
                   isClassLevel ? "text-[11px]" : "text-xs",
                   rowColor,
-                  totalBg,
+                  rowBg,
                   rowBg ? "font-bold" : isCategoryLevel ? "font-semibold" : "font-medium",
                   wholeRowSelected && SELECTED_CELL,
                 )}
