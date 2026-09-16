@@ -69,10 +69,16 @@ function TreeRows({
         const rowBg = depth === 0 ? TYPE_ROW_BG[row.key] : undefined;
         const totalBg = (depth === 0 && TYPE_ROW_BG_TOTAL[row.key]) || DEFAULT_TOTAL_BG;
         const isClassLevel = depth === 2;
+        const isCategoryLevel = depth === 1;
 
         return (
           <Fragment key={row.key}>
-            <tr className={isClassLevel ? "border-0" : "border-b last:border-0"}>
+            <tr
+              className={cn(
+                isClassLevel ? "border-0" : "border-b last:border-0",
+                isCategoryLevel && "border-t",
+              )}
+            >
               <td className={cn("max-w-56 overflow-hidden px-2 py-2", rowBg ?? "bg-background")}>
                 <div className="flex items-center gap-1.5" style={{ paddingLeft: `${depth * 1.25}rem` }}>
                   {hasChildren ? (
