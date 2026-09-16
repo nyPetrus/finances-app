@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   ArrowLeftRightIcon,
-  ArrowUpDownIcon,
   FileTextIcon,
   LandmarkIcon,
   LayoutDashboardIcon,
@@ -24,7 +23,6 @@ const links = [
   { href: "/budget", label: "Budget", icon: WalletIcon },
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRightIcon },
   { href: "/categories", label: "Categories", icon: TagIcon },
-  { href: "/types", label: "Types", icon: ArrowUpDownIcon },
   { href: "/classes", label: "Classes", icon: TagsIcon },
   { href: "/descriptions", label: "Descriptions", icon: FileTextIcon },
   { href: "/accounts", label: "Accounts", icon: LandmarkIcon },
