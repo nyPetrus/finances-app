@@ -115,6 +115,7 @@ function TreeRows({
                     rowColor,
                     rowBg,
                     rowBg && "font-bold",
+                    isCategoryLevel && "font-semibold",
                   )}
                 >
                   {value === 0 ? "" : formatCurrency(value)}
@@ -126,7 +127,7 @@ function TreeRows({
                   isClassLevel ? "text-[11px]" : "text-xs",
                   rowColor,
                   totalBg,
-                  rowBg ? "font-bold" : "font-medium",
+                  rowBg ? "font-bold" : isCategoryLevel ? "font-semibold" : "font-medium",
                 )}
               >
                 {row.total === 0 ? "" : formatCurrency(row.total)}
