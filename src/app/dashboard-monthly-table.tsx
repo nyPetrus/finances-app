@@ -27,6 +27,26 @@ const TYPE_COLOR: Record<string, string | undefined> = {
   "type:expense": "text-destructive",
 };
 
+// Type-level row backgrounds (income/expense/transfer only — Uncategorized
+// stays plain) and their darker Total-column variant, per explicit user
+// request to make the Type rows and the Total column stand out.
+const TYPE_ROW_BG: Record<string, string | undefined> = {
+  "type:income": "bg-emerald-50",
+  "type:expense": "bg-red-50",
+  "type:transfer": "bg-gray-100",
+};
+
+const TYPE_ROW_BG_TOTAL: Record<string, string | undefined> = {
+  "type:income": "bg-emerald-100",
+  "type:expense": "bg-red-100",
+  "type:transfer": "bg-gray-200",
+};
+
+// Fallback Total-column background for every row that isn't a colored Type
+// row (Category/Class/Uncategorized) — a little darker than the plain
+// surrounding cells, so the Total column stands out on its own.
+const DEFAULT_TOTAL_BG = "bg-muted/40";
+
 function TreeRows({
   rows,
   depth,
@@ -46,11 +66,14 @@ function TreeRows({
         const hasChildren = !!row.children && row.children.length > 0;
         const isExpanded = expanded.has(row.key);
         const rowColor = depth === 0 ? TYPE_COLOR[row.key] : colorClassName;
+        const rowBg = depth === 0 ? TYPE_ROW_BG[row.key] : undefined;
+        const totalBg = (depth === 0 && TYPE_ROW_BG_TOTAL[row.key]) || DEFAULT_TOTAL_BG;
+        const isClassLevel = depth === 2;
 
         return (
           <Fragment key={row.key}>
-            <tr className="border-b last:border-0">
-              <td className="max-w-56 overflow-hidden bg-background px-2 py-2">
+            <tr className={isClassLevel ? "border-0" : "border-b last:border-0"}>
+              <td className={cn("max-w-56 overflow-hidden px-2 py-2", rowBg ?? "bg-background")}>
                 <div className="flex items-center gap-1.5" style={{ paddingLeft: `${depth * 1.25}rem` }}>
                   {hasChildren ? (
                     <button
@@ -67,17 +90,39 @@ function TreeRows({
                   {row.icon && (
                     <CategoryIcon icon={row.icon} className="size-3.5 shrink-0 text-muted-foreground" />
                   )}
+                  {row.symbol && (
+                    <span className="inline-flex w-3.5 shrink-0 justify-center text-muted-foreground" aria-hidden="true">
+                      {row.symbol}
+                    </span>
+                  )}
                   <span className={cn("min-w-0 truncate", depth === 0 && "font-medium")} title={row.label}>
                     {row.label}
                   </span>
                 </div>
               </td>
               {row.months.map((value, i) => (
-                <td key={i} className={cn("whitespace-nowrap px-0.5 py-2 text-right text-xs", rowColor)}>
+                <td
+                  key={i}
+                  className={cn(
+                    "whitespace-nowrap px-0.5 py-2 text-right",
+                    isClassLevel ? "text-[11px]" : "text-xs",
+                    rowColor,
+                    rowBg,
+                    rowBg && "font-bold",
+                  )}
+                >
                   {value === 0 ? "" : formatCurrency(value)}
                 </td>
               ))}
-              <td className={cn("whitespace-nowrap px-2 py-2 text-right text-xs font-medium", rowColor)}>
+              <td
+                className={cn(
+                  "whitespace-nowrap px-2 py-2 text-right",
+                  isClassLevel ? "text-[11px]" : "text-xs",
+                  rowColor,
+                  totalBg,
+                  rowBg ? "font-bold" : "font-medium",
+                )}
+              >
                 {row.total === 0 ? "" : formatCurrency(row.total)}
               </td>
             </tr>
@@ -122,28 +167,28 @@ export function MonthlyBreakdownTable({ rows }: { rows: MonthlyRow[] }) {
     <div className="overflow-x-auto rounded-md border">
       <table className="w-full border-collapse text-sm">
         <thead>
-          <tr className="border-b bg-muted/50">
-            <th className="bg-muted/50 px-2 py-2" />
+          <tr className="border-b bg-muted/70">
+            <th className="bg-muted/70 px-2 py-2" />
             {MONTH_LABELS.map((label) => (
               <th key={label} className="px-0.5 py-2 text-center text-xs font-medium capitalize">
                 {label}
               </th>
             ))}
-            <th className="px-2 py-2 text-right text-xs font-medium">Total</th>
+            <th className="bg-muted px-2 py-2 text-right text-xs font-medium">Total</th>
           </tr>
         </thead>
         <tbody>
           <TreeRows rows={rows} depth={0} expanded={expanded} onToggle={toggle} />
         </tbody>
         <tfoot>
-          <tr className="border-t bg-muted/50">
+          <tr className="border-t bg-muted/70">
             <td className="px-2 py-2 text-xs font-medium">Total</td>
             {monthTotals.map((value, i) => (
               <td key={i} className="whitespace-nowrap px-0.5 py-2 text-right text-xs font-medium">
                 {value === 0 ? "" : formatCurrency(value)}
               </td>
             ))}
-            <td className="whitespace-nowrap px-2 py-2 text-right text-xs font-medium">
+            <td className="whitespace-nowrap bg-muted px-2 py-2 text-right text-xs font-medium">
               {grandTotal === 0 ? "" : formatCurrency(grandTotal)}
             </td>
           </tr>

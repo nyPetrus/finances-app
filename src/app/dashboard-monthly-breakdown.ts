@@ -1,4 +1,5 @@
 import type { Category, Class, Transaction } from "@/lib/supabase/types";
+import { TRANSACTION_TYPE_SYMBOLS } from "@/lib/transaction-type";
 
 // Feeds MonthlyBreakdownTable (dashboard-monthly-table.tsx): a Type/Category/
 // Class tree, one row per node, each carrying its own 12 monthly sums plus a
@@ -10,6 +11,7 @@ export type MonthlyRow = {
   key: string;
   label: string;
   icon?: string;
+  symbol?: string;
   months: number[];
   total: number;
   children?: MonthlyRow[];
@@ -111,6 +113,7 @@ export function buildMonthlyBreakdown(
     return {
       key: `type:${kind}`,
       label: TYPE_LABELS[kind],
+      symbol: TRANSACTION_TYPE_SYMBOLS[kind],
       months: typeMonths[kind],
       total: sum(typeMonths[kind]),
       children: categoryRows.length > 0 ? categoryRows : undefined,
