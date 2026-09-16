@@ -36,10 +36,13 @@ table is meant if it's ever unclear again.
   category, not from summing its Class children** — a category can have
   transactions with no `class_id`, so a category's total can legitimately
   exceed the sum of its visible Class rows; this is intentional, not a bug
-  to "fix" by adding a synthetic "no class" row. Transfer-kind rows
-  (Type/Category/Class alike) sum `Math.abs(amount)`, matching the
-  Transfers stat card's own magnitude-not-net rule (`dashboard-cards`);
-  every other kind sums the signed `amount` as-is.
+  to "fix" by adding a synthetic "no class" row. **Every kind, including
+  Transfer, sums the signed `amount` as-is** — a 150 transfer out and a
+  150 transfer in nets to 0 here, per explicit user request. This is a
+  deliberate divergence from the Transfers stat card (`dashboard-cards`),
+  which still sums `Math.abs(amount)` (magnitude, not net) so its own two
+  legs don't cancel out — don't "fix" this table to match the card, or
+  vice versa; they're intentionally different views now.
 - **A footer `<tfoot>` "Total" row sums straight down each month column,
   plus a grand-total cell in the Total column** — per explicit user
   request, symmetric with each row's own Total *column* (row-wise sum).
@@ -51,11 +54,11 @@ table is meant if it's ever unclear again.
   double-count if summed again. Styled `border-t bg-muted/50 font-medium`
   to read as a spreadsheet-style footer, visually distinct from both the
   header (`bg-muted/50` too, but no top border, top of the table) and the
-  Type rows above it. This total is a plain arithmetic column-sum, not a
-  "Balance"-style figure — it adds Transfers' `Math.abs` magnitude
-  straight in with Income/Expenses' signed amounts, so don't treat it as
-  interchangeable with the stat cards' Balance value (`dashboard-cards`),
-  which deliberately excludes Transfers for exactly that reason.
+  Type rows above it. This total is a plain arithmetic column-sum of
+  signed amounts (Transfers included, see above), not a "Balance"-style
+  figure — don't treat it as interchangeable with the stat cards' Balance
+  value (`dashboard-cards`), which deliberately excludes Transfers
+  entirely rather than netting them in.
 - **Values round to whole numbers, no decimals**:
   `dashboard-monthly-table.tsx`'s own `formatCurrency` uses
   `minimumFractionDigits: 0, maximumFractionDigits: 0` — per explicit user
@@ -122,8 +125,23 @@ table is meant if it's ever unclear again.
   still static and never hidden/reordered — don't route this through
   `ColumnsMenu`/`useColumnPreferences`, that's unrelated to why it dropped
   `table-fixed`.
-- **Deliberately not wired into the stat cards' click-to-filter
-  `selectedStat` state** — clicking a row's toggle only expands/collapses
-  it locally; it doesn't select anything or affect
-  `DashboardTransactionsTable`. Adding that wiring is a reasonable future
-  ask, not something to assume is already half-done.
+- **Now wired into the same click-to-filter state the stat cards use**
+  (per explicit user request — this used to be deliberately unwired, see
+  git history if that ever needs reverting). `dashboard-explorer.tsx`
+  holds a single `selection: { source: "stat"; stat } | { source:
+  "monthly"; value: MonthlySelection } | undefined` — clicking a stat card
+  sets the `"stat"` variant, clicking this table sets the `"monthly"`
+  variant, and the two are mutually exclusive (selecting one clears the
+  other). Every `MonthlyRow` carries its own `kind`/`categoryId`/`classId`
+  (not just its display `key`) so a click handler doesn't need to
+  re-derive them. Clicking a row's label or its Total cell filters to
+  that row's whole year; clicking one of its month cells scopes it to
+  that month too; clicking a month header/footer cell filters to that
+  month across every type (`kind` left `undefined` in the
+  `MonthlySelection`); clicking the Total header/footer cell shows the
+  full year unrestricted, same as the "Accounts" stat card. Re-clicking
+  the exact same selection clears it, same toggle behavior the stat cards
+  already had. The clicked cell/row/column gets a `ring-2 ring-inset
+  ring-primary` highlight (`SELECTED_CELL` in `dashboard-monthly-table.tsx`)
+  — the expand/collapse chevron button calls `stopPropagation` so toggling
+  a row no longer also changes the filter.

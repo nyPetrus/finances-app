@@ -79,10 +79,12 @@ export function buildMonthlyBreakdown(
       continue;
     }
 
-    // Transfers are summed as magnitude, matching the Transfers stat card
-    // (see dashboard-conventions) — otherwise a transfer's two legs across
-    // the user's own accounts would tend to net toward zero.
-    const value = category.kind === "transfer" ? Math.abs(transaction.amount) : transaction.amount;
+    // Unlike the Transfers stat card (which sums magnitude — see
+    // dashboard-conventions — so a transfer's two legs across the user's
+    // own accounts don't net toward zero), this table sums the signed
+    // amount as-is: a 150 transfer out and a 150 transfer in should net to
+    // 0 here, per explicit user request.
+    const value = transaction.amount;
 
     typeMonths[category.kind][month] += value;
 
