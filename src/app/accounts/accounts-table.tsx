@@ -77,8 +77,8 @@ const COLUMNS: {
   { key: "source", label: "Source", cellClassName: "max-w-32 truncate" },
   { key: "type", label: "Type" },
   { key: "lastSync", label: "Last sync", align: "center", cellClassName: "text-center whitespace-nowrap" },
-  { key: "balance", label: "Balance", cellClassName: "text-right whitespace-nowrap" },
   { key: "transactions", label: "Transactions", cellClassName: "text-right whitespace-nowrap" },
+  { key: "balance", label: "Balance", cellClassName: "text-right whitespace-nowrap" },
 ];
 
 const DEFAULT_COLUMN_ORDER = COLUMNS.map((column) => column.key);
