@@ -5,7 +5,9 @@
 
 Personal finance & budget app. Stack: Next.js 16 (App Router) + TypeScript +
 Tailwind v4 + shadcn/ui, Supabase (Postgres + Auth, RLS per user), Pluggy
-(Open Finance aggregator for Nubank/XP sync).
+(Open Finance aggregator for Nubank/XP sync), Google Drive (OAuth, for
+reading bank-statement files out of per-account Drive folders on demand —
+see `src/lib/google-drive/`, `src/app/accounts/google-drive-*`).
 
 - **Next.js 16 renamed `middleware.ts` to `proxy.ts`.** This project's is at
   `src/proxy.ts` — it refreshes the Supabase session and redirects
@@ -18,8 +20,14 @@ Tailwind v4 + shadcn/ui, Supabase (Postgres + Auth, RLS per user), Pluggy
   tell the user to run the new file there.
 - `.env.local` (gitignored) holds `NEXT_PUBLIC_SUPABASE_URL`,
   `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `PLUGGY_CLIENT_ID`,
-  `PLUGGY_CLIENT_SECRET`. Same values are set in Vercel's project env vars
-  for production.
+  `PLUGGY_CLIENT_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`. Same
+  values are set in Vercel's project env vars for production.
+  `GOOGLE_CLIENT_ID`/`SECRET` come from a Google Cloud OAuth client (Web
+  application type) — its Authorized redirect URIs must include
+  `<origin>/api/google-drive/callback` for every origin the app is actually
+  reached at (`http://localhost:3000` for local dev, the Vercel production
+  URL), since the callback route computes the redirect URI from the
+  incoming request's own origin at runtime rather than a hardcoded value.
 - Deployed on Vercel, auto-deploys on push to `main`
   (https://github.com/nyPetrus/finances-app). Live at
   https://finances-app-two-zeta.vercel.app.

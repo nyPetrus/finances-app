@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { fetchAllTransactionsInRange } from "@/lib/supabase/fetch-all-transactions";
 import type { Account } from "@/lib/supabase/types";
 import { AccountsTable } from "./accounts-table";
+import { GoogleDrivePanel } from "./google-drive-panel";
 import { isSortKey, type SortKey } from "./sort";
 
 // syncPluggyItem now waits on a live bank update (via Pluggy's updateItem),
@@ -18,9 +19,10 @@ export default async function AccountsPage({
   const sortDir: "asc" | "desc" = dirParam === "desc" ? "desc" : "asc";
 
   const supabase = await createClient();
-  const [{ data: accounts, error }, transactions] = await Promise.all([
+  const [{ data: accounts, error }, transactions, googleDriveConnection] = await Promise.all([
     supabase.from("accounts").select("*"),
     fetchAllTransactionsInRange(supabase, "0001-01-01", "9999-12-31"),
+    supabase.from("google_drive_tokens").select("google_email").maybeSingle(),
   ]);
 
   if (error) throw new Error(error.message);
@@ -36,6 +38,11 @@ export default async function AccountsPage({
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-6">
       <h1 className="text-2xl font-semibold">Accounts</h1>
+
+      <GoogleDrivePanel
+        connected={!!googleDriveConnection.data}
+        email={googleDriveConnection.data?.google_email ?? null}
+      />
 
       <AccountsTable
         accounts={allAccounts}
