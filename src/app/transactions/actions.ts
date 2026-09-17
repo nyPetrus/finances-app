@@ -41,6 +41,7 @@ export async function addTransaction(formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/transactions");
+  revalidatePath("/search");
 }
 
 export async function updateTransaction(formData: FormData) {
@@ -72,6 +73,7 @@ export async function updateTransaction(formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/transactions");
+  revalidatePath("/search");
 }
 
 export async function syncDescriptionsFromTransactions(transactionIds: string[]) {
@@ -132,6 +134,7 @@ export async function deleteTransactions(ids: string[]) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/transactions");
+  revalidatePath("/search");
   revalidatePath("/budget");
   revalidatePath("/");
 }

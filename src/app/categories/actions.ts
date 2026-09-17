@@ -29,6 +29,7 @@ export async function addCategory(formData: FormData) {
 
   revalidatePath("/categories");
   revalidatePath("/transactions");
+  revalidatePath("/search");
 }
 
 export async function updateCategory(formData: FormData) {
@@ -55,6 +56,7 @@ export async function updateCategory(formData: FormData) {
 
   revalidatePath("/categories");
   revalidatePath("/transactions");
+  revalidatePath("/search");
 }
 
 export async function deleteCategories(ids: string[]) {
@@ -76,4 +78,5 @@ export async function deleteCategories(ids: string[]) {
 
   revalidatePath("/categories");
   revalidatePath("/transactions");
+  revalidatePath("/search");
 }

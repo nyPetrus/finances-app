@@ -203,6 +203,7 @@ export async function syncMappedDescriptions() {
   );
 
   revalidatePath("/transactions");
+  revalidatePath("/search");
   revalidatePath("/descriptions");
   revalidatePath("/budget");
   revalidatePath("/");
@@ -249,6 +250,7 @@ export async function syncAllMappedDescriptions() {
   const updatedCount = await applyMappingSet(supabase, (mappings ?? []) as MappedDescription[], allCandidates);
 
   revalidatePath("/transactions");
+  revalidatePath("/search");
   revalidatePath("/descriptions");
   revalidatePath("/budget");
   revalidatePath("/");

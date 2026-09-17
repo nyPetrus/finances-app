@@ -187,5 +187,6 @@ export async function syncPluggyItem(itemId: string) {
 
   revalidatePath("/accounts");
   revalidatePath("/transactions");
+  revalidatePath("/search");
   revalidatePath("/budget");
 }
