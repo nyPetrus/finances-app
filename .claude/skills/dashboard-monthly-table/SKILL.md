@@ -78,6 +78,19 @@ table is meant if it's ever unclear again.
   to every row (Type, Category, and Class alike) — don't special-case any
   one level to still show "0". The footer Total row's own cells follow the
   same rule (`monthTotals[i] === 0` / `grandTotal === 0`).
+- **Type and Category rows show only their icon/symbol, not their text
+  name** — per explicit user request. A Type row's `row.symbol` (the
+  up/down/transfer arrow from `TRANSACTION_TYPE_SYMBOLS`) and a Category
+  row's `row.icon` (`category.icon`, rendered via `CategoryIcon`) are
+  enough on their own; the label `<span>` in `TreeRows` only renders when
+  `hasIcon` (`!!row.icon || !!row.symbol`) is false, or at the Class level
+  (`isClassLevel`), since Class rows never carry an icon and would
+  otherwise go blank. The "Uncategorized" Type row has neither an icon nor
+  a symbol, so it falls into that same `!hasIcon` fallback and keeps its
+  text label — don't treat that as an inconsistency to "fix" by giving it
+  a synthetic icon. The full name is still available as a native `title`
+  tooltip on the row's icon-containing wrapper `<div>` so it isn't lost
+  entirely, just hidden from the default view.
 - **`MONTH_LABELS` (the column headers) is a plain lowercase array
   (`["jan", "fev", ..., "dez"]`), not `Intl.DateTimeFormat("pt-BR", {
   month: "short" })`** — the `Intl` short form renders with a trailing

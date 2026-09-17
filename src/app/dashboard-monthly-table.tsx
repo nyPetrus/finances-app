@@ -78,6 +78,7 @@ function TreeRows({
         const rowBg = depth === 0 ? TYPE_ROW_BG[row.key] : undefined;
         const isClassLevel = depth === 2;
         const isCategoryLevel = depth === 1;
+        const hasIcon = !!row.icon || !!row.symbol;
 
         const rowSelected = rowMatchesSelection(row, selected);
         const wholeRowSelected = rowSelected && selected?.month === undefined;
@@ -103,7 +104,11 @@ function TreeRows({
                   wholeRowSelected && SELECTED_CELL,
                 )}
               >
-                <div className="flex items-center gap-1.5" style={{ paddingLeft: `${depth * 1.25}rem` }}>
+                <div
+                  className="flex items-center gap-1.5"
+                  style={{ paddingLeft: `${depth * 1.25}rem` }}
+                  title={hasIcon ? row.label : undefined}
+                >
                   {hasChildren ? (
                     <button
                       type="button"
@@ -127,9 +132,16 @@ function TreeRows({
                       {row.symbol}
                     </span>
                   )}
-                  <span className={cn("min-w-0 truncate", depth === 0 && "font-medium")} title={row.label}>
-                    {row.label}
-                  </span>
+                  {/* Type/Category rows show only their icon/symbol, not the
+                      name (per explicit user request) — but a row with
+                      neither (e.g. Uncategorized, which has no icon) still
+                      needs its label so it isn't left blank. Class rows
+                      never have an icon, so they always keep their label. */}
+                  {(!hasIcon || isClassLevel) && (
+                    <span className={cn("min-w-0 truncate", depth === 0 && "font-medium")} title={row.label}>
+                      {row.label}
+                    </span>
+                  )}
                 </div>
               </td>
               {row.months.map((value, i) => {
