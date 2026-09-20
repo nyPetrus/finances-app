@@ -14,6 +14,13 @@ export type DateGranularity = (typeof DATE_GRANULARITIES)[number];
 export const DATE_OPS = ["on", "before", "after"] as const;
 export type DateOp = (typeof DATE_OPS)[number];
 
+export const AMOUNT_OPS = ["equal_to", "greater_than", "less_than"] as const;
+export type AmountOp = (typeof AMOUNT_OPS)[number];
+
+function isAmountOp(value: string | undefined): value is AmountOp {
+  return !!value && (AMOUNT_OPS as readonly string[]).includes(value);
+}
+
 function isEqualityOp(value: string | undefined): value is EqualityOp {
   return !!value && (EQUALITY_OPS as readonly string[]).includes(value);
 }
@@ -48,6 +55,9 @@ export type ParsedFilters = {
   class: { op: EqualityOp; value: string } | null;
   description: { op: DescriptionOp; value: string } | null;
   date: { granularity: DateGranularity; op: DateOp; value: string } | null;
+  // Compared against the signed amount (expenses are negative), same as
+  // what the Amount column displays.
+  amount: { op: AmountOp; value: string } | null;
 };
 
 export function parseFilters(searchParams: SearchParams): ParsedFilters {
@@ -58,6 +68,8 @@ export function parseFilters(searchParams: SearchParams): ParsedFilters {
   const dateValue = one(searchParams, "dateValue");
   const dateGranularity = one(searchParams, "dateGranularity");
   const dateOp = one(searchParams, "dateOp");
+  const amountValue = one(searchParams, "amount")?.trim();
+  const amountOp = one(searchParams, "amountOp");
 
   return {
     account: accountValue
@@ -76,11 +88,22 @@ export function parseFilters(searchParams: SearchParams): ParsedFilters {
       dateValue && isDateGranularity(dateGranularity)
         ? { granularity: dateGranularity, op: isDateOp(dateOp) ? dateOp : "on", value: dateValue }
         : null,
+    amount:
+      amountValue && Number.isFinite(Number(amountValue))
+        ? { op: isAmountOp(amountOp) ? amountOp : "equal_to", value: amountValue }
+        : null,
   };
 }
 
 export function hasAnyFilter(filters: ParsedFilters): boolean {
-  return !!(filters.account || filters.category || filters.class || filters.description || filters.date);
+  return !!(
+    filters.account ||
+    filters.category ||
+    filters.class ||
+    filters.description ||
+    filters.date ||
+    filters.amount
+  );
 }
 
 // Half-open [start, end) range covering the whole year/month/day the

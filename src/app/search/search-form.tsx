@@ -16,6 +16,7 @@ import type { Account, Category, Class } from "@/lib/supabase/types";
 import {
   UNCATEGORIZED_VALUE,
   UNCLASSED_VALUE,
+  type AmountOp,
   type DateGranularity,
   type DateOp,
   type DescriptionOp,
@@ -44,6 +45,12 @@ const DATE_OP_LABELS: Record<DateOp, string> = {
   on: "On",
   before: "Before",
   after: "After",
+};
+
+const AMOUNT_OP_LABELS: Record<AmountOp, string> = {
+  equal_to: "Equal to",
+  greater_than: "Greater than",
+  less_than: "Less than",
 };
 
 export function SearchForm({
@@ -76,6 +83,9 @@ export function SearchForm({
   const [dateOp, setDateOp] = useState<DateOp>(filters.date?.op ?? "on");
   const [dateValue, setDateValue] = useState(filters.date?.value ?? "");
 
+  const [amountOp, setAmountOp] = useState<AmountOp>(filters.amount?.op ?? "equal_to");
+  const [amountValue, setAmountValue] = useState(filters.amount?.value ?? "");
+
   function handleApply() {
     const params = new URLSearchParams();
 
@@ -100,6 +110,10 @@ export function SearchForm({
       params.set("dateOp", dateOp);
       params.set("dateValue", dateValue);
     }
+    if (amountValue.trim() !== "") {
+      params.set("amount", amountValue.trim());
+      params.set("amountOp", amountOp);
+    }
 
     const sort = searchParams.get("sort");
     const dir = searchParams.get("dir");
@@ -121,6 +135,8 @@ export function SearchForm({
     setDateGranularity("day");
     setDateOp("on");
     setDateValue("");
+    setAmountOp("equal_to");
+    setAmountValue("");
     router.push("/search");
   }
 
@@ -129,7 +145,7 @@ export function SearchForm({
       <div className="flex flex-wrap items-center gap-2">
         <Label className="w-24 shrink-0">Account</Label>
         <Select value={accountOp} onValueChange={(value) => setAccountOp(value as EqualityOp)}>
-          <SelectTrigger className="w-28">
+          <SelectTrigger className="w-36">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -154,7 +170,7 @@ export function SearchForm({
       <div className="flex flex-wrap items-center gap-2">
         <Label className="w-24 shrink-0">Category</Label>
         <Select value={categoryOp} onValueChange={(value) => setCategoryOp(value as EqualityOp)}>
-          <SelectTrigger className="w-28">
+          <SelectTrigger className="w-36">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -180,7 +196,7 @@ export function SearchForm({
       <div className="flex flex-wrap items-center gap-2">
         <Label className="w-24 shrink-0">Class</Label>
         <Select value={classOp} onValueChange={(value) => setClassOp(value as EqualityOp)}>
-          <SelectTrigger className="w-28">
+          <SelectTrigger className="w-36">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -208,7 +224,7 @@ export function SearchForm({
           Description
         </Label>
         <Select value={descriptionOp} onValueChange={(value) => setDescriptionOp(value as DescriptionOp)}>
-          <SelectTrigger className="w-28">
+          <SelectTrigger className="w-36">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -235,7 +251,7 @@ export function SearchForm({
             setDateValue("");
           }}
         >
-          <SelectTrigger className="w-28">
+          <SelectTrigger className="w-36">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -245,7 +261,7 @@ export function SearchForm({
           </SelectContent>
         </Select>
         <Select value={dateOp} onValueChange={(value) => setDateOp(value as DateOp)}>
-          <SelectTrigger className="w-28">
+          <SelectTrigger className="w-36">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -277,6 +293,31 @@ export function SearchForm({
             className="w-40"
           />
         )}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Label htmlFor="search-amount" className="w-24 shrink-0">
+          Amount
+        </Label>
+        <Select value={amountOp} onValueChange={(value) => setAmountOp(value as AmountOp)}>
+          <SelectTrigger className="w-36">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="equal_to">{AMOUNT_OP_LABELS.equal_to}</SelectItem>
+            <SelectItem value="greater_than">{AMOUNT_OP_LABELS.greater_than}</SelectItem>
+            <SelectItem value="less_than">{AMOUNT_OP_LABELS.less_than}</SelectItem>
+          </SelectContent>
+        </Select>
+        <Input
+          id="search-amount"
+          type="number"
+          step="0.01"
+          value={amountValue}
+          onChange={(e) => setAmountValue(e.target.value)}
+          placeholder="-50.00"
+          className="w-56"
+        />
       </div>
 
       <div className="flex items-center gap-2">

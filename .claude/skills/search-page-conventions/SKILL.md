@@ -1,13 +1,13 @@
 ---
 name: search-page-conventions
-description: Use when touching the Search page (src/app/search/ — page.tsx, search-form.tsx, search-table.tsx, filters.ts, sort.ts) — its 5 optional per-filter operator+value controls (Account/Category/Class/Description/Date), how filter state round-trips through the URL, the Supabase query-building/paging behind "Apply", or its results table (a near-copy of TransactionsTable). Not part of the shared table-page-conventions architecture (this page doesn't own/create rows the way a canonical list page does), though its results table borrows heavily from it.
+description: Use when touching the Search page (src/app/search/ — page.tsx, search-form.tsx, search-table.tsx, filters.ts, sort.ts) — its 6 optional per-filter operator+value controls (Account/Category/Class/Description/Date/Amount), how filter state round-trips through the URL, the Supabase query-building/paging behind "Apply", or its results table (a near-copy of TransactionsTable). Not part of the shared table-page-conventions architecture (this page doesn't own/create rows the way a canonical list page does), though its results table borrows heavily from it.
 ---
 
 # Search page conventions
 
 `/search` lets the user query transactions across all time (not scoped to a
-month, unlike `/transactions`) by combining up to 5 independent, optional
-filters — Account, Category, Class, Description, Date — each with its own
+month, unlike `/transactions`) by combining up to 6 independent, optional
+filters — Account, Category, Class, Description, Date, Amount — each with its own
 operator, then clicking "Apply". Added per explicit user request.
 
 - **Every filter is optional and AND-combined; there is no default,
@@ -67,6 +67,15 @@ operator, then clicking "Apply". Added per explicit user request.
     to `""`** (`search-form.tsx`) — a value shaped for one granularity
     (e.g. `"2026-09-15"`) is meaningless for another (e.g. as a year), so
     don't try to convert between them instead.
+  - **Amount**: `amount` (a plain number string, validated finite in
+    `parseFilters()` — non-numeric values are dropped, i.e. treated as
+    "no amount filter") + `amountOp` (`"equal_to"` | `"greater_than"` |
+    `"less_than"`, default `"equal_to"`, no inclusive/between variants).
+    Compared against the **signed** amount, exactly as the Amount column
+    displays it (expenses are negative), so "Greater than -50" includes
+    positive amounts and smaller expenses — it is not an absolute-value
+    comparison. `buildQuery()` maps the ops to `.eq`/`.gt`/`.lt` on
+    `amount`.
   - `sort`/`dir` ride along unchanged from `table-page-conventions`'s
     URL-driven-sort pattern — `search-table.tsx`'s `sortHref()` clones the
     *entire current* `useSearchParams()` (so every active filter param

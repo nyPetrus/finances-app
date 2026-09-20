@@ -75,6 +75,13 @@ function buildQuery(supabase: SupabaseClient, filters: ParsedFilters) {
     }
   }
 
+  if (filters.amount) {
+    const amount = Number(filters.amount.value);
+    if (filters.amount.op === "greater_than") query = query.gt("amount", amount);
+    else if (filters.amount.op === "less_than") query = query.lt("amount", amount);
+    else query = query.eq("amount", amount);
+  }
+
   return query;
 }
 
