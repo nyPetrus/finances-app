@@ -59,7 +59,12 @@ export function GoogleDrivePanel({
     setImportResult(null);
     startTransition(async () => {
       try {
-        setImportResult(await importAccountFolderFromDrive(importAccountId, importFolderInput));
+        const result = await importAccountFolderFromDrive(importAccountId, importFolderInput);
+        if ("error" in result) {
+          setError(result.error);
+          return;
+        }
+        setImportResult(result);
         setImportFolderInput("");
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to import from Drive.");

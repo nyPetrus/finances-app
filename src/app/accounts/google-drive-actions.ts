@@ -97,10 +97,7 @@ function hashStatementRow(row: ParsedStatementRow, occurrence: number) {
 // Reads every CSV in the account's Drive folder and inserts the rows not
 // already imported. `folderInput` (link or id) links/re-links the folder to
 // the account; leave it empty to reuse the one already stored.
-export async function importAccountFolderFromDrive(
-  accountId: string,
-  folderInput: string,
-): Promise<DriveImportResult> {
+async function runDriveImport(accountId: string, folderInput: string): Promise<DriveImportResult> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -221,6 +218,20 @@ export async function importAccountFolderFromDrive(
   revalidatePath("/");
 
   return { files, inserted: files.reduce((sum, file) => sum + file.inserted, 0), skipped };
+}
+
+// Thrown errors from a server action lose their message in production
+// builds (the client only sees a generic "Server Components render" text),
+// so failures are returned as a value for the panel to display.
+export async function importAccountFolderFromDrive(
+  accountId: string,
+  folderInput: string,
+): Promise<DriveImportResult | { error: string }> {
+  try {
+    return await runDriveImport(accountId, folderInput);
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Failed to import from Drive." };
+  }
 }
 
 export async function disconnectGoogleDrive() {
