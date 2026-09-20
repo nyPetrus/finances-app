@@ -118,22 +118,47 @@ export function extractDriveFolderId(input: string): string {
   return match ? match[1] : trimmed;
 }
 
+// Follows nextPageToken so a folder with more files than one page holds
+// isn't silently truncated (same failure mode as PostgREST's 1000-row cap,
+// see PITFALLS.md).
 export async function listDriveFilesInFolder(accessToken: string, folderId: string): Promise<DriveFile[]> {
-  const params = new URLSearchParams({
-    q: `'${folderId}' in parents and trashed = false`,
-    fields: "files(id,name,modifiedTime,mimeType)",
-    orderBy: "modifiedTime desc",
-    pageSize: "100",
-  });
+  const files: DriveFile[] = [];
+  let pageToken: string | undefined;
 
-  const response = await fetch(`https://www.googleapis.com/drive/v3/files?${params.toString()}`, {
+  do {
+    const params = new URLSearchParams({
+      q: `'${folderId}' in parents and trashed = false`,
+      fields: "nextPageToken,files(id,name,modifiedTime,mimeType)",
+      orderBy: "modifiedTime desc",
+      pageSize: "1000",
+    });
+    if (pageToken) params.set("pageToken", pageToken);
+
+    const response = await fetch(`https://www.googleapis.com/drive/v3/files?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to list Drive folder: ${await response.text()}`);
+    }
+
+    const data = (await response.json()) as { files?: DriveFile[]; nextPageToken?: string };
+    files.push(...(data.files ?? []));
+    pageToken = data.nextPageToken;
+  } while (pageToken);
+
+  return files;
+}
+
+// Downloads a plain (non-Google-native) file such as a .csv as UTF-8 text.
+export async function downloadDriveFileText(accessToken: string, fileId: string): Promise<string> {
+  const response = await fetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to list Drive folder: ${await response.text()}`);
+    throw new Error(`Failed to download Drive file: ${await response.text()}`);
   }
 
-  const data = (await response.json()) as { files?: DriveFile[] };
-  return data.files ?? [];
+  return response.text();
 }

@@ -8,11 +8,12 @@ description: Use when touching Google Drive integration (src/lib/google-drive/cl
 Lets the user connect their Google account once, then read files out of a
 Drive folder on demand (a button click) — the intended end state is one
 folder per non-Pluggy-syncable account, each holding bank-exported
-statement files the app imports from. **What exists right now is only the
-first step: connect + "list files in a folder I paste a link for."**
-Per-account folder mapping, file parsing, and the "Update accounts
-folders" bulk-import button are future work, not yet built — don't assume
-they exist.
+statement files the app imports from. **What exists right now:** connect,
+"list files in a folder I paste a link for," and a per-account CSV import
+(see the import bullet below) for *manual* accounts, one account at a
+time. Not built yet: a parent folder with auto-discovered subfolders, an
+"Update accounts folders" bulk button, and any bank format other than
+Contabilizei Bank's CSV — don't assume they exist.
 
 - **Every Drive read is a user-initiated click, never a background/cron
   job — this was an explicit, deliberate design decision, not a
@@ -92,10 +93,29 @@ they exist.
   shipped.
 - **UI lives in `accounts/google-drive-panel.tsx`**, a card above
   `AccountsTable` on the Accounts page — not wired into any specific
-  account row yet (see the "not yet built" note above). Shows
+  account row. Shows
   connect/disconnect plus, once connected, a free-text folder link/ID
   input and a "List files" button that calls `listGoogleDriveFolderFiles()`
   and renders `{name, modifiedTime}` for each result. `extractDriveFolderId()`
   (`client.ts`) accepts either a bare folder id or a full
   `https://drive.google.com/drive/folders/<id>` link, since that's what a
   user actually copies from their browser.
+- **Statement CSV import** (`importAccountFolderFromDrive` in
+  `google-drive-actions.ts`, "Import from Drive" section of the panel).
+  Migration `0017_drive_csv_import.sql` adds `accounts.google_drive_folder_id`
+  (set/re-linked whenever a folder link is passed in; empty input reuses the
+  stored one), `transactions.balance` (the bank's "Saldo do dia", stored as-is
+  on every imported row) and `transactions.import_hash` (unique per account).
+  The action lists every `.csv` in the folder (`listDriveFilesInFolder` now
+  follows `nextPageToken`), downloads each with `downloadDriveFileText`, and
+  parses it with `parseContabilizeiCsv` (`src/lib/google-drive/`, pure, no
+  Drive/Supabase): BOM, `dd/mm/yyyy`, `"R$ 1.234,56"` with a non-breaking
+  space, `-` for blank, amount = Entrada − Saída, description lowercased
+  (see `transaction-description-rules`), `source = 'csv'`. Statements
+  overlap (a boundary-day row appears in two files), so dedupe is by
+  `import_hash` = sha256(date|amount|description|occurrence-within-file),
+  checked against the account's stored hashes (paged with `.range()`, see
+  `PITFALLS.md`) and against earlier files in the same run. A file that
+  fails to parse is reported per-file in the result and doesn't abort the
+  others. Dates are stored as naive midnight (`YYYY-MM-DDT00:00:00`), the
+  same as the manual add form.

@@ -42,6 +42,13 @@ export default async function AccountsPage({
       <GoogleDrivePanel
         connected={!!googleDriveConnection.data}
         email={googleDriveConnection.data?.google_email ?? null}
+        manualAccounts={allAccounts
+          .filter((account) => account.type === "manual")
+          .map((account) => ({
+            id: account.id,
+            name: account.name,
+            google_drive_folder_id: account.google_drive_folder_id,
+          }))}
       />
 
       <AccountsTable

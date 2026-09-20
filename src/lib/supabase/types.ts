@@ -36,6 +36,7 @@ export type Account = {
   pluggy_item_id: string | null;
   pluggy_account_id: string | null;
   current_balance: number;
+  google_drive_folder_id: string | null;
   updated_at: string;
   created_at: string;
 };
@@ -51,6 +52,9 @@ export type Transaction = {
   amount: number;
   source: "manual" | "pluggy" | "csv";
   pluggy_transaction_id: string | null;
+  import_hash: string | null;
+  // Bank-reported end-of-day balance from an imported statement; null otherwise.
+  balance: number | null;
   is_hidden: boolean;
   created_at: string;
 };
