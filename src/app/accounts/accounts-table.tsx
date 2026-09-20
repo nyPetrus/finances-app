@@ -39,6 +39,7 @@ import { useColumnPreferences } from "@/hooks/use-column-preferences";
 import type { Account } from "@/lib/supabase/types";
 import { deleteAccounts, updateAccount } from "./actions";
 import { AddAccountMenu } from "./add-account-menu";
+import { ImportTransactionsDialog } from "./import-transactions-dialog";
 import { syncPluggyItem } from "./pluggy-actions";
 import { type SortKey } from "./sort";
 
@@ -135,6 +136,7 @@ export function AccountsTable({
   const [isSavingEdit, startSaveEdit] = useTransition();
   const [actionError, setActionError] = useState<string | null>(null);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
+  const [importingAccount, setImportingAccount] = useState<Account | null>(null);
   const { hidden: hiddenColumns, order: columnOrder, toggle: toggleColumn, move: moveColumn } =
     useColumnPreferences<SortKey>("accounts-table", DEFAULT_COLUMN_ORDER);
 
@@ -346,6 +348,7 @@ export function AccountsTable({
                         ? () => handleSyncRow(account)
                         : undefined
                     }
+                    onImport={account.type === "manual" ? () => setImportingAccount(account) : undefined}
                     disabled={isSyncing || isDeleting}
                   />
                 </TableCell>
@@ -358,6 +361,10 @@ export function AccountsTable({
             ))}
           </TableBody>
         </Table>
+      )}
+
+      {importingAccount && (
+        <ImportTransactionsDialog account={importingAccount} onClose={() => setImportingAccount(null)} />
       )}
 
       {editingAccount && (

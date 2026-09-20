@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreVerticalIcon, PencilIcon, RefreshCwIcon, Trash2Icon } from "lucide-react";
+import { MoreVerticalIcon, PencilIcon, RefreshCwIcon, Trash2Icon, UploadIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -14,12 +14,14 @@ export function RowActionsMenu({
   onEdit,
   onDelete,
   onSync,
+  onImport,
   syncLabel = "Sync",
   disabled,
 }: {
   onEdit: () => void;
   onDelete: () => void;
   onSync?: () => void;
+  onImport?: () => void;
   syncLabel?: string;
   disabled?: boolean;
 }) {
@@ -47,6 +49,12 @@ export function RowActionsMenu({
           <DropdownMenuItem onClick={onSync}>
             <RefreshCwIcon />
             {syncLabel}
+          </DropdownMenuItem>
+        )}
+        {onImport && (
+          <DropdownMenuItem onClick={onImport}>
+            <UploadIcon />
+            Import transactions
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />

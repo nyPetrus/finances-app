@@ -1,6 +1,5 @@
 "use server";
 
-import { createHash } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
@@ -12,7 +11,8 @@ import {
   revokeGoogleToken,
   type DriveFile,
 } from "@/lib/google-drive/client";
-import { parseContabilizeiCsv, type ParsedStatementRow } from "@/lib/google-drive/parse-contabilizei-csv";
+import { parseContabilizeiCsv } from "@/lib/import/parse-contabilizei-csv";
+import { insertNewStatementRows, loadKnownImportHashes } from "@/lib/import/statement-import";
 
 // 60s safety margin so a token that's about to expire mid-request still
 // gets refreshed rather than failing the Drive call that follows.
@@ -85,15 +85,6 @@ export type DriveImportResult = {
   skipped: number;
 };
 
-// Statements have no stable transaction id, so identity is date + amount +
-// description, plus a per-file occurrence counter so genuinely identical
-// same-day rows (e.g. two R$ 195,00 card purchases) each get their own hash.
-function hashStatementRow(row: ParsedStatementRow, occurrence: number) {
-  return createHash("sha256")
-    .update(`${row.date}|${row.amount.toFixed(2)}|${row.description}|${occurrence}`)
-    .digest("hex");
-}
-
 // Reads every CSV in the account's Drive folder and inserts the rows not
 // already imported. `folderInput` (link or id) links/re-links the folder to
 // the account; leave it empty to reuse the one already stored.
@@ -137,26 +128,7 @@ async function runDriveImport(accountId: string, folderInput: string): Promise<D
     .filter((file) => file.name.toLowerCase().endsWith(".csv"))
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  // Hashes already stored for this account. Paged with .range() since an
-  // account's history can pass PostgREST's 1000-row cap (see PITFALLS.md).
-  const knownHashes = new Set<string>();
-  const pageSize = 1000;
-  for (let offset = 0; ; offset += pageSize) {
-    const { data: page, error: hashError } = await supabase
-      .from("transactions")
-      .select("import_hash")
-      .eq("account_id", account.id)
-      .not("import_hash", "is", null)
-      .order("id")
-      .range(offset, offset + pageSize - 1);
-
-    if (hashError) throw new Error(hashError.message);
-    if (!page || page.length === 0) break;
-
-    for (const row of page) knownHashes.add(row.import_hash as string);
-
-    if (page.length < pageSize) break;
-  }
+  const knownHashes = await loadKnownImportHashes(supabase, account.id);
 
   const files: DriveImportFileResult[] = [];
   let skipped = 0;
@@ -165,42 +137,15 @@ async function runDriveImport(accountId: string, folderInput: string): Promise<D
     try {
       const parsed = parseContabilizeiCsv(await downloadDriveFileText(accessToken, file.id));
 
-      // Overlapping statements repeat rows, so a hash already known (from
-      // the DB or an earlier file in this run) is skipped, not re-inserted.
-      const occurrences = new Map<string, number>();
-      const newRows = [];
-      for (const row of parsed) {
-        const key = `${row.date}|${row.amount.toFixed(2)}|${row.description}`;
-        const occurrence = occurrences.get(key) ?? 0;
-        occurrences.set(key, occurrence + 1);
+      const { inserted, skipped: fileSkipped } = await insertNewStatementRows(supabase, {
+        userId: user.id,
+        accountId: account.id,
+        rows: parsed,
+        knownHashes,
+      });
 
-        const importHash = hashStatementRow(row, occurrence);
-        if (knownHashes.has(importHash)) continue;
-        knownHashes.add(importHash);
-
-        newRows.push({
-          user_id: user.id,
-          account_id: account.id,
-          // Same naive-midnight format the manual add form produces.
-          date: `${row.date}T00:00:00`,
-          description: row.description,
-          amount: row.amount,
-          balance: row.balance,
-          source: "csv" as const,
-          import_hash: importHash,
-        });
-      }
-
-      const insertChunkSize = 500;
-      for (let i = 0; i < newRows.length; i += insertChunkSize) {
-        const { error: insertError } = await supabase
-          .from("transactions")
-          .insert(newRows.slice(i, i + insertChunkSize));
-        if (insertError) throw new Error(insertError.message);
-      }
-
-      skipped += parsed.length - newRows.length;
-      files.push({ name: file.name, rows: parsed.length, inserted: newRows.length });
+      skipped += fileSkipped;
+      files.push({ name: file.name, rows: parsed.length, inserted });
     } catch (err) {
       files.push({
         name: file.name,
