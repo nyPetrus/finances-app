@@ -150,9 +150,14 @@ list page instead of inventing a fresh layout.
      driven by `selected`/`selectedRows` — Pluggy bank sync is genuinely a
      multi-account bulk operation; "Connect bank" used to be a separate
      toolbar button here too but is now reachable only via the "+" menu,
-     see the "Accounts' '+' is a menu" bullet below) and Descriptions' own
+     see the "Accounts' '+' is a menu" bullet below), Descriptions' own
      `SyncButton` (applies existing `mapped_descriptions` rules to every
-     uncategorized transaction, see `transaction-description-rules`).
+     uncategorized transaction, see `transaction-description-rules`), and
+     — per explicit user request — that same `SyncButton` component
+     (`descriptions/sync-button.tsx`, imported directly, not a copy)
+     reused verbatim on Transactions too, right after the "+"/count slot.
+     See below for how this coexists with the per-row Sync that was
+     already there.
   3. **"Delete" last, and only rendered at all when `selected.size > 0`** —
      `{selected.size > 0 && <Button ...>Trash2Icon</Button>}`, no wrapping
      wrapper needed since it's a single conditional child alongside its
@@ -166,17 +171,25 @@ list page instead of inventing a fresh layout.
      since the `selected.size === 0` guard is redundant once the button
      only mounts when there's a selection. Confirms via `window.confirm(...)`
      before calling the bulk delete action, same as always.
-  **Transactions used to have a bulk "Sync" button in the left group too,
-  for `syncDescriptionsFromTransactions`, and no longer does** — since that
-  action is inherently per-transaction anyway (each row either has a
-  category to sync from or it doesn't), the per-row `RowActionsMenu`'s
-  `onSync` item is the only way to trigger it now, on both
-  `transactions-table.tsx` and its Dashboard-embedded copy. Don't
-  reintroduce a bulk Sync button for a table whose sync action is already
-  fully covered by the per-row menu — Accounts' case is different because
-  one Pluggy `pluggy_item_id` sync covers every account under that
-  connection, which is a real bulk operation, not just "loop the per-row
-  action over a selection." There is no "Edit" button in the toolbar
+  **Transactions has two different "Sync" affordances now, doing two
+  different things — don't conflate them.** The per-row `RowActionsMenu`'s
+  `onSync` item (on both `transactions-table.tsx` and its
+  Dashboard-embedded copy) still calls `syncDescriptionsFromTransactions`
+  scoped to that one row — it *creates/updates* a `mapped_descriptions`
+  rule from that row's own (already-set) category/class, then applies the
+  full rule set to matching uncategorized transactions; it needs a
+  category already on that row to have anything to save. The toolbar's
+  `SyncButton` (see above) instead just *applies the existing rule set* —
+  `syncMappedDescriptions()`, no new rule created — to every uncategorized
+  transaction in the whole account, not scoped to the visible month or any
+  selection; this is the same button/behavior Descriptions' own page
+  already has, reused here per explicit user request after a stretch of
+  this toolbar deliberately *not* having a bulk Sync (the removal
+  reasoning — "inherently per-transaction, the per-row menu already covers
+  it" — no longer holds now that there's a genuinely bulk, no-selection-
+  needed sync operation to expose). Don't merge the two or remove either
+  without checking first; they're both still doing distinct, real work.
+  There is no "Edit" button in the toolbar
   anywhere — it's redundant now that every row has its own Edit via the "⋮"
   menu. Icon-only toolbar buttons need `aria-label` *and* `title` set to
   the plain action word ("Columns", "Sync", "Delete") for the same reason

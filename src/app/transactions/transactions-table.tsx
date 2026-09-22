@@ -42,6 +42,7 @@ import type { Account, Category, Class, Transaction } from "@/lib/supabase/types
 import { deleteTransactions, syncDescriptionsFromTransactions, updateTransaction } from "./actions";
 import { AddTransactionDialog } from "./add-transaction-dialog";
 import { AddMappingDialog } from "../descriptions/add-mapping-dialog";
+import { SyncButton } from "../descriptions/sync-button";
 import { type SortKey } from "./sort";
 
 function formatCurrency(value: number) {
@@ -280,6 +281,7 @@ export function TransactionsTable({
               Create an account first
             </Button>
           )}
+          <SyncButton />
           {selected.size > 0 && (
             <Button
               variant="ghost"
