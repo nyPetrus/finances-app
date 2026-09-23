@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import type { Account, Category, Class, Transaction } from "@/lib/supabase/types";
+import { fetchClasses } from "@/lib/supabase/fetch-classes";
+import { effectiveGordura } from "@/lib/classification";
+import type { Account, Category, Transaction } from "@/lib/supabase/types";
 import { Button } from "@/components/ui/button";
 import { MonthPicker } from "./month-picker";
 import { TransactionsTable } from "./transactions-table";
@@ -68,7 +70,7 @@ export default async function TransactionsPage({
     { data: transactions, error: txError },
     { data: accounts, error: accError },
     { data: categories, error: catError },
-    { data: classes, error: classError },
+    allClasses,
   ] = await Promise.all([
     supabase
       .from("transactions")
@@ -78,17 +80,15 @@ export default async function TransactionsPage({
       .order("date", { ascending: false }),
     supabase.from("accounts").select("*").order("name"),
     supabase.from("categories").select("*").order("name"),
-    supabase.from("classes").select("*").order("name"),
+    fetchClasses(supabase),
   ]);
 
   if (txError) throw new Error(txError.message);
   if (accError) throw new Error(accError.message);
   if (catError) throw new Error(catError.message);
-  if (classError) throw new Error(classError.message);
 
   const allAccounts = (accounts ?? []) as Account[];
   const allCategories = (categories ?? []) as Category[];
-  const allClasses = (classes ?? []) as Class[];
   const monthTransactions = (transactions ?? []) as Transaction[];
 
   const accountsById = new Map(allAccounts.map((a) => [a.id, a]));
@@ -121,6 +121,9 @@ export default async function TransactionsPage({
         cmp = aName.localeCompare(bName);
         break;
       }
+      case "gordura":
+        cmp = (effectiveGordura(a, classesById) ?? "").localeCompare(effectiveGordura(b, classesById) ?? "");
+        break;
       case "amount":
         cmp = a.amount - b.amount;
         break;

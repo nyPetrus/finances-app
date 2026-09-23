@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { TagIcon, Trash2Icon, type LucideIcon } from "lucide-react";
+import { ArchiveIcon, ArchiveRestoreIcon, TagIcon, Trash2Icon, type LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -37,8 +37,9 @@ import { IconSwatchPicker } from "@/components/icon-swatch-picker";
 import { CategoryIcon } from "@/components/category-icon";
 import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
+import { useInactiveFilter } from "@/hooks/use-inactive-filter";
 import type { Category } from "@/lib/supabase/types";
-import { deleteCategories, updateCategory } from "./actions";
+import { deleteCategories, setCategoriesActive, updateCategory } from "./actions";
 import { AddCategoryDialog } from "./add-category-dialog";
 import { type SortKey } from "./sort";
 
@@ -68,6 +69,7 @@ function renderCell(category: Category, key: SortKey) {
         <div className="flex items-center gap-2">
           <CategoryIcon icon={category.icon} className="size-4 shrink-0 text-muted-foreground" />
           <span className="min-w-0 truncate">{category.name}</span>
+          {!category.is_active && <Badge variant="outline">Inactive</Badge>}
         </div>
       );
     case "type":
@@ -86,11 +88,21 @@ export function CategoriesTable({
 }) {
   const [isDeleting, startDelete] = useTransition();
   const [isSavingEdit, startSaveEdit] = useTransition();
+  const [isTogglingActive, startToggleActive] = useTransition();
   const [actionError, setActionError] = useState<string | null>(null);
+  // Categories a delete skipped because they're in use, offered a one-click
+  // "Deactivate instead" next to the error.
+  const [inUseIds, setInUseIds] = useState<string[]>([]);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [editIcon, setEditIcon] = useState("");
   const { hidden: hiddenColumns, order: columnOrder, toggle: toggleColumn, move: moveColumn } =
     useColumnPreferences<SortKey>("categories-table", DEFAULT_COLUMN_ORDER);
+  const {
+    showInactive,
+    setShowInactive,
+    inactiveCount,
+    visibleRows: visibleCategories,
+  } = useInactiveFilter(categories);
 
   function sortHref(column: SortKey) {
     const nextDir: "asc" | "desc" = sortKey === column && sortDir === "asc" ? "desc" : "asc";
@@ -104,7 +116,38 @@ export function CategoriesTable({
     toggleAll,
     toggleOne,
     clear: clearSelection,
-  } = useRowSelection(categories, (category) => category.id);
+  } = useRowSelection(visibleCategories, (category) => category.id);
+
+  const selectedCategories = visibleCategories.filter((category) => selected.has(category.id));
+  const isBusy = isDeleting || isTogglingActive;
+
+  function runDelete(ids: string[]) {
+    setActionError(null);
+    setInUseIds([]);
+    startDelete(async () => {
+      try {
+        const result = await deleteCategories(ids);
+        clearSelection();
+        setActionError(result.error);
+        setInUseIds(result.inUseIds);
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : "Failed to delete.");
+      }
+    });
+  }
+
+  function setActive(ids: string[], isActive: boolean) {
+    setActionError(null);
+    setInUseIds([]);
+    startToggleActive(async () => {
+      try {
+        await setCategoriesActive(ids, isActive);
+        clearSelection();
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : "Failed to update.");
+      }
+    });
+  }
 
   function openEditDialog(category: Category) {
     setActionError(null);
@@ -115,32 +158,13 @@ export function CategoriesTable({
   function handleDelete() {
     if (selected.size === 0) return;
     const label = selected.size === 1 ? "this category" : `these ${selected.size} categories`;
-    if (!window.confirm(`Delete ${label}? Transactions in ${selected.size === 1 ? "it" : "them"} will become uncategorized.`)) {
-      return;
-    }
-    setActionError(null);
-    startDelete(async () => {
-      try {
-        await deleteCategories(Array.from(selected));
-        clearSelection();
-      } catch (err) {
-        setActionError(err instanceof Error ? err.message : "Failed to delete.");
-      }
-    });
+    if (!window.confirm(`Delete ${label}? Categories still in use will be skipped.`)) return;
+    runDelete(Array.from(selected));
   }
 
   function handleDeleteRow(category: Category) {
-    if (!window.confirm(`Delete this category? Transactions in it will become uncategorized.`)) {
-      return;
-    }
-    setActionError(null);
-    startDelete(async () => {
-      try {
-        await deleteCategories([category.id]);
-      } catch (err) {
-        setActionError(err instanceof Error ? err.message : "Failed to delete.");
-      }
-    });
+    if (!window.confirm(`Delete this category?`)) return;
+    runDelete([category.id]);
   }
 
   const columnsByKey = new Map(COLUMNS.map((column) => [column.key, column]));
@@ -157,11 +181,35 @@ export function CategoriesTable({
           ) : (
             <AddCategoryDialog />
           )}
+          {selectedCategories.some((category) => category.is_active) && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              disabled={isBusy}
+              onClick={() => setActive(Array.from(selected), false)}
+              aria-label="Deactivate"
+              title="Deactivate"
+            >
+              <ArchiveIcon />
+            </Button>
+          )}
+          {selectedCategories.some((category) => !category.is_active) && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              disabled={isBusy}
+              onClick={() => setActive(Array.from(selected), true)}
+              aria-label="Activate"
+              title="Activate"
+            >
+              <ArchiveRestoreIcon />
+            </Button>
+          )}
           {selected.size > 0 && (
             <Button
               variant="ghost"
               size="icon-sm"
-              disabled={isDeleting}
+              disabled={isBusy}
               onClick={handleDelete}
               aria-label="Delete"
               title="Delete"
@@ -170,11 +218,27 @@ export function CategoriesTable({
             </Button>
           )}
         </div>
-        <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />
+        <div className="flex items-center gap-2">
+          {inactiveCount > 0 && (
+            <Button variant="ghost" size="sm" onClick={() => setShowInactive(!showInactive)}>
+              {showInactive ? "Hide inactive" : `Show inactive (${inactiveCount})`}
+            </Button>
+          )}
+          <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />
+        </div>
       </div>
-      {actionError && <p className="text-sm text-destructive">{actionError}</p>}
+      {actionError && (
+        <div className="flex items-center gap-2">
+          <p className="text-sm text-destructive">{actionError}</p>
+          {inUseIds.length > 0 && (
+            <Button variant="outline" size="sm" disabled={isBusy} onClick={() => setActive(inUseIds, false)}>
+              Deactivate instead
+            </Button>
+          )}
+        </div>
+      )}
 
-      {categories.length === 0 ? (
+      {visibleCategories.length === 0 ? (
         <p className="text-sm text-muted-foreground">No categories yet.</p>
       ) : (
         <Table>
@@ -201,8 +265,8 @@ export function CategoriesTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {categories.map((category) => (
-              <TableRow key={category.id} className="group">
+            {visibleCategories.map((category) => (
+              <TableRow key={category.id} className={category.is_active ? "group" : "group text-muted-foreground"}>
                 <TableCell>
                   <Checkbox
                     checked={selected.has(category.id)}
@@ -215,7 +279,9 @@ export function CategoriesTable({
                   <RowActionsMenu
                     onEdit={() => openEditDialog(category)}
                     onDelete={() => handleDeleteRow(category)}
-                    disabled={isDeleting}
+                    onToggleActive={() => setActive([category.id], !category.is_active)}
+                    isActive={category.is_active}
+                    disabled={isBusy}
                   />
                 </TableCell>
                 {visibleColumns.map((column) => (

@@ -57,6 +57,7 @@ export function buildMonthlyBreakdown(
   classes: Class[],
 ): MonthlyRow[] {
   const categoriesById = new Map(categories.map((c) => [c.id, c]));
+  const classesById = new Map(classes.map((c) => [c.id, c]));
 
   const typeMonths: Record<Category["kind"] | "uncategorized", number[]> = {
     income: emptyMonths(),
@@ -67,7 +68,9 @@ export function buildMonthlyBreakdown(
   let uncategorizedCount = 0;
 
   const categoryMonths = new Map<string, number[]>();
-  const classMonths = new Map<string, number[]>();
+  // A class can be reused across categories, so class sums are kept per
+  // category: categoryId -> classId -> months.
+  const classMonths = new Map<string, Map<string, number[]>>();
 
   for (const transaction of transactions) {
     const month = monthIndex(transaction.date);
@@ -92,8 +95,10 @@ export function buildMonthlyBreakdown(
     categoryMonths.get(category.id)![month] += value;
 
     if (transaction.class_id) {
-      if (!classMonths.has(transaction.class_id)) classMonths.set(transaction.class_id, emptyMonths());
-      classMonths.get(transaction.class_id)![month] += value;
+      if (!classMonths.has(category.id)) classMonths.set(category.id, new Map());
+      const byClass = classMonths.get(category.id)!;
+      if (!byClass.has(transaction.class_id)) byClass.set(transaction.class_id, emptyMonths());
+      byClass.get(transaction.class_id)![month] += value;
     }
   }
 
@@ -102,12 +107,12 @@ export function buildMonthlyBreakdown(
       .filter((category) => category.kind === kind && categoryMonths.has(category.id))
       .map((category) => {
         const months = categoryMonths.get(category.id)!;
-        const classRows: MonthlyRow[] = classes
-          .filter((classItem) => classItem.category_id === category.id && classMonths.has(classItem.id))
-          .map((classItem) => {
-            const classItemMonths = classMonths.get(classItem.id)!;
+        const classRows: MonthlyRow[] = [...(classMonths.get(category.id) ?? new Map<string, number[]>())]
+          .filter(([classId]) => classesById.has(classId))
+          .map(([classId, classItemMonths]) => {
+            const classItem = classesById.get(classId)!;
             return {
-              key: `class:${classItem.id}`,
+              key: `class:${category.id}:${classItem.id}`,
               label: classItem.name,
               kind,
               categoryId: category.id,

@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Category, Class, MappedDescription } from "@/lib/supabase/types";
+import { fetchClasses } from "@/lib/supabase/fetch-classes";
+import type { Category, MappedDescription } from "@/lib/supabase/types";
 import { DescriptionsTable } from "./descriptions-table";
 import { isSortKey, type SortKey } from "./sort";
 
@@ -22,20 +23,18 @@ export default async function DescriptionsPage({
 
   const [
     { data: categories, error: catError },
-    { data: classes, error: classError },
+    allClasses,
     { data: mappings, error: mapError },
   ] = await Promise.all([
     supabase.from("categories").select("*"),
-    supabase.from("classes").select("*"),
+    fetchClasses(supabase),
     supabase.from("mapped_descriptions").select("*"),
   ]);
 
   if (catError) throw new Error(catError.message);
-  if (classError) throw new Error(classError.message);
   if (mapError) throw new Error(mapError.message);
 
   const allCategories = (categories ?? []) as Category[];
-  const allClasses = (classes ?? []) as Class[];
   const allMappings = (mappings ?? []) as MappedDescription[];
 
   const categoriesById = new Map(allCategories.map((c) => [c.id, c]));

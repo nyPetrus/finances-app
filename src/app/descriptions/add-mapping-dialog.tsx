@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { pickableCategories, pickableClasses } from "@/lib/classification";
 import type { Category, Class } from "@/lib/supabase/types";
 import { addMappedDescription, syncAllMappedDescriptions, syncMappedDescriptions } from "./actions";
 
@@ -54,7 +55,7 @@ export function AddMappingDialog({
   const isSyncing = isSyncingUnmapped || isSyncingAll;
   const formRef = useRef<HTMLFormElement>(null);
 
-  const classesForCategory = categoryId ? classes.filter((c) => c.category_id === categoryId) : [];
+  const classesForCategory = pickableClasses(classes, categoryId, classId);
 
   function handleOpenChange(next: boolean) {
     setOpen(next);
@@ -168,7 +169,7 @@ export function AddMappingDialog({
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
               <SelectContent>
-                {categories.map((category) => (
+                {pickableCategories(categories, categoryId).map((category) => (
                   <SelectItem key={category.id} value={category.id}>
                     {category.name}
                   </SelectItem>

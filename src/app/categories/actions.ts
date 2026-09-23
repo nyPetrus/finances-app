@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { deleteIfUnused, type DeleteResult } from "@/lib/supabase/delete-if-unused";
 
 function throwFriendlyError(message: string, code?: string): never {
   if (code === "23505") throw new Error("A category with this name already exists.");
@@ -59,7 +60,28 @@ export async function updateCategory(formData: FormData) {
   revalidatePath("/search");
 }
 
-export async function deleteCategories(ids: string[]) {
+export async function deleteCategories(ids: string[]): Promise<DeleteResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  if (ids.length === 0) return { error: null, inUseIds: [] };
+
+  const result = await deleteIfUnused(supabase, "categories", user.id, ids);
+
+  revalidatePath("/categories");
+  revalidatePath("/classes");
+  revalidatePath("/transactions");
+  revalidatePath("/search");
+
+  return result;
+}
+
+// Inactive categories stay on existing transactions but are no longer offered
+// in pickers (see pickableCategories).
+export async function setCategoriesActive(ids: string[], isActive: boolean) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -70,13 +92,15 @@ export async function deleteCategories(ids: string[]) {
 
   const { error } = await supabase
     .from("categories")
-    .delete()
+    .update({ is_active: isActive })
     .in("id", ids)
     .eq("user_id", user.id);
 
   if (error) throw new Error(error.message);
 
   revalidatePath("/categories");
+  revalidatePath("/classes");
   revalidatePath("/transactions");
   revalidatePath("/search");
+  revalidatePath("/descriptions");
 }

@@ -1,6 +1,14 @@
 "use client";
 
-import { MoreVerticalIcon, PencilIcon, RefreshCwIcon, Trash2Icon, UploadIcon } from "lucide-react";
+import {
+  ArchiveIcon,
+  ArchiveRestoreIcon,
+  MoreVerticalIcon,
+  PencilIcon,
+  RefreshCwIcon,
+  Trash2Icon,
+  UploadIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -15,6 +23,8 @@ export function RowActionsMenu({
   onDelete,
   onSync,
   onImport,
+  onToggleActive,
+  isActive,
   syncLabel = "Sync",
   disabled,
 }: {
@@ -22,6 +32,9 @@ export function RowActionsMenu({
   onDelete: () => void;
   onSync?: () => void;
   onImport?: () => void;
+  // Deactivate/Activate item, for rows that can be hidden instead of deleted.
+  onToggleActive?: () => void;
+  isActive?: boolean;
   syncLabel?: string;
   disabled?: boolean;
 }) {
@@ -55,6 +68,12 @@ export function RowActionsMenu({
           <DropdownMenuItem onClick={onImport}>
             <UploadIcon />
             Import transactions
+          </DropdownMenuItem>
+        )}
+        {onToggleActive && (
+          <DropdownMenuItem onClick={onToggleActive}>
+            {isActive ? <ArchiveIcon /> : <ArchiveRestoreIcon />}
+            {isActive ? "Deactivate" : "Activate"}
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />

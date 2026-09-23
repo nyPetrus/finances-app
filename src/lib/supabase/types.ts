@@ -5,15 +5,24 @@ export type Category = {
   kind: "income" | "expense" | "transfer";
   icon: string;
   is_default: boolean;
+  is_active: boolean;
   created_at: string;
 };
+
+// How long a financial commitment lasts: "high" = finite (ends on its own,
+// e.g. a loan installment), "low" = recurs indefinitely (rent, insurance).
+export type Gordura = "high" | "low";
 
 export type Class = {
   id: string;
   user_id: string;
-  category_id: string;
   name: string;
+  default_gordura: Gordura | null;
+  is_active: boolean;
   created_at: string;
+  // Categories this class is linked to (category_classes rows), filled in by
+  // fetchClasses — not a real column.
+  category_ids: string[];
 };
 
 export type MappedDescription = {
@@ -55,6 +64,8 @@ export type Transaction = {
   import_hash: string | null;
   // Bank-reported end-of-day balance from an imported statement; null otherwise.
   balance: number | null;
+  // Manual override only; see effectiveGordura for the value to display.
+  gordura: Gordura | null;
   is_hidden: boolean;
   created_at: string;
 };

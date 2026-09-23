@@ -37,6 +37,7 @@ import { RowActionsMenu } from "@/components/row-actions-menu";
 import { CategoryIcon } from "@/components/category-icon";
 import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
+import { pickableCategories, pickableClasses } from "@/lib/classification";
 import type { Category, Class, MappedDescription } from "@/lib/supabase/types";
 import {
   deleteMappedDescriptions,
@@ -105,9 +106,7 @@ export function DescriptionsTable({
 
   const categoriesById = new Map(categories.map((c) => [c.id, c]));
   const classesById = new Map(classes.map((c) => [c.id, c]));
-  const editClassesForCategory = editCategoryId
-    ? classes.filter((c) => c.category_id === editCategoryId)
-    : [];
+  const editClassesForCategory = pickableClasses(classes, editCategoryId, editClassId);
 
   function sortHref(column: SortKey) {
     const nextDir: "asc" | "desc" = sortKey === column && sortDir === "asc" ? "desc" : "asc";
@@ -366,7 +365,7 @@ export function DescriptionsTable({
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map((category) => (
+                    {pickableCategories(categories, editCategoryId).map((category) => (
                       <SelectItem key={category.id} value={category.id}>
                         {category.name}
                       </SelectItem>

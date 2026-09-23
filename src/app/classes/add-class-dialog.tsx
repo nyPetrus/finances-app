@@ -3,8 +3,6 @@
 import { useState } from "react";
 import { PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -13,15 +11,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import type { Category } from "@/lib/supabase/types";
 import { addClass } from "./actions";
+import { ClassFormFields } from "./class-form-fields";
 
 export function AddClassDialog({ categories }: { categories: Category[] }) {
   const [open, setOpen] = useState(false);
@@ -46,33 +38,16 @@ export function AddClassDialog({ categories }: { categories: Category[] }) {
           id="add-class-form"
           action={async (formData) => {
             try {
-              await addClass(formData);
-              setOpen(false);
+              const result = await addClass(formData);
+              if (result.error) setError(result.error);
+              else setOpen(false);
             } catch (err) {
               setError(err instanceof Error ? err.message : "Failed to create class.");
             }
           }}
           className="flex flex-col gap-4"
         >
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="name">Name</Label>
-            <Input id="name" name="name" required autoFocus />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="category_id">Category</Label>
-            <Select name="category_id" defaultValue={categories[0]?.id}>
-              <SelectTrigger id="category_id">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <ClassFormFields categories={categories} autoFocus />
           {error && <p className="text-sm text-destructive">{error}</p>}
           <DialogFooter>
             <Button type="submit" form="add-class-form">

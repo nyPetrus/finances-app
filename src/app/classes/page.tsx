@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { fetchClasses } from "@/lib/supabase/fetch-classes";
 import type { Category, Class } from "@/lib/supabase/types";
 import { ClassesTable } from "./classes-table";
 import { isSortKey, type SortKey } from "./sort";
@@ -13,19 +14,21 @@ export default async function ClassesPage({
   const sortDir: "asc" | "desc" = dirParam === "desc" ? "desc" : "asc";
 
   const supabase = await createClient();
-  const [{ data: categories, error: catError }, { data: classes, error: classError }] =
-    await Promise.all([
-      supabase.from("categories").select("*"),
-      supabase.from("classes").select("*"),
-    ]);
+  const [{ data: categories, error: catError }, allClasses] = await Promise.all([
+    supabase.from("categories").select("*").order("name"),
+    fetchClasses(supabase),
+  ]);
 
   if (catError) throw new Error(catError.message);
-  if (classError) throw new Error(classError.message);
 
   const allCategories = (categories ?? []) as Category[];
-  const allClasses = (classes ?? []) as Class[];
 
   const categoriesById = new Map(allCategories.map((c) => [c.id, c]));
+  const categoryNames = (classItem: Class) =>
+    classItem.category_ids
+      .map((id) => categoriesById.get(id)?.name ?? "")
+      .sort((a, b) => a.localeCompare(b))
+      .join(", ");
 
   const sortedClasses = [...allClasses].sort((a, b) => {
     let cmp = 0;
@@ -33,12 +36,12 @@ export default async function ClassesPage({
       case "name":
         cmp = a.name.localeCompare(b.name);
         break;
-      case "category": {
-        const aName = categoriesById.get(a.category_id)?.name ?? "";
-        const bName = categoriesById.get(b.category_id)?.name ?? "";
-        cmp = aName.localeCompare(bName) || a.name.localeCompare(b.name);
+      case "category":
+        cmp = categoryNames(a).localeCompare(categoryNames(b)) || a.name.localeCompare(b.name);
         break;
-      }
+      case "gordura":
+        cmp = (a.default_gordura ?? "").localeCompare(b.default_gordura ?? "") || a.name.localeCompare(b.name);
+        break;
     }
     return sortDir === "asc" ? cmp : -cmp;
   });

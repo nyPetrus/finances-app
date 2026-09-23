@@ -38,7 +38,9 @@ import { RowActionsMenu } from "@/components/row-actions-menu";
 import { CategoryIcon } from "@/components/category-icon";
 import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
-import type { Account, Category, Class, Transaction } from "@/lib/supabase/types";
+import { ClassificationFields } from "@/components/classification-fields";
+import { effectiveGordura, GORDURA_LABELS } from "@/lib/classification";
+import type { Account, Category, Class, Gordura, Transaction } from "@/lib/supabase/types";
 import { deleteTransactions, syncDescriptionsFromTransactions, updateTransaction } from "./actions";
 import { AddTransactionDialog } from "./add-transaction-dialog";
 import { AddMappingDialog } from "../descriptions/add-mapping-dialog";
@@ -88,6 +90,7 @@ const COLUMNS: {
     headerIconOnly: true,
   },
   { key: "class", label: "Class", cellClassName: "max-w-40 truncate", headerIcon: TagsIcon, headerIconOnly: true },
+  { key: "gordura", label: "Gordura", cellClassName: "text-center" },
   { key: "amount", label: "Amount", cellClassName: "text-right" },
 ];
 
@@ -119,6 +122,7 @@ export function TransactionsTable({
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [editCategoryId, setEditCategoryId] = useState<string | null>(null);
   const [editClassId, setEditClassId] = useState<string | null>(null);
+  const [editGordura, setEditGordura] = useState<Gordura | null>(null);
   const [mappingPrefill, setMappingPrefill] = useState<string | null>(null);
   const editFormRef = useRef<HTMLFormElement>(null);
   const { hidden: hiddenColumns, order: columnOrder, toggle: toggleColumn, move: moveColumn } =
@@ -127,9 +131,6 @@ export function TransactionsTable({
   const accountsById = new Map(accounts.map((a) => [a.id, a]));
   const categoriesById = new Map(categories.map((c) => [c.id, c]));
   const classesById = new Map(classes.map((c) => [c.id, c]));
-  const editClassesForCategory = editCategoryId
-    ? classes.filter((c) => c.category_id === editCategoryId)
-    : [];
 
   function sortHref(column: SortKey) {
     const nextDir: "asc" | "desc" = sortKey === column && sortDir === "asc" ? "desc" : "asc";
@@ -175,6 +176,18 @@ export function TransactionsTable({
           <span className="text-sm text-muted-foreground">—</span>
         );
       }
+      case "gordura": {
+        const value = effectiveGordura(transaction, classesById);
+        if (!value) return <span className="text-sm text-muted-foreground">—</span>;
+        // Inherited from the class default reads muted; a manual override doesn't.
+        return transaction.gordura ? (
+          <span title="Set on this transaction">{GORDURA_LABELS[value]}</span>
+        ) : (
+          <span title="Class default" className="text-muted-foreground">
+            {GORDURA_LABELS[value]}
+          </span>
+        );
+      }
       case "amount": {
         const category = transaction.category_id ? categoriesById.get(transaction.category_id) : null;
         const colorClassName =
@@ -201,6 +214,7 @@ export function TransactionsTable({
     setActionError(null);
     setEditCategoryId(transaction.category_id);
     setEditClassId(transaction.class_id);
+    setEditGordura(transaction.gordura);
     setEditingTransaction(transaction);
   }
 
@@ -440,58 +454,16 @@ export function TransactionsTable({
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="category_id">Category</Label>
-                  <Select
-                    name="category_id"
-                    value={editCategoryId}
-                    onValueChange={(value) => {
-                      setEditCategoryId(value);
-                      setEditClassId(null);
-                    }}
-                  >
-                    <SelectTrigger id="category_id">
-                      <SelectValue placeholder="Uncategorized" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="class_id">Class</Label>
-                  <Select
-                    name="class_id"
-                    value={editClassId}
-                    onValueChange={setEditClassId}
-                    disabled={!editCategoryId || editClassesForCategory.length === 0}
-                  >
-                    <SelectTrigger id="class_id">
-                      <SelectValue
-                        placeholder={
-                          !editCategoryId
-                            ? "Pick a category first"
-                            : editClassesForCategory.length === 0
-                              ? "No classes"
-                              : "None"
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {editClassesForCategory.map((classItem) => (
-                        <SelectItem key={classItem.id} value={classItem.id}>
-                          {classItem.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+              <ClassificationFields
+                categories={categories}
+                classes={classes}
+                categoryId={editCategoryId}
+                classId={editClassId}
+                onCategoryChange={setEditCategoryId}
+                onClassChange={setEditClassId}
+                gordura={editGordura}
+                onGorduraChange={setEditGordura}
+              />
               <DialogFooter>
                 <Button
                   type="button"

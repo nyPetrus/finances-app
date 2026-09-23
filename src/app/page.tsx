@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { fetchAllTransactionsInRange } from "@/lib/supabase/fetch-all-transactions";
-import type { Account, Category, Class } from "@/lib/supabase/types";
+import { fetchClasses } from "@/lib/supabase/fetch-classes";
+import type { Account, Category } from "@/lib/supabase/types";
 import { Button } from "@/components/ui/button";
 import { buildMonthlyBreakdown } from "./dashboard-monthly-breakdown";
 import { DashboardExplorer } from "./dashboard-explorer";
@@ -20,22 +21,20 @@ export default async function Home({
   const [
     { data: accounts, error: accError },
     { data: categories, error: catError },
-    { data: classes, error: classError },
+    allClasses,
     yearTransactions,
   ] = await Promise.all([
     supabase.from("accounts").select("*"),
     supabase.from("categories").select("*"),
-    supabase.from("classes").select("*"),
+    fetchClasses(supabase),
     fetchAllTransactionsInRange(supabase, `${year}-01-01`, `${year + 1}-01-01`),
   ]);
 
   if (accError) throw new Error(accError.message);
   if (catError) throw new Error(catError.message);
-  if (classError) throw new Error(classError.message);
 
   const allAccounts = (accounts ?? []) as Account[];
   const allCategories = (categories ?? []) as Category[];
-  const allClasses = (classes ?? []) as Class[];
 
   const monthlyBreakdown = buildMonthlyBreakdown(yearTransactions, allCategories, allClasses);
 

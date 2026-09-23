@@ -38,7 +38,8 @@ import { RowActionsMenu } from "@/components/row-actions-menu";
 import { CategoryIcon } from "@/components/category-icon";
 import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
-import type { Account, Category, Class, Transaction } from "@/lib/supabase/types";
+import { ClassificationFields } from "@/components/classification-fields";
+import type { Account, Category, Class, Gordura, Transaction } from "@/lib/supabase/types";
 import { deleteTransactions, syncDescriptionsFromTransactions, updateTransaction } from "./transactions/actions";
 import { AddTransactionDialog } from "./transactions/add-transaction-dialog";
 import { AddMappingDialog } from "./descriptions/add-mapping-dialog";
@@ -110,6 +111,7 @@ export function DashboardTransactionsTable({
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [editCategoryId, setEditCategoryId] = useState<string | null>(null);
   const [editClassId, setEditClassId] = useState<string | null>(null);
+  const [editGordura, setEditGordura] = useState<Gordura | null>(null);
   const [mappingPrefill, setMappingPrefill] = useState<string | null>(null);
   const editFormRef = useRef<HTMLFormElement>(null);
   const [sortKey, setSortKey] = useState<SortKey>("date");
@@ -120,9 +122,6 @@ export function DashboardTransactionsTable({
   const accountsById = useMemo(() => new Map(accounts.map((a) => [a.id, a])), [accounts]);
   const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
   const classesById = useMemo(() => new Map(classes.map((c) => [c.id, c])), [classes]);
-  const editClassesForCategory = editCategoryId
-    ? classes.filter((c) => c.category_id === editCategoryId)
-    : [];
 
   function handleSort(column: SortKey) {
     if (sortKey === column) {
@@ -230,6 +229,7 @@ export function DashboardTransactionsTable({
     setActionError(null);
     setEditCategoryId(transaction.category_id);
     setEditClassId(transaction.class_id);
+    setEditGordura(transaction.gordura);
     setEditingTransaction(transaction);
   }
 
@@ -469,58 +469,16 @@ export function DashboardTransactionsTable({
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="category_id">Category</Label>
-                  <Select
-                    name="category_id"
-                    value={editCategoryId}
-                    onValueChange={(value) => {
-                      setEditCategoryId(value);
-                      setEditClassId(null);
-                    }}
-                  >
-                    <SelectTrigger id="category_id">
-                      <SelectValue placeholder="Uncategorized" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="class_id">Class</Label>
-                  <Select
-                    name="class_id"
-                    value={editClassId}
-                    onValueChange={setEditClassId}
-                    disabled={!editCategoryId || editClassesForCategory.length === 0}
-                  >
-                    <SelectTrigger id="class_id">
-                      <SelectValue
-                        placeholder={
-                          !editCategoryId
-                            ? "Pick a category first"
-                            : editClassesForCategory.length === 0
-                              ? "No classes"
-                              : "None"
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {editClassesForCategory.map((classItem) => (
-                        <SelectItem key={classItem.id} value={classItem.id}>
-                          {classItem.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+              <ClassificationFields
+                categories={categories}
+                classes={classes}
+                categoryId={editCategoryId}
+                classId={editClassId}
+                onCategoryChange={setEditCategoryId}
+                onClassChange={setEditClassId}
+                gordura={editGordura}
+                onGorduraChange={setEditGordura}
+              />
               <DialogFooter>
                 <Button
                   type="button"

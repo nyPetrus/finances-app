@@ -3,9 +3,16 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { syncMappedDescriptions } from "@/app/descriptions/actions";
+import { isGordura } from "@/lib/classification";
 
 function combineDateAndTime(dateInput: string, timeInput: string) {
   return `${dateInput}T${timeInput || "00:00"}:00`;
+}
+
+// "default" (or anything else) clears the override so the class default applies.
+function parseGordura(formData: FormData) {
+  const value = formData.get("gordura");
+  return isGordura(value) ? value : null;
 }
 
 export async function addTransaction(formData: FormData) {
@@ -32,6 +39,7 @@ export async function addTransaction(formData: FormData) {
     account_id,
     category_id,
     class_id,
+    gordura: parseGordura(formData),
     date,
     description,
     amount,
@@ -66,7 +74,15 @@ export async function updateTransaction(formData: FormData) {
 
   const { error } = await supabase
     .from("transactions")
-    .update({ account_id, category_id, class_id, date, description, amount })
+    .update({
+      account_id,
+      category_id,
+      class_id,
+      date,
+      description,
+      amount,
+      ...(formData.has("gordura") && { gordura: parseGordura(formData) }),
+    })
     .eq("id", id)
     .eq("user_id", user.id);
 
