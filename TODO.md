@@ -6,8 +6,9 @@ editing an item. Ask Claude to "sync TODO" to reconcile both sides.
 
 ## Open
 
-- [ ] App, conferir duplicidades <!-- todoist:6hWj767QM585GHhV -->
 - [ ] App, contagem registros categorias e classes <!-- todoist:6hWj7GG8fvFR9wRV -->
-- [ ] App, alterar categoria para grupo <!-- todoist:6hWj7MV6QjwJ8XwV -->
 
 ## Done
+
+- [x] App, conferir duplicidades <!-- todoist:6hWj767QM585GHhV -->
+- [x] ~~App, alterar categoria para grupo~~ (dropped — no longer needed) <!-- todoist:6hWj7MV6QjwJ8XwV -->
