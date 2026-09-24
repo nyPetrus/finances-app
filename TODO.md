@@ -7,6 +7,8 @@ editing an item. Ask Claude to "sync TODO" to reconcile both sides.
 ## Open
 
 - [ ] App, contagem registros categorias e classes <!-- todoist:6hWj7GG8fvFR9wRV -->
+- [ ] Conferir valores em dólar <!-- todoist:6hcQQqGgPGgVPR7m -->
+- [ ] Conferir valores futuros e valores cancelados <!-- todoist:6hcQQqHq7Gr6MHVm -->
 
 ## Done
 
