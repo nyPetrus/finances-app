@@ -54,18 +54,20 @@ async function waitForPluggyUpdate(itemId: string, budgetMs: number): Promise<It
   return item;
 }
 
-// Nubank's credit card feed reports some transactions (seen on bill
-// payments, "Pagamento recebido") twice under different Pluggy ids: once as
-// the live transaction (full creditCardMetadata, real timestamp) and again,
-// after the bill closes, as a bill line item whose metadata carries only a
-// billId and whose date is midnight BRT. Drop the bill-line copy when its
-// live twin (same BRT day, amount, and description) is also present; if the
+// Credit card feeds (seen on Nubank and XP, on bill payments) report some
+// transactions twice under different Pluggy ids: once as the live
+// transaction (full creditCardMetadata, real timestamp) and again, after the
+// bill closes, as a bill line item whose metadata carries only a billId and
+// whose date is midnight BRT. The two copies' descriptions can differ (XP:
+// "Pagamento de fatura" / "Pagamentos Validos Normais" live vs "Pagamento
+// recebido" on the bill), so the twin is matched on BRT day, amount, and
+// type only. Drop the bill-line copy when its live twin is present; if the
 // twin is ever missing, the bill-line copy is kept so nothing is lost.
 // Anything already synced that this drops gets purged by the stale-id
 // cleanup below.
 function dropBillLineDuplicates(transactions: Transaction[]): Transaction[] {
   const brtDay = (date: Date) => new Date(date.getTime() - 3 * 3600_000).toISOString().slice(0, 10);
-  const key = (t: Transaction) => `${brtDay(t.date)}|${t.amount}|${t.description.toLowerCase()}`;
+  const key = (t: Transaction) => `${brtDay(t.date)}|${t.amount}|${t.type}`;
   const isBillLineOnly = (t: Transaction) =>
     !!t.creditCardMetadata?.billId && !t.creditCardMetadata.cardNumber;
 
