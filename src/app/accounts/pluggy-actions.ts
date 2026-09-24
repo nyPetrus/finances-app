@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { pluggyClient } from "@/lib/pluggy/client";
-import type { Item } from "pluggy-sdk";
+import type { Item, Transaction } from "pluggy-sdk";
 
 export async function getPluggyConnectToken() {
   const supabase = await createClient();
@@ -52,6 +52,25 @@ async function waitForPluggyUpdate(itemId: string, budgetMs: number): Promise<It
   }
 
   return item;
+}
+
+// Nubank's credit card feed reports some transactions (seen on bill
+// payments, "Pagamento recebido") twice under different Pluggy ids: once as
+// the live transaction (full creditCardMetadata, real timestamp) and again,
+// after the bill closes, as a bill line item whose metadata carries only a
+// billId and whose date is midnight BRT. Drop the bill-line copy when its
+// live twin (same BRT day, amount, and description) is also present; if the
+// twin is ever missing, the bill-line copy is kept so nothing is lost.
+// Anything already synced that this drops gets purged by the stale-id
+// cleanup below.
+function dropBillLineDuplicates(transactions: Transaction[]): Transaction[] {
+  const brtDay = (date: Date) => new Date(date.getTime() - 3 * 3600_000).toISOString().slice(0, 10);
+  const key = (t: Transaction) => `${brtDay(t.date)}|${t.amount}|${t.description.toLowerCase()}`;
+  const isBillLineOnly = (t: Transaction) =>
+    !!t.creditCardMetadata?.billId && !t.creditCardMetadata.cardNumber;
+
+  const liveKeys = new Set(transactions.filter((t) => !isBillLineOnly(t)).map(key));
+  return transactions.filter((t) => !(isBillLineOnly(t) && liveKeys.has(key(t))));
 }
 
 export async function syncPluggyItem(itemId: string) {
@@ -118,10 +137,12 @@ export async function syncPluggyItem(itemId: string) {
     pendingCutoff.setUTCDate(pendingCutoff.getUTCDate() + 1);
     const pendingCutoffDate = pendingCutoff.toISOString().slice(0, 10);
 
-    const postedTransactions = transactions.filter((transaction) => {
-      if (transaction.status !== "PENDING") return true;
-      return transaction.date.toISOString().slice(0, 10) <= pendingCutoffDate;
-    });
+    const postedTransactions = dropBillLineDuplicates(
+      transactions.filter((transaction) => {
+        if (transaction.status !== "PENDING") return true;
+        return transaction.date.toISOString().slice(0, 10) <= pendingCutoffDate;
+      }),
+    );
 
     if (postedTransactions.length > 0) {
       const rows = postedTransactions.map((transaction) => ({
