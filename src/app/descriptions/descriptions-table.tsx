@@ -403,10 +403,10 @@ export function DescriptionsTable({
               </div>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={handleSaveAndSortAll} disabled={isEditBusy}>
-                  {isSyncingAll ? "Sorting…" : "Create and sort all"}
+                  {isSyncingAll ? "Sorting…" : "Sort all"}
                 </Button>
                 <Button type="button" variant="outline" onClick={handleSaveAndSortUnmapped} disabled={isEditBusy}>
-                  {isSyncingUnmapped ? "Sorting…" : "Create and sort unmapped"}
+                  {isSyncingUnmapped ? "Sorting…" : "Sort unmapped"}
                 </Button>
                 <Button type="submit" form={`edit-mapping-${editingMapping.description}`} disabled={isEditBusy}>
                   {isSavingEdit ? "Saving…" : "Save"}

@@ -11,6 +11,15 @@ function isCheckType(value: string | null): value is MappedDescription["check_ty
   return !!value && (CHECK_TYPES as readonly string[]).includes(value);
 }
 
+// mapped_descriptions' primary key is (user_id, description) — a duplicate
+// description hits Postgres' unique_violation (23505) rather than any
+// application-level check, so translate that into a message worth showing
+// instead of the raw constraint error.
+function throwFriendlyError(message: string, code?: string): never {
+  if (code === "23505") throw new Error("A mapping for this description already exists.");
+  throw new Error(message);
+}
+
 export async function addMappedDescription(formData: FormData) {
   const supabase = await createClient();
   const {
@@ -34,7 +43,7 @@ export async function addMappedDescription(formData: FormData) {
     check_type: checkType,
   });
 
-  if (error) throw new Error(error.message);
+  if (error) throwFriendlyError(error.message, error.code);
 
   revalidatePath("/descriptions");
 }
@@ -61,7 +70,7 @@ export async function updateMappedDescription(formData: FormData) {
     .eq("user_id", user.id)
     .eq("description", originalDescription);
 
-  if (error) throw new Error(error.message);
+  if (error) throwFriendlyError(error.message, error.code);
 
   revalidatePath("/descriptions");
 }

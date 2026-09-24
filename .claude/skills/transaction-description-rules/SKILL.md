@@ -17,16 +17,34 @@ description: Use when writing or touching code that inserts/updates a transactio
   matcher (`equal_to` beats `starts_with` beats `contains`, longest pattern
   wins within a tier, each transaction claimed by at most one mapping):
   `syncMappedDescriptions()` (the "Sync" button in `DescriptionsTable`'s own
-  toolbar — see `table-page-conventions` — and the "Create and sort
-  unmapped" button in both `AddMappingDialog` and `DescriptionsTable`'s own
-  edit-mapping dialog) applies the *existing* `mapped_descriptions` rules to
-  every transaction with `category_id is null`. `syncAllMappedDescriptions()`
-  (the "Create and sort all" button in those same two places) applies them
-  to *every* transaction regardless of current `category_id`, so a mapping
-  can override a transaction's existing category/class — because it isn't
+  toolbar and on Transactions' own toolbar, both reusing the same
+  `SyncButton` component — see `table-page-conventions` — plus
+  `AddMappingDialog`'s "Create and sort unmapped" and
+  `DescriptionsTable`'s edit dialog's "Sort unmapped", see below) applies
+  the *existing* `mapped_descriptions` rules to every transaction with
+  `category_id is null`. `syncAllMappedDescriptions()` (`AddMappingDialog`'s
+  "Create and sort all" / the edit dialog's "Sort all") applies them to
+  *every* transaction regardless of current `category_id`, so a mapping can
+  override a transaction's existing category/class — because it isn't
   narrowed to a query that's guaranteed under Supabase/PostgREST's 1000-row
   cap the way the uncategorized-only query is, it pages through `.range()`
   instead of a single `.select()` (see `PITFALLS.md`).
+
+- **Adding or renaming a mapping into a description that's already mapped
+  throws a friendly error instead of a raw Postgres one.**
+  `mapped_descriptions`' primary key is `(user_id, description)`, so a
+  collision surfaces as a `23505` (unique_violation) from the `.insert()`
+  in `addMappedDescription` or the `.update()` in `updateMappedDescription`
+  (the latter when the *edited* description now matches a different
+  existing row). Both go through a local `throwFriendlyError(message,
+  code)` in `descriptions/actions.ts` — same pattern as
+  `categories/actions.ts`'s own copy for category-name collisions, not
+  shared code, just the same shape — that turns a `23505` into "A mapping
+  for this description already exists." Both `AddMappingDialog` and
+  `DescriptionsTable`'s edit dialog already had an error paragraph wired up
+  before this (see the CLAUDE.md-documented Edit/Add dialog error-state
+  convention), so no UI changes were needed to surface it — only the action
+  layer changed.
 
 - **`AddMappingDialog` (`src/app/descriptions/add-mapping-dialog.tsx`) is
   controllable from outside the Descriptions page**, not just a
@@ -65,11 +83,18 @@ description: Use when writing or touching code that inserts/updates a transactio
 
 - **`DescriptionsTable`'s own edit-mapping dialog** (same file,
   `src/app/descriptions/descriptions-table.tsx` — a plain inline `Dialog`,
-  not `AddMappingDialog`) has the identical pair of buttons next to `"Save"`,
+  not `AddMappingDialog`) has a matching pair of buttons next to `"Save"`,
   wired the same `ref`-read-`FormData` way but calling
   `updateMappedDescription` instead of `addMappedDescription` — so editing
   an existing mapping's description/operator/category/class can immediately
-  re-run it against transactions too, not just creating a new one. The
-  button labels stay `"Create and sort unmapped"` / `"Create and sort all"`
-  even here (an edit, not a create) to match `AddMappingDialog`'s wording
-  exactly, per explicit user request.
+  re-run it against transactions too, not just creating a new one. **The
+  button labels are `"Sort all"` / `"Sort unmapped"` here, not
+  `"Create and sort all"` / `"Create and sort unmapped"`** — they used to
+  match `AddMappingDialog`'s wording exactly (an earlier explicit user
+  request), but that was reversed by a later explicit request: editing
+  isn't creating, so the label shouldn't claim it is. `"Save"` alone still
+  means "persist the edit, don't touch any transactions." Keep
+  `AddMappingDialog`'s own three buttons (`"Create and sort all"`/
+  `"Create and sort unmapped"`/`"Create"`) as they are if this comes up
+  again — only the edit dialog's wording changed, since only it was ever
+  editing rather than creating.
