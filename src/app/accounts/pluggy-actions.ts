@@ -54,6 +54,14 @@ async function waitForPluggyUpdate(itemId: string, budgetMs: number): Promise<It
   return item;
 }
 
+// For foreign-currency purchases (e.g. USD subscriptions on a credit card),
+// Pluggy's `amount` is in the original currency (currencyCode) and the BRL
+// value the account is actually charged is in amountInAccountCurrency.
+// Everything in this app is BRL, so always prefer the account-currency value.
+function accountAmount(t: Transaction): number {
+  return t.amountInAccountCurrency ?? t.amount;
+}
+
 // Credit card feeds (seen on Nubank and XP, on bill payments) report some
 // transactions twice under different Pluggy ids: once as the live
 // transaction (full creditCardMetadata, real timestamp) and again, after the
@@ -67,7 +75,7 @@ async function waitForPluggyUpdate(itemId: string, budgetMs: number): Promise<It
 // cleanup below.
 function dropBillLineDuplicates(transactions: Transaction[]): Transaction[] {
   const brtDay = (date: Date) => new Date(date.getTime() - 3 * 3600_000).toISOString().slice(0, 10);
-  const key = (t: Transaction) => `${brtDay(t.date)}|${t.amount}|${t.type}`;
+  const key = (t: Transaction) => `${brtDay(t.date)}|${accountAmount(t)}|${t.type}`;
   const isBillLineOnly = (t: Transaction) =>
     !!t.creditCardMetadata?.billId && !t.creditCardMetadata.cardNumber;
 
@@ -152,7 +160,10 @@ export async function syncPluggyItem(itemId: string) {
         account_id: account.id,
         date: transaction.date.toISOString(),
         description: transaction.description.toLowerCase(),
-        amount: transaction.type === "DEBIT" ? -Math.abs(transaction.amount) : Math.abs(transaction.amount),
+        amount:
+          transaction.type === "DEBIT"
+            ? -Math.abs(accountAmount(transaction))
+            : Math.abs(accountAmount(transaction)),
         source: "pluggy" as const,
         pluggy_transaction_id: transaction.id,
       }));
