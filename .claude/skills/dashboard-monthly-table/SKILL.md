@@ -1,6 +1,6 @@
 ---
 name: dashboard-monthly-table
-description: Use when touching the Dashboard's monthly breakdown tree table (dashboard-monthly-breakdown.ts + dashboard-monthly-table.tsx) — what the user calls "the dynamic table," since its rows dynamically expand/collapse (not the embedded click-to-filter transactions table, which only appears/disappears wholesale — see dashboard-conventions for that one). Covers the Type/Category/Class tree, the footer Total row, column auto-sizing, decimal rounding, zero-value empty cells, row color, and the expand/collapse chevrons.
+description: Use when touching the Dashboard's monthly breakdown tree table (dashboard-monthly-breakdown.ts + dashboard-monthly-table.tsx) — what the user calls "the dynamic table," since its rows dynamically expand/collapse (not the embedded click-to-filter transactions table, which only appears/disappears wholesale — see dashboard-conventions for that one). Covers the Type/Gordura/Category/Class tree, the footer Total row, column auto-sizing, decimal rounding, zero-value empty cells, row color, and the expand/collapse chevrons.
 ---
 
 # Dashboard monthly table ("the dynamic table")
@@ -8,7 +8,7 @@ description: Use when touching the Dashboard's monthly breakdown tree table (das
 `dashboard-monthly-breakdown.ts` (`buildMonthlyBreakdown()`, a pure
 function, no `"use client"`, called from `page.tsx`) + `dashboard-monthly-
 table.tsx` (`MonthlyBreakdownTable`, `"use client"`) together render the
-Type/Category/Class monthly breakdown, sitting directly below the page's
+Type/Gordura/Category/Class monthly breakdown, sitting directly below the page's
 year-nav header and above the click-to-filter embedded table (see
 `dashboard-conventions`) — there used to be a 6-card stat grid between the
 two, removed once this table's own Type rows and click-to-filter covered
@@ -24,11 +24,24 @@ which is a different component with its own conventions
 between the two tables because of exactly this ambiguity; confirm which
 table is meant if it's ever unclear again.
 
-- **3-level expand/collapse tree**: Type (Income/Expenses/Transfers,
+- **4-level expand/collapse tree**: Type (Income/Expenses/Transfers,
   always shown, plus Uncategorized only when at least one transaction
-  actually has no category) → Category (only categories of that `kind`
-  with at least one transaction this year) → Class (only classes with at
-  least one transaction this year) — with a month column per month plus a
+  actually has no category — Uncategorized has no children) → **Gordura**
+  (Alta / Baixa / Sem gordura, in that order, each only when it has
+  transactions under that Type — added per explicit user request, between
+  Type and Category) → Category (only categories of that `kind` with at
+  least one transaction this year under that gordura) → Class (only
+  classes with at least one transaction this year). Gordura is the
+  transaction's *effective* gordura (`effectiveGordura`: its own override,
+  else its class's `default_gordura`), bucketed via `gorduraKey()` in
+  `dashboard-monthly-breakdown.ts` with `"none"` → "Sem gordura" so no
+  amount drops out of the tree. Because gordura is per transaction, the
+  same Category (and Class) can appear under more than one Gordura row;
+  sums below Type are keyed by `${gordura}|${categoryId}`, and row keys
+  embed the gordura (`gordura:<kind>:<g>`, `category:<g>:<id>`,
+  `class:<g>:<cat>:<class>`) so expand state stays distinct per branch.
+  Income/Transfers usually land entirely under "Sem gordura" (their
+  classes rarely carry a default) — that extra click is expected — with a month column per month plus a
   trailing Total column (year sum of that row). `buildMonthlyBreakdown()`
   does a single pass over `yearTransactions` bucketing into per-type/
   per-category/per-class month arrays, then builds the `MonthlyRow[]` tree
@@ -85,7 +98,8 @@ table is meant if it's ever unclear again.
   enough on their own; the label `<span>` in `TreeRows` only renders when
   `hasIcon` (`!!row.icon || !!row.symbol`) is false, or at the Class level
   (`isClassLevel`), since Class rows never carry an icon and would
-  otherwise go blank. The "Uncategorized" Type row has neither an icon nor
+  otherwise go blank. Gordura rows have no icon either, so they show their
+  text label ("Alta"/"Baixa"/"Sem gordura") through the same fallback. The "Uncategorized" Type row has neither an icon nor
   a symbol, so it falls into that same `!hasIcon` fallback and keeps its
   text label — don't treat that as an inconsistency to "fix" by giving it
   a synthetic icon. The full name is still available as a native `title`
@@ -117,8 +131,12 @@ table is meant if it's ever unclear again.
   Set())` in `MonthlyBreakdownTable`) — only the 3-4 Type rows are visible
   on first render; a row only shows a toggle button when it actually has
   children, and Class rows never do (this is the bottom of the hierarchy
-  — "I can see at maximum at class level" was an explicit requirement,
-  don't add a 4th level). **The toggle is `ChevronRightIcon`/
+  — "I can see at maximum at class level" was an explicit requirement; the
+  Gordura level was later inserted *above* Category, per explicit user
+  request, but Class stays the deepest level — don't add anything below
+  it). `TreeRows` depths: 0 Type, 1 Gordura (`border-t`, `font-semibold` —
+  the styling Category rows used to have), 2 Category, 3 Class
+  (`text-[11px]`). **The toggle is `ChevronRightIcon`/
   `ChevronDownIcon` (collapsed/expanded)** — it used to be `PlusIcon`/
   `MinusIcon`, deliberately *not* chevrons (to avoid visual confusion with
   `SortableTableHead`'s own chevron-based sort arrows elsewhere in the
@@ -154,7 +172,7 @@ table is meant if it's ever unclear again.
   applies. `dashboard-explorer.tsx` holds a single `selection:
   MonthlySelection | undefined`, passed to this table as `selected` and
   updated via its `onSelect` prop. Every `MonthlyRow` carries its own
-  `kind`/`categoryId`/`classId` (not just its display `key`) so a click
+  `kind`/`gordura`/`categoryId`/`classId` (not just its display `key`) so a click
   handler doesn't need to re-derive them. Clicking a row's label or its
   Total cell filters to that row's whole year; clicking one of its month
   cells scopes it to that month too; clicking a month header/footer cell

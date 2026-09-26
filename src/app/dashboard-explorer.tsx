@@ -3,11 +3,17 @@
 import { useMemo, useState } from "react";
 import { DashboardTransactionsTable } from "./dashboard-transactions-table";
 import { MonthlyBreakdownTable } from "./dashboard-monthly-table";
-import { monthIndex, type MonthlyRow, type MonthlySelection } from "./dashboard-monthly-breakdown";
+import { gorduraKey, monthIndex, type MonthlyRow, type MonthlySelection } from "./dashboard-monthly-breakdown";
 import type { Account, Category, Class, Transaction } from "@/lib/supabase/types";
 
 function monthlySelectionsEqual(a: MonthlySelection, b: MonthlySelection) {
-  return a.kind === b.kind && a.categoryId === b.categoryId && a.classId === b.classId && a.month === b.month;
+  return (
+    a.kind === b.kind &&
+    a.gordura === b.gordura &&
+    a.categoryId === b.categoryId &&
+    a.classId === b.classId &&
+    a.month === b.month
+  );
 }
 
 export function DashboardExplorer({
@@ -26,6 +32,7 @@ export function DashboardExplorer({
   const [selection, setSelection] = useState<MonthlySelection | undefined>(undefined);
 
   const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
+  const classesById = useMemo(() => new Map(classes.map((c) => [c.id, c])), [classes]);
 
   function handleSelect(value: MonthlySelection) {
     setSelection((prev) => (prev && monthlySelectionsEqual(prev, value) ? undefined : value));
@@ -34,18 +41,19 @@ export function DashboardExplorer({
   const filteredTransactions = useMemo(() => {
     if (!selection) return [];
 
-    const { kind, categoryId, classId, month } = selection;
+    const { kind, gordura, categoryId, classId, month } = selection;
     return transactions.filter((t) => {
       if (month !== undefined && monthIndex(t.date) !== month) return false;
       if (kind === undefined) return true;
       if (kind === "uncategorized") return !t.category_id;
       const category = t.category_id ? categoriesById.get(t.category_id) : undefined;
       if (!category || category.kind !== kind) return false;
+      if (gordura && gorduraKey(t, classesById) !== gordura) return false;
       if (categoryId && category.id !== categoryId) return false;
       if (classId && t.class_id !== classId) return false;
       return true;
     });
-  }, [selection, transactions, categoriesById]);
+  }, [selection, transactions, categoriesById, classesById]);
 
   return (
     <div className="flex flex-col gap-6">
