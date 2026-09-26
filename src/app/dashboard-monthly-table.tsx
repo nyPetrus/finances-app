@@ -102,7 +102,7 @@ function TreeRows({
               <td
                 onClick={() => onSelect(rowSelection)}
                 className={cn(
-                  "max-w-56 cursor-pointer overflow-hidden px-2 py-2 hover:brightness-95",
+                  "sticky left-0 z-10 max-w-56 cursor-pointer overflow-hidden border-r px-2 py-2 hover:brightness-95",
                   rowBg ?? "bg-background",
                   wholeRowSelected && SELECTED_CELL,
                 )}
@@ -174,10 +174,10 @@ function TreeRows({
               <td
                 onClick={() => onSelect(rowSelection)}
                 className={cn(
-                  "cursor-pointer whitespace-nowrap px-2 py-2 text-right hover:brightness-95",
+                  "sticky right-0 z-10 cursor-pointer whitespace-nowrap border-l px-2 py-2 text-right hover:brightness-95",
                   isClassLevel ? "text-[11px]" : "text-xs",
                   rowColor,
-                  rowBg,
+                  rowBg ?? "bg-background",
                   rowBg ? "font-bold" : isGorduraLevel ? "font-semibold" : "font-medium",
                   wholeRowSelected && SELECTED_CELL,
                 )}
@@ -239,17 +239,17 @@ export function MonthlyBreakdownTable({
   const totalSelected = !!selected && selected.kind === undefined && selected.month === undefined;
 
   return (
-    <div className="overflow-x-auto rounded-md border">
+    <div className="max-h-[70vh] overflow-auto rounded-md border">
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="border-b">
-            <th className="px-2 py-2" />
+            <th className="sticky top-0 left-0 z-30 border-r bg-background px-2 py-2" />
             {MONTH_LABELS.map((label, i) => (
               <th
                 key={label}
                 onClick={() => onSelect({ month: i })}
                 className={cn(
-                  "cursor-pointer px-0.5 py-2 text-center text-xs font-medium capitalize hover:brightness-95",
+                  "sticky top-0 z-20 cursor-pointer bg-background px-0.5 py-2 text-center text-xs font-medium capitalize hover:brightness-95",
                   columnSelectedMonth === i && SELECTED_CELL,
                 )}
               >
@@ -259,7 +259,7 @@ export function MonthlyBreakdownTable({
             <th
               onClick={() => onSelect({})}
               className={cn(
-                "cursor-pointer px-2 py-2 text-right text-xs font-medium hover:brightness-95",
+                "sticky top-0 right-0 z-30 cursor-pointer border-l bg-background px-2 py-2 text-right text-xs font-medium hover:brightness-95",
                 totalSelected && SELECTED_CELL,
               )}
             >
@@ -272,13 +272,15 @@ export function MonthlyBreakdownTable({
         </tbody>
         <tfoot>
           <tr className="border-t">
-            <td className="px-2 py-2 text-xs font-medium">Total</td>
+            <td className="sticky bottom-0 left-0 z-30 border-r bg-background px-2 py-2 text-xs font-medium">
+              Total
+            </td>
             {monthTotals.map((value, i) => (
               <td
                 key={i}
                 onClick={() => onSelect({ month: i })}
                 className={cn(
-                  "cursor-pointer whitespace-nowrap px-0.5 py-2 text-right text-xs font-medium hover:brightness-95",
+                  "sticky bottom-0 z-20 cursor-pointer whitespace-nowrap bg-background px-0.5 py-2 text-right text-xs font-medium hover:brightness-95",
                   columnSelectedMonth === i && SELECTED_CELL,
                 )}
               >
@@ -288,7 +290,7 @@ export function MonthlyBreakdownTable({
             <td
               onClick={() => onSelect({})}
               className={cn(
-                "cursor-pointer whitespace-nowrap px-2 py-2 text-right text-xs font-medium hover:brightness-95",
+                "sticky right-0 bottom-0 z-30 cursor-pointer whitespace-nowrap border-l bg-background px-2 py-2 text-right text-xs font-medium hover:brightness-95",
                 totalSelected && SELECTED_CELL,
               )}
             >

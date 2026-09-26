@@ -1,6 +1,6 @@
 ---
 name: dashboard-monthly-table
-description: Use when touching the Dashboard's monthly breakdown tree table (dashboard-monthly-breakdown.ts + dashboard-monthly-table.tsx) — what the user calls "the dynamic table," since its rows dynamically expand/collapse (not the embedded click-to-filter transactions table, which only appears/disappears wholesale — see dashboard-conventions for that one). Covers the Type/Gordura/Category/Class tree, the footer Total row, column auto-sizing, decimal rounding, zero-value empty cells, row color, and the expand/collapse chevrons.
+description: Use when touching the Dashboard's monthly breakdown tree table (dashboard-monthly-breakdown.ts + dashboard-monthly-table.tsx) — what the user calls "the dynamic table," since its rows dynamically expand/collapse (not the embedded click-to-filter transactions table, which only appears/disappears wholesale — see dashboard-conventions for that one). Covers the Type/Gordura/Category/Class tree, the footer Total row, column auto-sizing, decimal rounding, zero-value empty cells, row color, the expand/collapse chevrons, and the sticky/frozen header row, footer row, label column, and Total column.
 ---
 
 # Dashboard monthly table ("the dynamic table")
@@ -163,6 +163,29 @@ table is meant if it's ever unclear again.
   still static and never hidden/reordered — don't route this through
   `ColumnsMenu`/`useColumnPreferences`, that's unrelated to why it dropped
   `table-fixed`.
+- **Frozen panes: header row, footer Total row, label column, and Total
+  column all stay visible when the table doesn't fit the window** — per
+  explicit user request. The outer wrapper (`overflow-x-auto` before) is
+  now `max-h-[70vh] overflow-auto`, so the table scrolls both axes inside
+  its own bounded box instead of just growing the page horizontally.
+  `position: sticky` is applied per-cell (not on `<tr>` — sticky on table
+  rows is unreliable across browsers), not per-row: every `<th>`/`<td>` in
+  `<thead>` gets `sticky top-0`, every one in `<tfoot>` gets `sticky
+  bottom-0`, the label cell in every row (including header/footer) gets
+  `sticky left-0`, and the Total cell in every row gets `sticky right-0`.
+  Each sticky cell needs its own opaque background (`bg-background`, or
+  the row's own `rowBg` when it has one) so cells scrolling underneath
+  don't bleed through — this is why the Total `<td>` now falls back to
+  `rowBg ?? "bg-background"` for its background class specifically, kept
+  separate from the plain `rowBg` still used for the unrelated `font-bold`
+  check just below it (don't collapse those two into one `rowBg` reference
+  again). Z-index is layered 10/20/30: body-row sticky label/Total cells
+  are `z-10`, header/footer non-corner sticky cells are `z-20`, and the
+  four corner cells (sticky on *two* axes at once — top+left, top+right,
+  bottom+left, bottom+right) are `z-30` so they stay above both single-axis
+  sticky layers during diagonal scroll. `border-r`/`border-l` were added to
+  the label/Total columns as a visual seam marking the frozen edge — a
+  purely additive touch, not required for the sticky mechanism itself.
 - **Drives the embedded transactions table's click-to-filter entirely on
   its own** — this table used to be deliberately unwired from a separate
   stat-card click-to-filter, then got wired in alongside the cards, then
