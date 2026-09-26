@@ -14,7 +14,7 @@ export function gorduraKey(
   return effectiveGordura(transaction, classesById) ?? "none";
 }
 
-const GORDURA_ORDER: GorduraKey[] = ["high", "low", "none"];
+const GORDURA_ORDER: GorduraKey[] = ["low", "high", "none"];
 const GORDURA_KEY_LABELS: Record<GorduraKey, string> = { ...GORDURA_LABELS, none: "Sem gordura" };
 
 // Feeds MonthlyBreakdownTable (dashboard-monthly-table.tsx): a Type/Gordura/

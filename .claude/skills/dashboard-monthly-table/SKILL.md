@@ -27,7 +27,7 @@ table is meant if it's ever unclear again.
 - **4-level expand/collapse tree**: Type (Income/Expenses/Transfers,
   always shown, plus Uncategorized only when at least one transaction
   actually has no category — Uncategorized has no children) → **Gordura**
-  (Alta / Baixa / Sem gordura, in that order, each only when it has
+  (Baixa / Alta / Sem gordura, in that order — Baixa first per explicit user request — each only when it has
   transactions under that Type — added per explicit user request, between
   Type and Category) → Category (only categories of that `kind` with at
   least one transaction this year under that gordura) → Class (only
