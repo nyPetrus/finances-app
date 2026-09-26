@@ -59,15 +59,13 @@ export function DashboardExplorer({
     <div className="flex flex-col gap-6">
       <MonthlyBreakdownTable rows={monthlyBreakdown} selected={selection} onSelect={handleSelect} />
 
-      {selection ? (
+      {selection && (
         <DashboardTransactionsTable
           transactions={filteredTransactions}
           accounts={accounts}
           categories={categories}
           classes={classes}
         />
-      ) : (
-        <p className="text-sm text-muted-foreground">Click a cell in the table above to filter transactions.</p>
       )}
     </div>
   );

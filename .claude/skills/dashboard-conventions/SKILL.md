@@ -60,9 +60,12 @@ skimming if that ever happens.
   `dashboard-monthly-table` for exactly what counts as a click and how
   `MonthlySelection` is shaped) — clicking toggles it (re-clicking the
   exact same selection clears it via `handleSelect`'s
-  `monthlySelectionsEqual` check). When nothing is selected, no table (not
-  even an empty shell) renders — just a muted hint; when something is
-  selected, `DashboardExplorer` filters the full year's `transactions` prop
+  `monthlySelectionsEqual` check). When nothing is selected, nothing
+  renders below the monthly breakdown table at all — no table, no hint
+  text either (there used to be a muted "Click a cell..." hint here,
+  removed per explicit user request; don't re-add it without a fresh ask).
+  When something is selected, `DashboardExplorer` filters the full year's
+  `transactions` prop
   client-side (see the `filteredTransactions` `useMemo`) and renders
   `dashboard-transactions-table.tsx` with the result. (This selection used
   to be a `{source: "stat"} | {source: "monthly"}` union covering both the
