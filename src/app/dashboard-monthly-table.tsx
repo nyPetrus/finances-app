@@ -111,7 +111,7 @@ function TreeRows({
               >
                 <div
                   className="flex items-center gap-1.5"
-                  style={{ paddingLeft: `${depth * 1.25}rem` }}
+                  style={{ paddingLeft: `${depth}rem` }}
                   title={hasIcon ? row.label : undefined}
                 >
                   {row.icon && (
