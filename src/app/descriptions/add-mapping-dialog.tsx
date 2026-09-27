@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { pickableCategories, pickableClasses } from "@/lib/classification";
 import type { Category, Class } from "@/lib/supabase/types";
-import { addMappedDescription, syncAllMappedDescriptions, syncMappedDescriptions } from "./actions";
+import { addMappedDescription, syncMappedDescriptions } from "./actions";
 
 export function AddMappingDialog({
   categories,
@@ -51,8 +51,6 @@ export function AddMappingDialog({
   const [categoryId, setCategoryId] = useState<string | null>(defaultCategoryId ?? null);
   const [classId, setClassId] = useState<string | null>(defaultClassId ?? null);
   const [isSyncingUnmapped, startSyncUnmapped] = useTransition();
-  const [isSyncingAll, startSyncAll] = useTransition();
-  const isSyncing = isSyncingUnmapped || isSyncingAll;
   const formRef = useRef<HTMLFormElement>(null);
 
   const classesForCategory = pickableClasses(classes, categoryId, classId);
@@ -79,26 +77,6 @@ export function AddMappingDialog({
         setOpen(false);
         toast.success(
           count === 1 ? "Mapping created — 1 transaction categorized." : `Mapping created — ${count} transactions categorized.`,
-        );
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to create mapping.");
-      }
-    });
-  }
-
-  function handleCreateAndSortAll() {
-    const form = formRef.current;
-    if (!form) return;
-    if (!form.reportValidity()) return;
-    const formData = new FormData(form);
-    setError(null);
-    startSyncAll(async () => {
-      try {
-        await addMappedDescription(formData);
-        const count = await syncAllMappedDescriptions();
-        setOpen(false);
-        toast.success(
-          count === 1 ? "Mapping created — 1 transaction sorted." : `Mapping created — ${count} transactions sorted.`,
         );
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to create mapping.");
@@ -207,13 +185,10 @@ export function AddMappingDialog({
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleCreateAndSortAll} disabled={isSyncing}>
-              {isSyncingAll ? "Sorting…" : "Create and sort all"}
-            </Button>
-            <Button type="button" variant="outline" onClick={handleCreateAndSortUnmapped} disabled={isSyncing}>
+            <Button type="button" variant="outline" onClick={handleCreateAndSortUnmapped} disabled={isSyncingUnmapped}>
               {isSyncingUnmapped ? "Sorting…" : "Create and sort unmapped"}
             </Button>
-            <Button type="submit" form="add-mapping-form" disabled={isSyncing}>
+            <Button type="submit" form="add-mapping-form" disabled={isSyncingUnmapped}>
               Create
             </Button>
           </DialogFooter>

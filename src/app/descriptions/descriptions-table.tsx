@@ -41,7 +41,6 @@ import { pickableCategories, pickableClasses } from "@/lib/classification";
 import type { Category, Class, MappedDescription } from "@/lib/supabase/types";
 import {
   deleteMappedDescriptions,
-  syncAllMappedDescriptions,
   syncMappedDescriptions,
   updateMappedDescription,
 } from "./actions";
@@ -94,13 +93,12 @@ export function DescriptionsTable({
   const [isDeleting, startDelete] = useTransition();
   const [isSavingEdit, startSaveEdit] = useTransition();
   const [isSyncingUnmapped, startSyncUnmapped] = useTransition();
-  const [isSyncingAll, startSyncAll] = useTransition();
   const [actionError, setActionError] = useState<string | null>(null);
   const [editingMapping, setEditingMapping] = useState<MappedDescription | null>(null);
   const [editCategoryId, setEditCategoryId] = useState<string | null>(null);
   const [editClassId, setEditClassId] = useState<string | null>(null);
   const editFormRef = useRef<HTMLFormElement>(null);
-  const isEditBusy = isSavingEdit || isSyncingUnmapped || isSyncingAll;
+  const isEditBusy = isSavingEdit || isSyncingUnmapped;
   const { hidden: hiddenColumns, order: columnOrder, toggle: toggleColumn, move: moveColumn } =
     useColumnPreferences<SortKey>("descriptions-table", DEFAULT_COLUMN_ORDER);
 
@@ -165,26 +163,6 @@ export function DescriptionsTable({
         setEditingMapping(null);
         toast.success(
           count === 1 ? "Mapping saved — 1 transaction categorized." : `Mapping saved — ${count} transactions categorized.`,
-        );
-      } catch (err) {
-        setActionError(err instanceof Error ? err.message : "Failed to update mapping.");
-      }
-    });
-  }
-
-  function handleSaveAndSortAll() {
-    const form = editFormRef.current;
-    if (!form) return;
-    if (!form.reportValidity()) return;
-    const formData = new FormData(form);
-    setActionError(null);
-    startSyncAll(async () => {
-      try {
-        await updateMappedDescription(formData);
-        const count = await syncAllMappedDescriptions();
-        setEditingMapping(null);
-        toast.success(
-          count === 1 ? "Mapping saved — 1 transaction sorted." : `Mapping saved — ${count} transactions sorted.`,
         );
       } catch (err) {
         setActionError(err instanceof Error ? err.message : "Failed to update mapping.");
@@ -402,9 +380,6 @@ export function DescriptionsTable({
                 </Select>
               </div>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={handleSaveAndSortAll} disabled={isEditBusy}>
-                  {isSyncingAll ? "Sorting…" : "Sort all"}
-                </Button>
                 <Button type="button" variant="outline" onClick={handleSaveAndSortUnmapped} disabled={isEditBusy}>
                   {isSyncingUnmapped ? "Sorting…" : "Sort unmapped"}
                 </Button>

@@ -103,9 +103,7 @@ function normalizeDescription(value: string) {
 // beats starts_with beats contains, longest pattern wins within a tier, and
 // each transaction is claimed by at most one mapping — then writes the
 // resulting category_id/class_id, grouped into one update per distinct
-// combo. Shared by syncMappedDescriptions (uncategorized transactions only)
-// and syncAllMappedDescriptions (every transaction, so a mapping can also
-// override a transaction's existing category/class).
+// combo. Used by syncMappedDescriptions (uncategorized transactions only).
 async function applyMappingSet(
   supabase: SupabaseClient,
   allMappings: MappedDescription[],
@@ -210,53 +208,6 @@ export async function syncMappedDescriptions() {
     (mappings ?? []) as MappedDescription[],
     (candidates ?? []) as { id: string; description: string }[],
   );
-
-  revalidatePath("/transactions");
-  revalidatePath("/search");
-  revalidatePath("/descriptions");
-  revalidatePath("/budget");
-  revalidatePath("/");
-
-  return updatedCount;
-}
-
-// Like syncMappedDescriptions, but matches against every transaction rather
-// than only uncategorized ones — so a mapping can also correct transactions
-// that already carry a (different) category/class. Unlike the uncategorized
-// query above, this isn't narrowed by a filter that keeps it well under
-// Supabase/PostgREST's 1000-row cap, so it has to page through with
-// .range() instead of a single .select() — see PITFALLS.md.
-export async function syncAllMappedDescriptions() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Unauthorized");
-
-  const { data: mappings, error: mapError } = await supabase
-    .from("mapped_descriptions")
-    .select("*")
-    .eq("user_id", user.id);
-  if (mapError) throw new Error(mapError.message);
-
-  const pageSize = 1000;
-  const allCandidates: { id: string; description: string }[] = [];
-  for (let offset = 0; ; offset += pageSize) {
-    const { data, error } = await supabase
-      .from("transactions")
-      .select("id, description")
-      .eq("user_id", user.id)
-      .range(offset, offset + pageSize - 1);
-
-    if (error) throw new Error(error.message);
-    if (!data || data.length === 0) break;
-
-    allCandidates.push(...data);
-
-    if (data.length < pageSize) break;
-  }
-
-  const updatedCount = await applyMappingSet(supabase, (mappings ?? []) as MappedDescription[], allCandidates);
 
   revalidatePath("/transactions");
   revalidatePath("/search");

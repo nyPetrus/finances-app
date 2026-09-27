@@ -115,7 +115,7 @@ then clicking "Apply". Added per explicit user request.
     building its new query string) so re-filtering doesn't reset the
     user's chosen sort.
 - **Query building pages through `.range()`, the same reason
-  `syncAllMappedDescriptions()` does** (see `PITFALLS.md`) — a single
+  `fetchAllTransactionsInRange()` does** (see `PITFALLS.md`) — a single
   broad filter (e.g. just "Account is X" with no date bound) can easily
   return more than PostgREST's 1000-row cap across a multi-year history.
   `buildQuery()` (`page.tsx`) is a **factory function**, re-invoked fresh
