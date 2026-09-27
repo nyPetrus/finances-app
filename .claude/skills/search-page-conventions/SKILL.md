@@ -1,6 +1,6 @@
 ---
 name: search-page-conventions
-description: Use when touching the Search page (src/app/search/ — page.tsx, search-form.tsx, search-table.tsx, filters.ts, sort.ts, bulk-edit-dialog.tsx) — its 7 optional filters (Account/Category/Class/Gordura as checkbox multi-selects, Description/Date/Amount as operator+value controls), how filter state round-trips through the URL, the Supabase query-building/paging behind "Apply", its results table (a near-copy of TransactionsTable), or the Search-only batch Category/Class/Gordura editor on selected rows. Not part of the shared table-page-conventions architecture (this page doesn't own/create rows the way a canonical list page does), though its results table borrows heavily from it.
+description: Use when touching the Search page (src/app/search/ — page.tsx, search-form.tsx, search-table.tsx, filters.ts, sort.ts, bulk-edit-dialog.tsx) — its 7 optional filters (Account/Category/Class/Gordura as checkbox multi-selects, Description/Date/Amount as operator+value controls), how filter state round-trips through the URL, the Supabase query-building/paging behind "Apply", the count+total results-summary block, its results table (a near-copy of TransactionsTable), or the Search-only batch Category/Class/Gordura editor on selected rows. Not part of the shared table-page-conventions architecture (this page doesn't own/create rows the way a canonical list page does), though its results table borrows heavily from it.
 ---
 
 # Search page conventions
@@ -13,11 +13,12 @@ then clicking "Apply". Added per explicit user request.
 - **Every filter is optional and AND-combined; there is no default,
   unfiltered "show everything" state.** `src/app/search/page.tsx` only
   runs a query when `hasAnyFilter(filters)` is true (`filters.ts`) — with
-  zero filters set, the results area renders nothing at all (no hint text;
-  one used to sit here but was removed per explicit user request — don't
-  re-add it). This guard itself is deliberate, not just an easy default:
-  without it, a bare page load (or a "Clear" click) would trigger an
-  unbounded query. Don't remove *this* to "simplify" the page. **Apply and
+  zero filters set, the results area (summary block + table, see below)
+  renders nothing at all (no hint text; one used to sit here but was
+  removed per explicit user request — don't re-add it). This guard itself
+  is deliberate, not just an easy default: without it, a bare page load (or
+  a "Clear" click) would trigger an unbounded query. Don't remove *this* to
+  "simplify" the page. **Apply and
   Clear are themselves disabled (dimmed via the Button component's own
   `disabled` styling) whenever every filter field is empty** —
   `search-form.tsx`'s `hasAnyValue`, computed from current local state
@@ -133,6 +134,19 @@ then clicking "Apply". Added per explicit user request.
   on every page of the loop in `runSearch()` — Supabase query builders are
   meant to be executed once each, so don't try to build one query object
   and reuse it across `.range()` calls.
+- **A results-summary block sits between the form and the table** — per
+  explicit user request, a bordered `rounded-md` bar (`page.tsx`, inline
+  JSX, no separate component) showing the count ("1 transaction" /
+  "N transactions", matching the singular/plural pattern `BulkEditDialog`'s
+  title already uses) and the **signed** sum of `sortedResults.amount`
+  (transfers net toward 0, same convention as the Dashboard monthly table
+  and the Amount column — see `amount-color-conventions`), colored
+  `text-emerald-600` only when `>= 0`, otherwise the default text color —
+  the same "only positive gets color" rule as the Amount column, applied to
+  the aggregate rather than a single row. Rendered under the same
+  `searchActive` guard as the table (one `<>...</>` fragment covers both),
+  so it never shows with zero filters applied, and does show "0
+  transactions · Total: 0,00" when a filter matches nothing.
 - **The results table (`search-table.tsx`) is a near-verbatim copy of
   `TransactionsTable`, for the same reasons `dashboard-transactions-table.tsx`
   is a copy and not a reuse** (see `dashboard-conventions`) — same

@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { fetchClasses } from "@/lib/supabase/fetch-classes";
 import type { Account, Category, Transaction } from "@/lib/supabase/types";
+import { cn } from "@/lib/utils";
 import { SearchForm } from "./search-form";
 import { SearchTable } from "./search-table";
 import {
@@ -20,6 +21,12 @@ import { isSortKey, type SortKey } from "./sort";
 // e.g. searching for "50%" doesn't turn into a wildcard match.
 function escapeIlike(value: string) {
   return value.replace(/[%_]/g, (match) => `\\${match}`);
+}
+
+// Matches search-table.tsx's own Amount column formatting (2 decimals, no
+// currency symbol — see amount-color-conventions).
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
 }
 
 // Checkbox filters (account/category/class) are OR semantics: match any
@@ -183,6 +190,12 @@ export default async function SearchPage({
     return sortDir === "asc" ? cmp : -cmp;
   });
 
+  // Signed sum, same as the Amount column and every other aggregate in the
+  // app (see amount-color-conventions/dashboard-monthly-breakdown.ts) — a
+  // transfer's two legs net toward 0 rather than being excluded or summed
+  // by magnitude.
+  const totalAmount = sortedResults.reduce((sum, t) => sum + t.amount, 0);
+
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-6">
       <h1 className="text-2xl font-semibold">Search</h1>
@@ -190,14 +203,27 @@ export default async function SearchPage({
       <SearchForm accounts={allAccounts} categories={allCategories} classes={allClasses} filters={filters} />
 
       {searchActive && (
-        <SearchTable
-          transactions={sortedResults}
-          accounts={allAccounts}
-          categories={allCategories}
-          classes={allClasses}
-          sortKey={sortKey}
-          sortDir={sortDir}
-        />
+        <>
+          <div className="flex items-center gap-2 rounded-md border px-4 py-3 text-sm">
+            <span className="font-medium">
+              {sortedResults.length === 1 ? "1 transaction" : `${sortedResults.length} transactions`}
+            </span>
+            <span className="text-muted-foreground">·</span>
+            <span className="text-muted-foreground">Total:</span>
+            <span className={cn("font-medium", totalAmount >= 0 && "text-emerald-600")}>
+              {formatCurrency(totalAmount)}
+            </span>
+          </div>
+
+          <SearchTable
+            transactions={sortedResults}
+            accounts={allAccounts}
+            categories={allCategories}
+            classes={allClasses}
+            sortKey={sortKey}
+            sortDir={sortDir}
+          />
+        </>
       )}
     </div>
   );
