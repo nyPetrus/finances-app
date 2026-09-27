@@ -451,7 +451,7 @@ export function DashboardTransactionsTable({
                   <SelectContent>
                     {accounts.map((account) => (
                       <SelectItem key={account.id} value={account.id}>
-                        {account.name}
+                        {account.label ?? account.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

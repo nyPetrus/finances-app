@@ -71,8 +71,8 @@ export function ClassFormFields({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="none">None (defaults to {GORDURA_LABELS.high})</SelectItem>
-            <SelectItem value="high">{GORDURA_LABELS.high} — finite commitment</SelectItem>
-            <SelectItem value="low">{GORDURA_LABELS.low} — recurs indefinitely</SelectItem>
+            <SelectItem value="high">{GORDURA_LABELS.high}</SelectItem>
+            <SelectItem value="low">{GORDURA_LABELS.low}</SelectItem>
           </SelectContent>
         </Select>
       </div>
