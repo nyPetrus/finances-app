@@ -122,7 +122,7 @@ export default async function TransactionsPage({
         break;
       }
       case "gordura":
-        cmp = (effectiveGordura(a, classesById) ?? "").localeCompare(effectiveGordura(b, classesById) ?? "");
+        cmp = effectiveGordura(a, classesById).localeCompare(effectiveGordura(b, classesById));
         break;
       case "amount":
         cmp = a.amount - b.amount;

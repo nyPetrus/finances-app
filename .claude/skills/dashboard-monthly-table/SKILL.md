@@ -51,16 +51,23 @@ table is meant if it's ever unclear again.
   always shown, plus Uncategorized only when at least one transaction
   actually has no category — Uncategorized has no children) is the static
   root, then zero to three more levels per the user's "Levels" menu
-  selection/order — **Gordura** (Baixa / Alta / Sem gordura, always in that
-  order regardless of where the level sits — Baixa first per explicit user
+  selection/order — **Gordura** (Baixa / Alta, always in that order
+  regardless of where the level sits — Baixa first per explicit user
   request), **Category** (only categories of that `kind` with at least one
   transaction this year under whatever ancestor levels are above it), and
   **Class** (only classes with at least one transaction this year), each
   only appearing when it actually has matching transactions. Gordura is the
-  transaction's *effective* gordura (`effectiveGordura`: its own override,
-  else its class's `default_gordura`), bucketed via `gorduraKey()` in
-  `dashboard-monthly-breakdown.ts` with `"none"` → "Sem gordura" so no
-  amount drops out of the tree — this is the one level that never folds a
+  transaction's *effective* gordura (`effectiveGordura` in
+  `@/lib/classification.ts`: its own override, else its class's
+  `default_gordura`, else `DEFAULT_GORDURA` — "Alta", per explicit user
+  request — so it's always a concrete Alta/Baixa, never "unset"). **There
+  used to be a third "Sem gordura"/`"none"` bucket** for a transaction with
+  neither an override nor a class default — removed once `effectiveGordura`
+  stopped ever returning null; `gorduraKey()` in
+  `dashboard-monthly-breakdown.ts` is now just a thin alias for
+  `effectiveGordura`, kept only so this file and `dashboard-explorer.tsx`
+  didn't need an import-name churn. Don't reintroduce a "none" bucket
+  without a fresh ask — this is the one level that never folds a
   transaction into its parent without a row of its own; Category and Class
   do fold a transaction in when it has none (transactions with no category
   at all never reach a Category level at all, having already been split off
@@ -129,7 +136,7 @@ table is meant if it's ever unclear again.
   `hasIcon` (`!!row.icon || !!row.symbol`) is false, or at the Class level
   (`isClassLevel`), since Class rows never carry an icon and would
   otherwise go blank. Gordura rows have no icon either, so they show their
-  text label ("Alta"/"Baixa"/"Sem gordura") through the same fallback. The "Uncategorized" Type row has neither an icon nor
+  text label ("Alta"/"Baixa") through the same fallback. The "Uncategorized" Type row has neither an icon nor
   a symbol, so it falls into that same `!hasIcon` fallback and keeps its
   text label — don't treat that as an inconsistency to "fix" by giving it
   a synthetic icon. The full name is still available as a native `title`

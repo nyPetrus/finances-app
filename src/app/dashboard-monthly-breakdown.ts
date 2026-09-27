@@ -2,20 +2,12 @@ import type { Category, Class, Gordura, Transaction } from "@/lib/supabase/types
 import { effectiveGordura, GORDURA_LABELS } from "@/lib/classification";
 import { TRANSACTION_TYPE_SYMBOLS } from "@/lib/transaction-type";
 
-// A transaction's effective gordura (see effectiveGordura), with "none" for
-// one that has neither an override nor a class default — kept as its own
-// branch so no amount drops out of the tree.
-export type GorduraKey = Gordura | "none";
+// Thin alias kept for callers in this file and dashboard-explorer.tsx —
+// effectiveGordura() is always a concrete Gordura now (never "unset"), so
+// there's no longer a "none"/"Sem gordura" bucket to map onto.
+export const gorduraKey = effectiveGordura;
 
-export function gorduraKey(
-  transaction: Pick<Transaction, "gordura" | "class_id">,
-  classesById: Map<string, Class>,
-): GorduraKey {
-  return effectiveGordura(transaction, classesById) ?? "none";
-}
-
-const GORDURA_ORDER: GorduraKey[] = ["low", "high", "none"];
-const GORDURA_KEY_LABELS: Record<GorduraKey, string> = { ...GORDURA_LABELS, none: "Sem gordura" };
+const GORDURA_ORDER: Gordura[] = ["low", "high"];
 
 // The three optional breakdown levels below the always-present Type level.
 // The Dashboard's "Levels" menu (dashboard-explorer.tsx) lets the user
@@ -46,7 +38,7 @@ export type MonthlyRow = {
   symbol?: string;
   level: "type" | ClassificationLevel;
   kind: Category["kind"] | "uncategorized";
-  gordura?: GorduraKey;
+  gordura?: Gordura;
   categoryId?: string;
   classId?: string;
   months: number[];
@@ -60,7 +52,7 @@ export type MonthlyRow = {
 // year, no restriction at all" (a Total-column click).
 export type MonthlySelection = {
   kind?: Category["kind"] | "uncategorized";
-  gordura?: GorduraKey;
+  gordura?: Gordura;
   categoryId?: string;
   classId?: string;
   month?: number;
@@ -112,7 +104,7 @@ function bucketBy(level: ClassificationLevel, transactions: Transaction[], categ
     if (level === "gordura") {
       const gordura = gorduraKey(transaction, classesById);
       id = gordura;
-      label = GORDURA_KEY_LABELS[gordura];
+      label = GORDURA_LABELS[gordura];
       selection = { gordura };
     } else if (level === "category") {
       const category = transaction.category_id ? categoriesById.get(transaction.category_id) : undefined;

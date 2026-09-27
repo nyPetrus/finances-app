@@ -178,7 +178,6 @@ export function TransactionsTable({
       }
       case "gordura": {
         const value = effectiveGordura(transaction, classesById);
-        if (!value) return <span className="text-sm text-muted-foreground">—</span>;
         // Inherited from the class default reads muted; a manual override doesn't.
         return transaction.gordura ? (
           <span title="Set on this transaction">{GORDURA_LABELS[value]}</span>

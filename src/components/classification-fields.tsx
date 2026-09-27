@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { GORDURA_LABELS, pickableCategories, pickableClasses } from "@/lib/classification";
+import { DEFAULT_GORDURA, GORDURA_LABELS, pickableCategories, pickableClasses } from "@/lib/classification";
 import type { Category, Class, Gordura } from "@/lib/supabase/types";
 
 // The Category + Class (+ optional Gordura override) pickers shared by every
@@ -100,7 +100,7 @@ export function ClassificationFields({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="default">
-                Class default ({classDefault ? GORDURA_LABELS[classDefault] : "none"})
+                Class default ({GORDURA_LABELS[classDefault ?? DEFAULT_GORDURA]})
               </SelectItem>
               <SelectItem value="high">{GORDURA_LABELS.high}</SelectItem>
               <SelectItem value="low">{GORDURA_LABELS.low}</SelectItem>

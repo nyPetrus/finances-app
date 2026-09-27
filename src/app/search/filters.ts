@@ -3,7 +3,7 @@
 // so it stays safe to import from a "use client" file.
 
 import { effectiveGordura, GORDURA_LABELS } from "@/lib/classification";
-import type { Class, Gordura, Transaction } from "@/lib/supabase/types";
+import type { Gordura } from "@/lib/supabase/types";
 
 export const DESCRIPTION_OPS = ["equal_to", "starts_with", "contains"] as const;
 export type DescriptionOp = (typeof DESCRIPTION_OPS)[number];
@@ -38,24 +38,18 @@ function isDateOp(value: string | undefined): value is DateOp {
 export const UNCATEGORIZED_VALUE = "uncategorized";
 export const UNCLASSED_VALUE = "unclassed";
 
-// A transaction's effective gordura (its own override, else its class's
-// default — see effectiveGordura), with "none" standing in for a
-// transaction that has neither, same "none" bucket concept as the
-// Dashboard's monthly breakdown table.
-export type GorduraValue = Gordura | "none";
-export const GORDURA_VALUES: GorduraValue[] = ["low", "high", "none"];
-export const GORDURA_VALUE_LABELS: Record<GorduraValue, string> = { ...GORDURA_LABELS, none: "Sem gordura" };
+// A transaction's effective gordura is always a concrete value now (its own
+// override, else its class's default, else DEFAULT_GORDURA — see
+// effectiveGordura), so this filter only ever offers/matches Alta/Baixa —
+// no "Sem gordura"/unset option any more.
+export const GORDURA_VALUES: Gordura[] = ["low", "high"];
+export const GORDURA_VALUE_LABELS = GORDURA_LABELS;
 
-function isGorduraValue(value: string): value is GorduraValue {
-  return value === "high" || value === "low" || value === "none";
+function isGorduraValue(value: string): value is Gordura {
+  return value === "high" || value === "low";
 }
 
-export function effectiveGorduraValue(
-  transaction: Pick<Transaction, "gordura" | "class_id">,
-  classesById: Map<string, Class>,
-): GorduraValue {
-  return effectiveGordura(transaction, classesById) ?? "none";
-}
+export const effectiveGorduraValue = effectiveGordura;
 
 export type SearchParams = { [key: string]: string | string[] | undefined };
 
@@ -78,7 +72,7 @@ export type ParsedFilters = {
   accounts: string[];
   categories: string[];
   classes: string[];
-  gorduras: GorduraValue[];
+  gorduras: Gordura[];
   description: { op: DescriptionOp; value: string } | null;
   date: { granularity: DateGranularity; op: DateOp; value: string } | null;
   // Compared against the signed amount (expenses are negative), same as

@@ -54,19 +54,23 @@ then clicking "Apply". Added per explicit user request.
       `"uncategorized"` — `UNCATEGORIZED_VALUE` — for "no category").
     - **Class**: same shape, with `"unclassed"` (`UNCLASSED_VALUE`) as its
       pseudo-value.
-    - **Gordura**: `gordura` (`"high"` | `"low"` | `"none"` —
-      `GorduraValue`, `GORDURA_VALUES` for the fixed Baixa/Alta/Sem-gordura
-      order, `GORDURA_VALUE_LABELS` for display). Filters on the
+    - **Gordura**: `gordura` (`"high"` | `"low"` — `Gordura`,
+      `GORDURA_VALUES` for the fixed Baixa/Alta order, `GORDURA_VALUE_LABELS`
+      — an alias for `GORDURA_LABELS` — for display). Filters on the
       transaction's **effective** gordura (`effectiveGorduraValue()` in
-      `filters.ts`, wrapping `effectiveGordura()` from
-      `@/lib/classification.ts` with the "none" fallback — same concept as
-      the Dashboard monthly table's `gorduraKey()`), not just its own
-      override column. Because "effective" needs the class join, this is
-      the one filter `buildQuery()` (`page.tsx`) **can't** push into the
-      Supabase query — it's applied in JS *after* `runSearch()` has already
-      paged through everything matching the other filters (still correct
-      per `PITFALLS.md`, since the Postgres query itself isn't what's
-      narrowing on gordura, so it can't silently truncate).
+      `filters.ts`, a thin alias for `effectiveGordura()` from
+      `@/lib/classification.ts`, same as the Dashboard monthly table's
+      `gorduraKey()`), not just its own override column — always a concrete
+      Alta/Baixa, never "unset" (`effectiveGordura` falls back to
+      `DEFAULT_GORDURA`, "Alta", when there's no override and no class
+      default; there used to be a third "Sem gordura"/`"none"` option here,
+      removed once that fallback stopped ever being null — don't reintroduce
+      it without a fresh ask). Because "effective" needs the class join,
+      this is the one filter `buildQuery()` (`page.tsx`) **can't** push into
+      the Supabase query — it's applied in JS *after* `runSearch()` has
+      already paged through everything matching the other filters (still
+      correct per `PITFALLS.md`, since the Postgres query itself isn't
+      what's narrowing on gordura, so it can't silently truncate).
     - `buildQuery()`'s `applyCheckboxFilter()` handles Account/Category/
       Class: plain `.in(column, ids)` when no pseudo-value is checked,
       `.is(column, null)` when only the pseudo-value is checked, and

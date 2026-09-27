@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { deleteIfUnused, type DeleteResult } from "@/lib/supabase/delete-if-unused";
-import { isGordura } from "@/lib/classification";
+import { DEFAULT_GORDURA, isGordura } from "@/lib/classification";
 import type { Gordura } from "@/lib/supabase/types";
 
 // Errors are returned as values rather than thrown: Next.js hides thrown
@@ -96,20 +96,21 @@ export async function updateClass(formData: FormData): Promise<ClassActionResult
 
   // Changing a class's default gordura must not retroactively change what
   // an already-existing transaction shows (see effectiveGordura, which
-  // falls back to this default only when the transaction has no gordura of
-  // its own) — only a transaction assigned to this class from now on
-  // should pick up the new default. Freeze every transaction currently
-  // relying on the *old* default by writing it directly onto their own
-  // `gordura` column before it stops being current. (If there was no old
-  // default to freeze — `previousGordura` null — there's nothing to write:
-  // a transaction with no gordura column value and no default to inherit
-  // already reads as "Sem gordura" either way, so it isn't retroactively
-  // changed to a real value here; it starts picking up the new default
-  // like any other still-uncategorized-for-gordura transaction would.)
-  if (previousGordura && previousGordura !== defaultGordura) {
+  // falls back to this default — or DEFAULT_GORDURA when the class has no
+  // default of its own — only when the transaction has no gordura of its
+  // own) — only a transaction assigned to this class from now on should
+  // pick up the new default. Freeze every transaction currently relying on
+  // the *old* effective default by writing it directly onto their own
+  // `gordura` column before it stops being current. Both sides fall back to
+  // DEFAULT_GORDURA (never null), so a class going from "no default" to an
+  // explicit one freezes correctly too — there's no longer an unrepresentable
+  // "unset" state to worry about.
+  const previousEffective = previousGordura ?? DEFAULT_GORDURA;
+  const newEffective = defaultGordura ?? DEFAULT_GORDURA;
+  if (previousEffective !== newEffective) {
     const { error: freezeError } = await supabase
       .from("transactions")
-      .update({ gordura: previousGordura })
+      .update({ gordura: previousEffective })
       .eq("class_id", id)
       .eq("user_id", user.id)
       .is("gordura", null);
