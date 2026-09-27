@@ -9,6 +9,13 @@ export const gorduraKey = effectiveGordura;
 
 const GORDURA_ORDER: Gordura[] = ["low", "high"];
 
+// Shown next to a Gordura row's name, the same way TRANSACTION_TYPE_SYMBOLS
+// marks a Type row — per explicit user request.
+const GORDURA_SYMBOLS: Record<Gordura, string> = {
+  low: "▢",
+  high: "△",
+};
+
 // The three optional breakdown levels below the always-present Type level.
 // The Dashboard's "Levels" menu (dashboard-explorer.tsx) lets the user
 // include/exclude and reorder these freely, backed by the same
@@ -93,18 +100,23 @@ type LevelSelection = Pick<MonthlySelection, "gordura" | "categoryId" | "classId
 // transaction: by the time this runs, transactions with no category at all
 // have already been split off into the "Uncategorized" Type row.
 function bucketBy(level: ClassificationLevel, transactions: Transaction[], categoriesById: Map<string, Category>, classesById: Map<string, Class>) {
-  const buckets = new Map<string, { label: string; icon?: string; selection: LevelSelection; transactions: Transaction[] }>();
+  const buckets = new Map<
+    string,
+    { label: string; icon?: string; symbol?: string; selection: LevelSelection; transactions: Transaction[] }
+  >();
 
   for (const transaction of transactions) {
     let id: string;
     let label: string;
     let icon: string | undefined;
+    let symbol: string | undefined;
     let selection: LevelSelection;
 
     if (level === "gordura") {
       const gordura = gorduraKey(transaction, classesById);
       id = gordura;
       label = GORDURA_LABELS[gordura];
+      symbol = GORDURA_SYMBOLS[gordura];
       selection = { gordura };
     } else if (level === "category") {
       const category = transaction.category_id ? categoriesById.get(transaction.category_id) : undefined;
@@ -121,7 +133,7 @@ function bucketBy(level: ClassificationLevel, transactions: Transaction[], categ
       selection = { classId: classItem.id };
     }
 
-    if (!buckets.has(id)) buckets.set(id, { label, icon, selection, transactions: [] });
+    if (!buckets.has(id)) buckets.set(id, { label, icon, symbol, selection, transactions: [] });
     buckets.get(id)!.transactions.push(transaction);
   }
 
@@ -162,6 +174,7 @@ function buildLevelRows(
       key,
       label: bucket.label,
       icon: bucket.icon,
+      symbol: bucket.symbol,
       level,
       kind,
       ...selection,

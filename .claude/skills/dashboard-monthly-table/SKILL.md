@@ -139,30 +139,35 @@ table is meant if it's ever unclear again.
   (`monthTotals[i] === 0` / `grandTotal === 0`).
   **Why:** per explicit user request.
 
-- **Type and Category rows show only their icon/symbol, not their text
-  name.** A Type row's `row.symbol` (the diagonal arrow from
-  `TRANSACTION_TYPE_SYMBOLS` — `↗`/`↘`/`→` for income/expense/transfer) and
-  a Category row's `row.icon` (`category.icon`, rendered via
-  `CategoryIcon`) are enough on their own; the label `<span>` in `TreeRows`
-  only renders when `hasIcon` (`!!row.icon || !!row.symbol`) is false, or
-  at the Class level
+- **Type, Category, and Gordura rows show only their icon/symbol, not
+  their text name.** A Type row's `row.symbol` (the arrow from
+  `TRANSACTION_TYPE_SYMBOLS` — `↑`/`↓`/`↔` for income/expense/transfer), a
+  Category row's `row.icon` (`category.icon`, rendered via
+  `CategoryIcon`), and a Gordura row's `row.symbol` (from `GORDURA_SYMBOLS`
+  in `dashboard-monthly-breakdown.ts` — `▢` for Baixa, `△` for Alta) are
+  enough on their own; the label `<span>` in `TreeRows` only renders when
+  `hasIcon` (`!!row.icon || !!row.symbol`) is false, or at the Class level
   (`isClassLevel`), since Class rows never carry an icon and would
-  otherwise go blank. Gordura rows have no icon either, so they show their
-  text label ("Alta"/"Baixa") through the same fallback. The
-  "Uncategorized" Type row has neither an icon nor a symbol, so it falls
-  into that same `!hasIcon` fallback and keeps its text label — don't
-  treat that as an inconsistency to "fix" by giving it a synthetic icon.
-  The full name is still available as a native `title` tooltip on the
-  row's icon-containing wrapper `<div>` so it isn't lost entirely, just
-  hidden from the default view.
-  **Why:** per explicit user request.
+  otherwise go blank. The "Uncategorized" Type row has neither an icon nor
+  a symbol, so it falls into that same `!hasIcon` fallback and keeps its
+  text label — don't treat that as an inconsistency to "fix" by giving it
+  a synthetic icon. The full name is still available as a native `title`
+  tooltip on the row's icon-containing wrapper `<div>` so it isn't lost
+  entirely, just hidden from the default view.
+  **Why:** per explicit user request. Gordura rows used to have neither an
+  icon nor a symbol (so they kept their "Alta"/"Baixa" text label through
+  this same fallback) until `GORDURA_SYMBOLS` was added — same mechanism,
+  just a later addition; don't assume Gordura is still a text-only level
+  if this comes up again.
 
   **The Type symbol is rendered larger and bolder than the rest of the
   row** (`text-base font-bold`, vs. the table's base `text-sm`) — still
   `text-muted-foreground`, not colored to match the row's own
   income/expense color, to stay in this table's otherwise subdued style
-  rather than adding more color weight. The Category icon (`CategoryIcon`,
-  `size-3.5`) is unaffected — this sizing bump is Type-symbol-only.
+  rather than adding more color weight. This sizing bump is Type-symbol-
+  only — the Category icon (`CategoryIcon`, `size-3.5`) and the Gordura
+  symbol (plain text, no size override, so it renders at the row's default
+  `text-sm`/`text-xs`) are both unaffected.
   **Why:** per explicit user request, to make the arrow read as a clear
   signal rather than blending into the row.
 
