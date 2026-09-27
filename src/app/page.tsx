@@ -4,7 +4,6 @@ import { fetchAllTransactionsInRange } from "@/lib/supabase/fetch-all-transactio
 import { fetchClasses } from "@/lib/supabase/fetch-classes";
 import type { Account, Category } from "@/lib/supabase/types";
 import { Button } from "@/components/ui/button";
-import { buildMonthlyBreakdown } from "./dashboard-monthly-breakdown";
 import { DashboardExplorer } from "./dashboard-explorer";
 
 export default async function Home({
@@ -36,8 +35,6 @@ export default async function Home({
   const allAccounts = (accounts ?? []) as Account[];
   const allCategories = (categories ?? []) as Category[];
 
-  const monthlyBreakdown = buildMonthlyBreakdown(yearTransactions, allCategories, allClasses);
-
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-6">
       <div className="flex items-center justify-between">
@@ -58,7 +55,6 @@ export default async function Home({
         accounts={allAccounts}
         categories={allCategories}
         classes={allClasses}
-        monthlyBreakdown={monthlyBreakdown}
       />
     </div>
   );

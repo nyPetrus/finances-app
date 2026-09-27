@@ -15,12 +15,16 @@ export function ColumnsMenu<K extends string>({
   hidden,
   onToggle,
   onMove,
+  label = "Columns",
+  icon = <Columns3Icon />,
 }: {
   columns: { key: K; label: string }[];
   order: K[];
   hidden: Set<K>;
   onToggle: (key: K) => void;
   onMove: (key: K, direction: -1 | 1) => void;
+  label?: string;
+  icon?: React.ReactNode;
 }) {
   const columnsByKey = new Map(columns.map((column) => [column.key, column]));
   const orderedColumns = order.map((key) => columnsByKey.get(key)).filter((column) => column != null);
@@ -28,9 +32,9 @@ export function ColumnsMenu<K extends string>({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        render={<Button variant="outline" size="icon-sm" aria-label="Columns" title="Columns" />}
+        render={<Button variant="outline" size="icon-sm" aria-label={label} title={label} />}
       >
-        <Columns3Icon />
+        {icon}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="min-w-48">
         {orderedColumns.map((column, index) => (

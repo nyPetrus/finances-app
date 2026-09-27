@@ -77,9 +77,11 @@ function TreeRows({
         const isExpanded = expanded.has(row.key);
         const rowColor = depth === 0 ? TYPE_COLOR[row.key] : colorClassName;
         const rowBg = depth === 0 ? TYPE_ROW_BG[row.key] : undefined;
-        // Levels: 0 Type, 1 Gordura, 2 Category, 3 Class.
-        const isGorduraLevel = depth === 1;
-        const isClassLevel = depth === 3;
+        // Depth 0 is always Type; which classification each deeper depth
+        // represents depends on the user's configured level order, so style
+        // off the row's own `level` field instead of a fixed depth number.
+        const isGorduraLevel = row.level === "gordura";
+        const isClassLevel = row.level === "class";
         const hasIcon = !!row.icon || !!row.symbol;
 
         const rowSelected = rowMatchesSelection(row, selected);

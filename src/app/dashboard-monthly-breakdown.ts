@@ -17,9 +17,24 @@ export function gorduraKey(
 const GORDURA_ORDER: GorduraKey[] = ["low", "high", "none"];
 const GORDURA_KEY_LABELS: Record<GorduraKey, string> = { ...GORDURA_LABELS, none: "Sem gordura" };
 
-// Feeds MonthlyBreakdownTable (dashboard-monthly-table.tsx): a Type/Gordura/
-// Category/Class tree, one row per node, each carrying its own 12 monthly
-// sums plus a year total. A node is only included if at least one
+// The three optional breakdown levels below the always-present Type level.
+// The Dashboard's "Levels" menu (dashboard-explorer.tsx) lets the user
+// include/exclude and reorder these freely, backed by the same
+// useColumnPreferences hook the rest of the app uses for table columns.
+// Type itself is never one of these — it's always level 1, static.
+export type ClassificationLevel = "gordura" | "category" | "class";
+
+export const CLASSIFICATION_LEVEL_LABELS: Record<ClassificationLevel, string> = {
+  gordura: "Gordura",
+  category: "Category",
+  class: "Class",
+};
+
+export const DEFAULT_CLASSIFICATION_LEVELS: ClassificationLevel[] = ["gordura", "category", "class"];
+
+// Feeds MonthlyBreakdownTable (dashboard-monthly-table.tsx): a Type + however
+// many of the configured levels tree, one row per node, each carrying its own
+// 12 monthly sums plus a year total. A node is only included if at least one
 // transaction actually falls under it — an all-zero category (say, a Class
 // whose two transactions happen to net to zero) still gets a row, but a
 // category with literally no transactions this year does not, so expanding
@@ -29,6 +44,7 @@ export type MonthlyRow = {
   label: string;
   icon?: string;
   symbol?: string;
+  level: "type" | ClassificationLevel;
   kind: Category["kind"] | "uncategorized";
   gordura?: GorduraKey;
   categoryId?: string;
@@ -62,11 +78,6 @@ function emptyMonths(): number[] {
   return Array(12).fill(0);
 }
 
-function addTo(map: Map<string, number[]>, key: string, month: number, value: number) {
-  if (!map.has(key)) map.set(key, emptyMonths());
-  map.get(key)![month] += value;
-}
-
 function sum(months: number[]) {
   return months.reduce((a, b) => a + b, 0);
 }
@@ -75,138 +86,162 @@ export function monthIndex(date: string) {
   return Number(date.slice(5, 7)) - 1;
 }
 
+// Biggest amount first — expense totals are negative (see
+// amount-color-conventions), so sort by magnitude rather than raw value,
+// which would otherwise put the smallest expense on top.
+const byMagnitude = (a: MonthlyRow, b: MonthlyRow) => Math.abs(b.total) - Math.abs(a.total);
+
+type LevelSelection = Pick<MonthlySelection, "gordura" | "categoryId" | "classId">;
+
+// Buckets `transactions` by one level. A transaction with no value for this
+// level (e.g. no class_id when level is "class") is left out of every
+// bucket — its amount still counts toward the parent node's own months/total
+// (computed independently below, not derived from children), it just gets
+// no child row of its own. Category is the one exception that never drops a
+// transaction: by the time this runs, transactions with no category at all
+// have already been split off into the "Uncategorized" Type row.
+function bucketBy(level: ClassificationLevel, transactions: Transaction[], categoriesById: Map<string, Category>, classesById: Map<string, Class>) {
+  const buckets = new Map<string, { label: string; icon?: string; selection: LevelSelection; transactions: Transaction[] }>();
+
+  for (const transaction of transactions) {
+    let id: string;
+    let label: string;
+    let icon: string | undefined;
+    let selection: LevelSelection;
+
+    if (level === "gordura") {
+      const gordura = gorduraKey(transaction, classesById);
+      id = gordura;
+      label = GORDURA_KEY_LABELS[gordura];
+      selection = { gordura };
+    } else if (level === "category") {
+      const category = transaction.category_id ? categoriesById.get(transaction.category_id) : undefined;
+      if (!category) continue;
+      id = category.id;
+      label = category.name;
+      icon = category.icon;
+      selection = { categoryId: category.id };
+    } else {
+      const classItem = transaction.class_id ? classesById.get(transaction.class_id) : undefined;
+      if (!classItem) continue;
+      id = classItem.id;
+      label = classItem.name;
+      selection = { classId: classItem.id };
+    }
+
+    if (!buckets.has(id)) buckets.set(id, { label, icon, selection, transactions: [] });
+    buckets.get(id)!.transactions.push(transaction);
+  }
+
+  return [...buckets.entries()].map(([id, bucket]) => ({ id, ...bucket }));
+}
+
+function buildLevelRows(
+  transactions: Transaction[],
+  levels: ClassificationLevel[],
+  levelIndex: number,
+  kind: Category["kind"],
+  keyPrefix: string,
+  selectionSoFar: LevelSelection,
+  categoriesById: Map<string, Category>,
+  classesById: Map<string, Class>,
+): MonthlyRow[] {
+  if (levelIndex >= levels.length) return [];
+  const level = levels[levelIndex];
+  const buckets = bucketBy(level, transactions, categoriesById, classesById);
+
+  const rows: MonthlyRow[] = buckets.map((bucket) => {
+    const key = `${keyPrefix}:${level}:${bucket.id}`;
+    const selection = { ...selectionSoFar, ...bucket.selection };
+    const months = emptyMonths();
+    for (const t of bucket.transactions) months[monthIndex(t.date)] += t.amount;
+    const children = buildLevelRows(
+      bucket.transactions,
+      levels,
+      levelIndex + 1,
+      kind,
+      key,
+      selection,
+      categoriesById,
+      classesById,
+    );
+
+    return {
+      key,
+      label: bucket.label,
+      icon: bucket.icon,
+      level,
+      kind,
+      ...selection,
+      months,
+      total: sum(months),
+      children: children.length > 0 ? children : undefined,
+    };
+  });
+
+  if (level === "gordura") {
+    rows.sort((a, b) => GORDURA_ORDER.indexOf(a.gordura!) - GORDURA_ORDER.indexOf(b.gordura!));
+  } else {
+    rows.sort(byMagnitude);
+  }
+  return rows;
+}
+
 export function buildMonthlyBreakdown(
   transactions: Transaction[],
   categories: Category[],
   classes: Class[],
+  levels: ClassificationLevel[] = DEFAULT_CLASSIFICATION_LEVELS,
 ): MonthlyRow[] {
   const categoriesById = new Map(categories.map((c) => [c.id, c]));
   const classesById = new Map(classes.map((c) => [c.id, c]));
 
-  const typeMonths: Record<Category["kind"] | "uncategorized", number[]> = {
-    income: emptyMonths(),
-    expense: emptyMonths(),
-    transfer: emptyMonths(),
-    uncategorized: emptyMonths(),
-  };
-  let uncategorizedCount = 0;
-
-  // Gordura sits between Type and Category, and is per transaction (a manual
-  // override can differ from its class default), so one category can appear
-  // under more than one gordura. Sums below Type are therefore keyed by
-  // `${gordura}|${categoryId}` rather than by category alone.
-  const gorduraMonths = new Map<string, number[]>(); // `${kind}|${gordura}`
-  const categoryMonths = new Map<string, number[]>(); // `${gordura}|${categoryId}`
-  // A class can be reused across categories, so class sums are kept per
-  // gordura+category: `${gordura}|${categoryId}` -> classId -> months.
-  const classMonths = new Map<string, Map<string, number[]>>();
+  const byType = new Map<Category["kind"], Transaction[]>(TYPE_ORDER.map((kind) => [kind, []]));
+  const uncategorized: Transaction[] = [];
 
   for (const transaction of transactions) {
-    const month = monthIndex(transaction.date);
     const category = transaction.category_id ? categoriesById.get(transaction.category_id) : undefined;
-
     if (!category) {
-      typeMonths.uncategorized[month] += transaction.amount;
-      uncategorizedCount += 1;
+      uncategorized.push(transaction);
       continue;
     }
+    byType.get(category.kind)!.push(transaction);
+  }
 
+  const rows: MonthlyRow[] = TYPE_ORDER.map((kind) => {
+    const kindTransactions = byType.get(kind)!;
+    const months = emptyMonths();
     // Unlike the Transfers stat card (which sums magnitude — see
     // dashboard-conventions — so a transfer's two legs across the user's
     // own accounts don't net toward zero), this table sums the signed
     // amount as-is: a 150 transfer out and a 150 transfer in should net to
     // 0 here, per explicit user request.
-    const value = transaction.amount;
+    for (const t of kindTransactions) months[monthIndex(t.date)] += t.amount;
 
-    typeMonths[category.kind][month] += value;
-
-    const gordura = gorduraKey(transaction, classesById);
-    addTo(gorduraMonths, `${category.kind}|${gordura}`, month, value);
-
-    const categoryKey = `${gordura}|${category.id}`;
-    addTo(categoryMonths, categoryKey, month, value);
-
-    if (transaction.class_id) {
-      if (!classMonths.has(categoryKey)) classMonths.set(categoryKey, new Map());
-      addTo(classMonths.get(categoryKey)!, transaction.class_id, month, value);
-    }
-  }
-
-  // Biggest amount first — expense totals are negative (see
-  // amount-color-conventions), so sort by magnitude rather than raw value,
-  // which would otherwise put the smallest expense on top.
-  const byMagnitude = (a: MonthlyRow, b: MonthlyRow) => Math.abs(b.total) - Math.abs(a.total);
-
-  const rows: MonthlyRow[] = TYPE_ORDER.map((kind) => {
-    const gorduraRows: MonthlyRow[] = GORDURA_ORDER.filter((gordura) => gorduraMonths.has(`${kind}|${gordura}`)).map(
-      (gordura) => {
-        const categoryRows: MonthlyRow[] = categories
-          .filter((category) => category.kind === kind && categoryMonths.has(`${gordura}|${category.id}`))
-          .map((category) => {
-            const categoryKey = `${gordura}|${category.id}`;
-            const months = categoryMonths.get(categoryKey)!;
-            const classRows: MonthlyRow[] = [...(classMonths.get(categoryKey) ?? new Map<string, number[]>())]
-              .filter(([classId]) => classesById.has(classId))
-              .map(([classId, classItemMonths]) => {
-                const classItem = classesById.get(classId)!;
-                return {
-                  key: `class:${gordura}:${category.id}:${classItem.id}`,
-                  label: classItem.name,
-                  kind,
-                  gordura,
-                  categoryId: category.id,
-                  classId: classItem.id,
-                  months: classItemMonths,
-                  total: sum(classItemMonths),
-                };
-              })
-              .sort(byMagnitude);
-
-            return {
-              key: `category:${gordura}:${category.id}`,
-              label: category.name,
-              icon: category.icon,
-              kind,
-              gordura,
-              categoryId: category.id,
-              months,
-              total: sum(months),
-              children: classRows.length > 0 ? classRows : undefined,
-            };
-          })
-          .sort(byMagnitude);
-
-        const months = gorduraMonths.get(`${kind}|${gordura}`)!;
-        return {
-          key: `gordura:${kind}:${gordura}`,
-          label: GORDURA_KEY_LABELS[gordura],
-          kind,
-          gordura,
-          months,
-          total: sum(months),
-          children: categoryRows.length > 0 ? categoryRows : undefined,
-        };
-      },
-    );
+    const children = buildLevelRows(kindTransactions, levels, 0, kind, `type:${kind}`, {}, categoriesById, classesById);
 
     return {
       key: `type:${kind}`,
       label: TYPE_LABELS[kind],
       symbol: TRANSACTION_TYPE_SYMBOLS[kind],
+      level: "type",
       kind,
-      months: typeMonths[kind],
-      total: sum(typeMonths[kind]),
-      children: gorduraRows.length > 0 ? gorduraRows : undefined,
+      months,
+      total: sum(months),
+      children: children.length > 0 ? children : undefined,
     };
   });
 
-  if (uncategorizedCount > 0) {
+  if (uncategorized.length > 0) {
+    const months = emptyMonths();
+    for (const t of uncategorized) months[monthIndex(t.date)] += t.amount;
     rows.push({
       key: "type:uncategorized",
       label: "Uncategorized",
+      level: "type",
       kind: "uncategorized",
-      months: typeMonths.uncategorized,
-      total: sum(typeMonths.uncategorized),
+      months,
+      total: sum(months),
     });
   }
 

@@ -1,19 +1,42 @@
 ---
 name: dashboard-monthly-table
-description: Use when touching the Dashboard's monthly breakdown tree table (dashboard-monthly-breakdown.ts + dashboard-monthly-table.tsx) — what the user calls "the dynamic table," since its rows dynamically expand/collapse (not the embedded click-to-filter transactions table, which only appears/disappears wholesale — see dashboard-conventions for that one). Covers the Type/Gordura/Category/Class tree, the footer Total row, column auto-sizing, decimal rounding, zero-value empty cells, row color, the expand/collapse chevrons, and the sticky/frozen header row, footer row, label column, and Total column.
+description: Use when touching the Dashboard's monthly breakdown tree table (dashboard-monthly-breakdown.ts + dashboard-monthly-table.tsx) — what the user calls "the dynamic table," since its rows dynamically expand/collapse (not the embedded click-to-filter transactions table, which only appears/disappears wholesale — see dashboard-conventions for that one). Covers the Type level (static) plus the configurable Gordura/Category/Class levels (the "Levels" menu — include/exclude and reorder), the footer Total row, column auto-sizing, decimal rounding, zero-value empty cells, row color, the expand/collapse chevrons, and the sticky/frozen header row, footer row, label column, and Total column.
 ---
 
 # Dashboard monthly table ("the dynamic table")
 
 `dashboard-monthly-breakdown.ts` (`buildMonthlyBreakdown()`, a pure
-function, no `"use client"`, called from `page.tsx`) + `dashboard-monthly-
-table.tsx` (`MonthlyBreakdownTable`, `"use client"`) together render the
-Type/Gordura/Category/Class monthly breakdown, sitting directly below the page's
+function, no `"use client"`) + `dashboard-monthly-table.tsx`
+(`MonthlyBreakdownTable`, `"use client"`) together render the Type +
+configurable-levels monthly breakdown, sitting directly below the page's
 year-nav header and above the click-to-filter embedded table (see
 `dashboard-conventions`) — there used to be a 6-card stat grid between the
 two, removed once this table's own Type rows and click-to-filter covered
 the same ground; see `dashboard-conventions`'s "removed-cards" history if
 that ever needs revisiting.
+
+- **The levels below Type are configurable, per explicit user request**: a
+  "Levels" icon-button menu (top-right of `dashboard-explorer.tsx`, reusing
+  `ColumnsMenu`/`useColumnPreferences` — the same show/hide + up/down-reorder
+  control the rest of the app uses for table columns, storage key
+  `dashboard-monthly-table-levels`) lets the user include/exclude and
+  reorder `ClassificationLevel`s (`"gordura" | "category" | "class"`) freely.
+  **Type is never one of these** — it's hardcoded as the always-present root
+  level (Income/Expenses/Transfers, plus Uncategorized when applicable) and
+  isn't listed in the menu. `buildMonthlyBreakdown(transactions, categories,
+  classes, levels)` takes the resulting ordered subset (default
+  `DEFAULT_CLASSIFICATION_LEVELS = ["gordura", "category", "class"]`, the
+  original fixed order) and recurses through it via `buildLevelRows` —
+  moving Class above Category (or excluding Category/Gordura entirely) is
+  just a different `levels` array, not a special case in the tree-building
+  code. Because the level config is a per-browser preference,
+  `buildMonthlyBreakdown` now runs **client-side inside
+  `dashboard-explorer.tsx`** (not server-side in `page.tsx` — `page.tsx` just
+  passes raw `transactions`/`categories`/`classes` through). Every
+  `MonthlyRow` carries a `level: "type" | ClassificationLevel` field set at
+  build time; `dashboard-monthly-table.tsx` uses that (not a hardcoded depth
+  number) to decide Gordura/Class-specific styling, since which depth holds
+  which classification now depends on the configured order.
 
 **Naming note**: the user refers to this specific table as "the dynamic
 table" (its rows dynamically expand/collapse). This is a real,
@@ -24,35 +47,42 @@ which is a different component with its own conventions
 between the two tables because of exactly this ambiguity; confirm which
 table is meant if it's ever unclear again.
 
-- **4-level expand/collapse tree**: Type (Income/Expenses/Transfers,
+- **Up-to-4-level expand/collapse tree**: Type (Income/Expenses/Transfers,
   always shown, plus Uncategorized only when at least one transaction
-  actually has no category — Uncategorized has no children) → **Gordura**
-  (Baixa / Alta / Sem gordura, in that order — Baixa first per explicit user request — each only when it has
-  transactions under that Type — added per explicit user request, between
-  Type and Category) → Category (only categories of that `kind` with at
-  least one transaction this year under that gordura) → Class (only
-  classes with at least one transaction this year). Gordura is the
+  actually has no category — Uncategorized has no children) is the static
+  root, then zero to three more levels per the user's "Levels" menu
+  selection/order — **Gordura** (Baixa / Alta / Sem gordura, always in that
+  order regardless of where the level sits — Baixa first per explicit user
+  request), **Category** (only categories of that `kind` with at least one
+  transaction this year under whatever ancestor levels are above it), and
+  **Class** (only classes with at least one transaction this year), each
+  only appearing when it actually has matching transactions. Gordura is the
   transaction's *effective* gordura (`effectiveGordura`: its own override,
   else its class's `default_gordura`), bucketed via `gorduraKey()` in
   `dashboard-monthly-breakdown.ts` with `"none"` → "Sem gordura" so no
-  amount drops out of the tree. Because gordura is per transaction, the
-  same Category (and Class) can appear under more than one Gordura row;
-  sums below Type are keyed by `${gordura}|${categoryId}`, and row keys
-  embed the gordura (`gordura:<kind>:<g>`, `category:<g>:<id>`,
-  `class:<g>:<cat>:<class>`) so expand state stays distinct per branch.
-  Income/Transfers usually land entirely under "Sem gordura" (their
-  classes rarely carry a default) — that extra click is expected — with a month column per month plus a
-  trailing Total column (year sum of that row). `buildMonthlyBreakdown()`
-  does a single pass over `yearTransactions` bucketing into per-type/
-  per-category/per-class month arrays, then builds the `MonthlyRow[]` tree
-  from `categories`/`classes` filtered down to only the ids that had at
-  least one transaction — a category or class with zero transactions this
-  year gets no row at all, so expanding a row never reveals an empty list.
-  **A Category row's months come directly from transactions in that
-  category, not from summing its Class children** — a category can have
-  transactions with no `class_id`, so a category's total can legitimately
-  exceed the sum of its visible Class rows; this is intentional, not a bug
-  to "fix" by adding a synthetic "no class" row. **Every kind, including
+  amount drops out of the tree — this is the one level that never folds a
+  transaction into its parent without a row of its own; Category and Class
+  do fold a transaction in when it has none (transactions with no category
+  at all never reach a Category level at all, having already been split off
+  into "Uncategorized" at the Type level; a class-less transaction under a
+  "class" level just contributes to its parent's total with no Class child
+  row, same as before this became configurable). Row keys are built by
+  threading `${level}:${bucketId}` onto the parent's own key
+  (`buildLevelRows` in `dashboard-monthly-breakdown.ts`) so expand state
+  stays distinct per branch regardless of level order — with a month column
+  per month plus a trailing Total column (year sum of that row).
+  `buildMonthlyBreakdown()` first splits `yearTransactions` into
+  Type/Uncategorized buckets, then recurses `buildLevelRows` through the
+  configured `levels` array, at each step grouping the transactions handed
+  to it by that one level and recursing into the next — a category or class
+  with zero transactions this year gets no row at all, so expanding a row
+  never reveals an empty list. **A parent row's months come directly from
+  the transactions handed into it, not from summing its children** — a
+  Category node (or any node) can have transactions that don't produce a
+  child row at the next level, so a node's total can legitimately exceed
+  the sum of its visible children; this is intentional, not a bug to "fix"
+  by adding a synthetic "none" row for every level (only Gordura gets one).
+  **Every kind, including
   Transfer, sums the signed `amount` as-is** — a 150 transfer out and a
   150 transfer in nets to 0 here, per explicit user request. (The
   now-removed Transfers stat card used to sum `Math.abs(amount)`
@@ -130,13 +160,16 @@ table is meant if it's ever unclear again.
 - **Expand state defaults to fully collapsed** (`useState<Set<string>>(new
   Set())` in `MonthlyBreakdownTable`) — only the 3-4 Type rows are visible
   on first render; a row only shows a toggle button when it actually has
-  children, and Class rows never do (this is the bottom of the hierarchy
-  — "I can see at maximum at class level" was an explicit requirement; the
-  Gordura level was later inserted *above* Category, per explicit user
-  request, but Class stays the deepest level — don't add anything below
-  it). `TreeRows` depths: 0 Type, 1 Gordura (`border-t`, `font-semibold` —
-  the styling Category rows used to have), 2 Category, 3 Class
-  (`text-[11px]`). **The toggle is `ChevronRightIcon`/
+  children, which naturally happens to whichever level the user has placed
+  last in the "Levels" menu order (originally always Class, back when the
+  order was fixed — "I can see at maximum at class level" was the original
+  explicit requirement, but it's now just wherever the user puts the last
+  configured level, not hardcoded to Class specifically). `TreeRows` styles
+  off each row's own `row.level` field, not a fixed depth number — depth 0
+  is always Type, but which classification sits at depth 1/2/3 depends on
+  the configured order, so Gordura rows always get `border-t
+  font-semibold` and Class rows always get `text-[11px]` regardless of
+  where in the tree they land. **The toggle is `ChevronRightIcon`/
   `ChevronDownIcon` (collapsed/expanded)** — it used to be `PlusIcon`/
   `MinusIcon`, deliberately *not* chevrons (to avoid visual confusion with
   `SortableTableHead`'s own chevron-based sort arrows elsewhere in the
@@ -159,10 +192,11 @@ table is meant if it's ever unclear again.
   month/Total cells stay `whitespace-nowrap` so their own natural
   (numeric) content width is what auto-layout sizes them to — now further
   narrowed whenever a cell is empty (see the zero-value rule above), which
-  is fine and expected. The column set here (label + 12 months + Total) is
-  still static and never hidden/reordered — don't route this through
-  `ColumnsMenu`/`useColumnPreferences`, that's unrelated to why it dropped
-  `table-fixed`.
+  is fine and expected. The *column* set here (label + 12 months + Total)
+  is still static and never hidden/reordered by column — `ColumnsMenu`/
+  `useColumnPreferences` is only reused for the separate "Levels" menu
+  (which rows/depth get built, not which columns render); don't conflate
+  the two or assume the month columns became configurable too.
 - **Frozen panes: header row, footer Total row, label column, and Total
   column all stay visible when the table doesn't fit the window** — per
   explicit user request. The outer wrapper (`overflow-x-auto` before) is
