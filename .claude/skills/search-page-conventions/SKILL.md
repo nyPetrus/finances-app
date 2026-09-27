@@ -14,18 +14,19 @@ then clicking "Apply". Added per explicit user request.
   unfiltered "show everything" state.** `src/app/search/page.tsx` only
   runs a query when `hasAnyFilter(filters)` is true (`filters.ts`) — with
   zero filters set, the results area (summary block + table, see below)
-  renders nothing at all (no hint text; one used to sit here but was
-  removed per explicit user request — don't re-add it). This guard itself
-  is deliberate, not just an easy default: without it, a bare page load (or
-  a "Clear" click) would trigger an unbounded query. Don't remove *this* to
-  "simplify" the page. **Apply and
-  Clear are themselves disabled (dimmed via the Button component's own
-  `disabled` styling) whenever every filter field is empty** —
-  `search-form.tsx`'s `hasAnyValue`, computed from current local state
-  (not the `filters` prop), so unchecking every checkbox / clearing every
-  field re-disables both buttons live, before the user even clicks Apply —
-  per explicit user request, replacing the removed hint text as the signal
-  that there's nothing to search yet.
+  renders nothing at all, no hint text. Don't remove this guard to
+  "simplify" the page. **Apply and Clear are themselves disabled (dimmed
+  via the Button component's own `disabled` styling) whenever every
+  filter field is empty** — `search-form.tsx`'s `hasAnyValue`, computed
+  from current local state (not the `filters` prop), so unchecking every
+  checkbox / clearing every field re-disables both buttons live, before
+  the user even clicks Apply.
+  **Why:** the query guard is deliberate, not just an easy default —
+  without it, a bare page load (or a "Clear" click) would trigger an
+  unbounded query. A muted hint text used to sit in the results area
+  instead of the disabled-buttons treatment, but was removed per explicit
+  user request when Apply/Clear started reflecting the same "nothing to
+  search yet" state live — don't re-add the hint text without a fresh ask.
 - **State is fully URL-driven, the same pattern `/transactions` uses for
   `month`/`sort`/`dir`** — `search-form.tsx` (`"use client"`) reads its
   initial field values from a `filters: ParsedFilters` prop (computed
@@ -39,8 +40,7 @@ then clicking "Apply". Added per explicit user request.
   truth for all of these — both `page.tsx` and `search-form.tsx` import
   from it, never redefine locally):
   - **Account, Category, Class, Gordura are checkbox multi-selects, not
-    operator+value controls** — per explicit user request, replacing an
-    earlier `is`/`is not` single-value design. Each renders via the shared
+    operator+value controls.** Each renders via the shared
     `CheckboxSelect` component (`src/components/checkbox-select.tsx`, also
     used nowhere else yet) and round-trips as a **repeated** query param —
     `?account=id1&account=id2`, parsed by `filters.ts`'s `many()` helper —
@@ -48,7 +48,10 @@ then clicking "Apply". Added per explicit user request.
     meaning "no filter"**, not "match nothing." `ParsedFilters.accounts` /
     `.categories` / `.classes` / `.gorduras` are plain `string[]` (no `op`
     field at all — don't reintroduce `EqualityOp`/`is`/`is_not` for these
-    four, that's exactly what this replaced).
+    four).
+    **Why:** replaces an earlier `is`/`is not` single-value design, per
+    explicit user request — that's exactly what the checkbox redesign
+    was for, so don't bring the operator back for these four fields.
     - **Account**: `account` (account ids). No pseudo-value — every
       transaction has an `account_id`.
     - **Category**: `category` (category ids, plus the literal string
@@ -64,14 +67,15 @@ then clicking "Apply". Added per explicit user request.
       `gorduraKey()`), not just its own override column — always a concrete
       Alta/Baixa, never "unset" (`effectiveGordura` falls back to
       `DEFAULT_GORDURA`, "Alta", when there's no override and no class
-      default; there used to be a third "Sem gordura"/`"none"` option here,
-      removed once that fallback stopped ever being null — don't reintroduce
-      it without a fresh ask). Because "effective" needs the class join,
-      this is the one filter `buildQuery()` (`page.tsx`) **can't** push into
-      the Supabase query — it's applied in JS *after* `runSearch()` has
-      already paged through everything matching the other filters (still
-      correct per `PITFALLS.md`, since the Postgres query itself isn't
-      what's narrowing on gordura, so it can't silently truncate).
+      default). Because "effective" needs the class join, this is the one
+      filter `buildQuery()` (`page.tsx`) **can't** push into the Supabase
+      query — it's applied in JS *after* `runSearch()` has already paged
+      through everything matching the other filters (still correct per
+      `PITFALLS.md`, since the Postgres query itself isn't what's
+      narrowing on gordura, so it can't silently truncate).
+      **Why only two values:** there used to be a third "Sem gordura"/
+      `"none"` option here, removed once `effectiveGordura`'s fallback
+      stopped ever being null — don't reintroduce it without a fresh ask.
     - `buildQuery()`'s `applyCheckboxFilter()` handles Account/Category/
       Class: plain `.in(column, ids)` when no pseudo-value is checked,
       `.is(column, null)` when only the pseudo-value is checked, and
@@ -98,13 +102,13 @@ then clicking "Apply". Added per explicit user request.
     `dateValue` (a plain string shaped by the granularity — `"2026"`,
     `"2026-09"`, or `"2026-09-15"`, matching what a native `<input
     type="month">`/`type="date">` already emits) + `dateOp` (`"on"` |
-    `"before"` | `"after"`, default `"on"`, per explicit user decision —
-    no inclusive-boundary or between-two-dates variants). `dateRangeFor()`
-    (`filters.ts`) turns granularity+value into a half-open `{ start, end
-    }` pair of plain `"YYYY-MM-DD"` strings (safe to compare directly
-    against the `date` timestamp column, the same trick
-    `transactions/page.tsx`'s own month-scoping already relies on): "on"
-    is `gte(start).lt(end)`, "before" is `lt(start)`, "after" is
+    `"before"` | `"after"`, default `"on"` — no inclusive-boundary or
+    between-two-dates variants, per explicit user decision).
+    `dateRangeFor()` (`filters.ts`) turns granularity+value into a
+    half-open `{ start, end }` pair of plain `"YYYY-MM-DD"` strings (safe
+    to compare directly against the `date` timestamp column, the same
+    trick `transactions/page.tsx`'s own month-scoping already relies on):
+    "on" is `gte(start).lt(end)`, "before" is `lt(start)`, "after" is
     `gte(end)`. **Changing the granularity `<Select>` resets `dateValue`
     to `""`** (`search-form.tsx`) — a value shaped for one granularity
     (e.g. `"2026-09-15"`) is meaningless for another (e.g. as a year), so
@@ -134,19 +138,20 @@ then clicking "Apply". Added per explicit user request.
   on every page of the loop in `runSearch()` — Supabase query builders are
   meant to be executed once each, so don't try to build one query object
   and reuse it across `.range()` calls.
-- **A results-summary block sits between the form and the table** — per
-  explicit user request, a bordered `rounded-md` bar (`page.tsx`, inline
-  JSX, no separate component) showing the count ("1 transaction" /
-  "N transactions", matching the singular/plural pattern `BulkEditDialog`'s
-  title already uses) and the **signed** sum of `sortedResults.amount`
-  (transfers net toward 0, same convention as the Dashboard monthly table
-  and the Amount column — see `amount-color-conventions`), colored
-  `text-emerald-600` only when `>= 0`, otherwise the default text color —
-  the same "only positive gets color" rule as the Amount column, applied to
-  the aggregate rather than a single row. Rendered under the same
+- **A results-summary block sits between the form and the table**: a
+  bordered `rounded-md` bar (`page.tsx`, inline JSX, no separate
+  component) showing the count ("1 transaction" / "N transactions",
+  matching the singular/plural pattern `BulkEditDialog`'s title already
+  uses) and the **signed** sum of `sortedResults.amount` (transfers net
+  toward 0, same convention as the Dashboard monthly table and the Amount
+  column — see `amount-color-conventions`), colored `text-emerald-600`
+  only when `>= 0`, otherwise the default text color — the same "only
+  positive gets color" rule as the Amount column, applied to the
+  aggregate rather than a single row. Rendered under the same
   `searchActive` guard as the table (one `<>...</>` fragment covers both),
   so it never shows with zero filters applied, and does show "0
-  transactions · Total: 0,00" when a filter matches nothing.
+  transactions · Total: 0,00" when a filter matches nothing. Added per
+  explicit user request.
 - **The results table (`search-table.tsx`) is a near-verbatim copy of
   `TransactionsTable`, for the same reasons `dashboard-transactions-table.tsx`
   is a copy and not a reuse** (see `dashboard-conventions`) — same
@@ -162,10 +167,10 @@ then clicking "Apply". Added per explicit user request.
   feature is added, check whether it belongs here too, same as the
   Dashboard's copy.
 - **Batch-editing selected transactions' Category/Class/Gordura is a
-  Search-only feature**, per explicit user request — not added to
-  `TransactionsTable` or the Dashboard's embedded table, unlike most of
-  this table's other functionality (see the previous bullet). The "Edit
-  selected" `PencilIcon` button in the toolbar (next to Delete, same
+  Search-only feature** — not added to `TransactionsTable` or the
+  Dashboard's embedded table, unlike most of this table's other
+  functionality (see the previous bullet). The "Edit selected"
+  `PencilIcon` button in the toolbar (next to Delete, same
   `selected.size > 0` visibility) opens `BulkEditDialog`
   (`search/bulk-edit-dialog.tsx`), which posts to `bulkUpdateClassification`
   in `transactions/actions.ts`. **Each of the three fields defaults to "No
@@ -186,7 +191,7 @@ then clicking "Apply". Added per explicit user request.
   `deleteTransactions`, it revalidates `/transactions`, `/search`,
   `/budget`, and `/` (category/class changes affect Budget and Dashboard
   too), and the dialog clears the row selection on success
-  (`onSaved={clearSelection}`).
+  (`onSaved={clearSelection}`). Added per explicit user request.
 - **Mutations from this table's row actions
   (`deleteTransactions`/`updateTransaction`/`syncDescriptionsFromTransactions`/
   `bulkUpdateClassification`, all reused from `transactions/actions.ts` — no
@@ -202,7 +207,7 @@ then clicking "Apply". Added per explicit user request.
   `revalidatePath("/transactions")` should add `revalidatePath("/search")`
   right next to it, not just the one path.
 - **Nav entry**: `sidebar-nav.tsx`'s `links` array, `SearchIcon`
-  (`lucide-react`), positioned between Budget and Transactions per explicit
-  user request (moved there from directly after Transactions) — check the
-  current array rather than assuming either position if this ever comes up
-  again.
+  (`lucide-react`), positioned between Budget and Transactions.
+  **Why:** moved there per explicit user request, from directly after
+  Transactions — check the current array rather than assuming either
+  position if this ever comes up again.

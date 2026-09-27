@@ -12,29 +12,31 @@ description: Use when writing or touching code that inserts/updates a transactio
   Existing rows were backfilled once via
   `supabase/migrations/0012_lowercase_transaction_descriptions.sql`.
 
-- **One way to bulk-categorize transactions from history**:
-  `syncMappedDescriptions()` in `src/app/descriptions/actions.ts`, backed by
-  a private `applyMappingSet()` matcher (`equal_to` beats `starts_with`
-  beats `contains`, longest pattern wins within a tier, each transaction
-  claimed by at most one mapping). It applies the *existing*
-  `mapped_descriptions` rules to every transaction with `category_id is
-  null` — surfaced as the "Sync" button in `DescriptionsTable`'s own
-  toolbar and on Transactions' own toolbar (both reusing the same
-  `SyncButton` component — see `table-page-conventions`), plus
-  `AddMappingDialog`'s "Create and sort unmapped" and
-  `DescriptionsTable`'s edit dialog's "Sort unmapped" (see below). **There
-  used to be a second, "sort all" variant** (`syncAllMappedDescriptions()`,
-  matching *every* transaction regardless of current `category_id` so a
-  mapping could override an existing category/class, surfaced as
-  `AddMappingDialog`'s "Create and sort all" and the edit dialog's "Sort
-  all") — removed per explicit user request across every place it
-  appeared. Don't reintroduce a "sort all"/override-existing-categorization
-  action without a fresh ask; the uncategorized-only `syncMappedDescriptions`
-  is the only bulk-categorize path now, and it stays narrow enough
-  (`category_id is null`) to not need `.range()` paging — if a future
-  "match everything" variant comes back, re-add the `.range()` paging this
-  used to need (see `PITFALLS.md`), it isn't guaranteed under
-  Supabase/PostgREST's 1000-row cap the way the uncategorized-only query is.
+- **There is exactly one way to bulk-categorize transactions from
+  history**: `syncMappedDescriptions()` in
+  `src/app/descriptions/actions.ts`, backed by a private
+  `applyMappingSet()` matcher (`equal_to` beats `starts_with` beats
+  `contains`, longest pattern wins within a tier, each transaction claimed
+  by at most one mapping). It applies the *existing* `mapped_descriptions`
+  rules to every transaction with `category_id is null` — surfaced as the
+  "Sync" button in `DescriptionsTable`'s own toolbar and on Transactions'
+  own toolbar (both reusing the same `SyncButton` component — see
+  `table-page-conventions`), plus `AddMappingDialog`'s "Create and sort
+  unmapped" and `DescriptionsTable`'s edit dialog's "Sort unmapped" (see
+  below). Don't reintroduce a "sort all"/override-existing-categorization
+  action without a fresh ask; the uncategorized-only
+  `syncMappedDescriptions` is the only bulk-categorize path now, and it
+  stays narrow enough (`category_id is null`) to not need `.range()`
+  paging — if a future "match everything" variant comes back, re-add the
+  `.range()` paging this used to need (see `PITFALLS.md`), it isn't
+  guaranteed under Supabase/PostgREST's 1000-row cap the way the
+  uncategorized-only query is.
+  **Why:** there used to be a second, "sort all" variant
+  (`syncAllMappedDescriptions()`, matching *every* transaction regardless
+  of current `category_id` so a mapping could override an existing
+  category/class, surfaced as `AddMappingDialog`'s "Create and sort all"
+  and the edit dialog's "Sort all") — removed per explicit user request
+  across every place it appeared.
 
 - **Adding or renaming a mapping into a description that's already mapped
   throws a friendly error instead of a raw Postgres one.**
@@ -48,9 +50,8 @@ description: Use when writing or touching code that inserts/updates a transactio
   shared code, just the same shape — that turns a `23505` into "A mapping
   for this description already exists." Both `AddMappingDialog` and
   `DescriptionsTable`'s edit dialog already had an error paragraph wired up
-  before this (see the CLAUDE.md-documented Edit/Add dialog error-state
-  convention), so no UI changes were needed to surface it — only the action
-  layer changed.
+  from the CLAUDE.md-documented Edit/Add dialog error-state convention, so
+  no UI changes were needed to surface it — only the action layer changed.
 
 - **`AddMappingDialog` (`src/app/descriptions/add-mapping-dialog.tsx`) is
   controllable from outside the Descriptions page**, not just a
@@ -84,9 +85,10 @@ description: Use when writing or touching code that inserts/updates a transactio
   reading the form via a `ref` (not the native submit-button/FormData
   trick) since it needs to run a second async step after creating —
   `"Create"` alone is untouched, still just the plain `action={...}` form
-  submission it always was. (There used to be a third `"Create and sort
-  all"` button here too — removed per explicit user request, see above;
-  don't re-add it without a fresh ask.)
+  submission it always was.
+  **Why no "Create and sort all" button:** there used to be a third button
+  here too, matching the removed "sort all" action above — removed per
+  explicit user request; don't re-add it without a fresh ask.
 
 - **`DescriptionsTable`'s own edit-mapping dialog** (same file,
   `src/app/descriptions/descriptions-table.tsx` — a plain inline `Dialog`,
@@ -94,11 +96,12 @@ description: Use when writing or touching code that inserts/updates a transactio
   `"Save"`, wired the same `ref`-read-`FormData` way but calling
   `updateMappedDescription` instead of `addMappedDescription` — so editing
   an existing mapping's description/operator/category/class can immediately
-  re-run it against transactions too, not just creating a new one. **The
-  button label is `"Sort unmapped"` here, not `"Create and sort unmapped"`**
-  — editing isn't creating, so the label shouldn't claim it is (an earlier
-  explicit user request briefly made this match `AddMappingDialog`'s wording
-  exactly, then a later explicit request reversed that). `"Save"` alone
-  still means "persist the edit, don't touch any transactions." (This
-  dialog also used to have a `"Sort all"` button next to this one — removed
-  per explicit user request, see above.)
+  re-run it against transactions too, not just creating a new one.
+  `"Save"` alone still means "persist the edit, don't touch any
+  transactions." **The button label is `"Sort unmapped"` here, not
+  `"Create and sort unmapped"`** — editing isn't creating, so the label
+  shouldn't claim it is.
+  **Why:** an earlier explicit user request briefly made this match
+  `AddMappingDialog`'s wording exactly, then a later explicit request
+  reversed that. This dialog also used to have a `"Sort all"` button next
+  to this one — removed per explicit user request, same as above.

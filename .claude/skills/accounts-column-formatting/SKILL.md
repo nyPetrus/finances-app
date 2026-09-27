@@ -5,16 +5,17 @@ description: Use when touching how the Accounts table (src/app/accounts/accounts
 
 # Accounts table column formatting
 
-- **Balance has no currency symbol**, matching the Transactions table's
-  Amount column (see `transactions-column-formatting`). `formatCurrency`
-  uses `Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2,
+- **Balance has no currency symbol.** `formatCurrency` uses
+  `Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2,
   maximumFractionDigits: 2 })` (plain decimal style) instead of `style:
   "currency", currency: "BRL"` — it renders `1.234,56`, not `R$ 1.234,56`.
   This is local to this file's own `formatCurrency` copy; Budget's
   planned/actual/variance and the month header keep currency style and the
-  `R$` symbol — don't change those unless asked. The Dashboard has no `R$`
-  anywhere any more — its 6 stat cards used to be the one place that kept
-  it, but they were removed (see `dashboard-conventions`'s "removed-cards"
+  `R$` symbol — don't change those unless asked.
+  **Why:** matches the Transactions table's Amount column (see
+  `transactions-column-formatting`). The Dashboard has no `R$` anywhere any
+  more either — its 6 stat cards used to be the one place that kept it,
+  but they were removed (see `dashboard-conventions`'s "removed-cards"
   history); everything left there is chart- or table-shaped and no-symbol
   like this file (see `dashboard-conventions`/`dashboard-monthly-table`).
 - **Last sync is compact and never wraps**: `formatDateTime` builds
@@ -41,12 +42,12 @@ description: Use when touching how the Accounts table (src/app/accounts/accounts
   values render in full without needing to lean on the ellipsis at all.
 - **Account, Source, and Type render as a `Badge` chip**
   (`variant="secondary"`), the same treatment as the Categories table's
-  Type column (see `table-page-conventions`). Account and Source additionally
-  get `className="max-w-full gap-1 truncate"` on the `Badge` itself — unlike
-  Categories' Type (a short, bounded enum label), both are free text
-  (`account.label`/`account.source`) that could in principle be long, and
-  `Badge`'s own `w-fit shrink-0` would otherwise let a long value stretch
-  the table wider than its container. Type doesn't need this since
+  Type column (see `table-page-conventions`). Account and Source
+  additionally get `className="max-w-full gap-1 truncate"` on the `Badge`
+  itself — unlike Categories' Type (a short, bounded enum label), both are
+  free text (`account.label`/`account.source`) that could in principle be
+  long, and `Badge`'s own `w-fit shrink-0` would otherwise let a long value
+  stretch the table wider than its container. Type doesn't need this since
   `typeLabels` are always short. All three fall back to a plain muted
   `"—"` span when the value is null (Type is never null, so it never needs
   the fallback).

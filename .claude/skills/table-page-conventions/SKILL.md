@@ -24,7 +24,8 @@ list page instead of inventing a fresh layout.
   `max-w-*` on that same cell, or it silently does nothing.** This app's
   tables use the default (`auto`) HTML table layout, not `table-fixed` (see
   the `Markup` bullet above — fixed widths/`<colgroup>` aren't allowed since
-  columns can be hidden/reordered). In `auto` layout, `white-space: nowrap`
+  columns can be hidden/reordered).
+  **Why the pairing matters:** in `auto` layout, `white-space: nowrap`
   (part of what Tailwind's `truncate` sets, alongside `overflow-hidden` and
   `text-overflow: ellipsis`) makes a cell's *min-content* width equal its
   full, un-ellipsized width — so the browser never actually gets to shrink
@@ -99,16 +100,17 @@ list page instead of inventing a fresh layout.
   - `onEdit` sets a per-row `editing<X>: <Row> | null` state (e.g.
     `editingAccount`) instead of relying on checkbox selection.
   - **`RowActionsMenu` has no `onDelete` prop and no Delete item at all —
-    removed per explicit user request, for security: the *only* way to
-    delete a row anywhere in the app is now the toolbar's bulk Delete
-    button (below), which always requires an explicit selection first,
-    rather than a single accidental click in a per-row menu.** Every
+    the *only* way to delete a row anywhere in the app is the toolbar's
+    bulk Delete button (below), which always requires an explicit
+    selection first, rather than a single accidental click in a per-row
+    menu.** Don't reintroduce a per-row delete path without a fresh ask;
+    route any future single-row delete through the existing bulk action
+    with a one-element array instead, called from the toolbar's selection,
+    not from the row menu.
+    **Why:** removed per explicit user request, for security. Every
     table's own `handleDeleteRow(row)` (which used to confirm + call the
-    delete action with a one-element array, e.g. `deleteAccounts([account.id])`)
-    was deleted along with its wiring — don't reintroduce a per-row delete
-    path without a fresh ask; route any future single-row delete through
-    the existing bulk action with a one-element array instead, called from
-    the toolbar's selection, not from the row menu.
+    delete action with a one-element array, e.g.
+    `deleteAccounts([account.id])`) was deleted along with its wiring.
   - `onSync` is only passed on tables that have a sync concept at all
     (Accounts, Transactions — and Transactions' Dashboard-embedded copy,
     `dashboard-transactions-table.tsx`, see `dashboard-conventions`) and
@@ -155,32 +157,32 @@ list page instead of inventing a fresh layout.
      `variant="outline"` `size="icon-sm"`, spinning via
      `className={isSyncing ? "animate-spin" : undefined}` while pending,
      driven by `selected`/`selectedRows` — Pluggy bank sync is genuinely a
-     multi-account bulk operation; "Connect bank" used to be a separate
-     toolbar button here too but is now reachable only via the "+" menu,
-     see the "Accounts' '+' is a menu" bullet below), Descriptions' own
-     `SyncButton` (applies existing `mapped_descriptions` rules to every
-     uncategorized transaction, see `transaction-description-rules`), and
-     — per explicit user request — that same `SyncButton` component
-     (`descriptions/sync-button.tsx`, imported directly, not a copy)
-     reused verbatim on Transactions too, right after the "+"/count slot.
-     See below for how this coexists with the per-row Sync that was
-     already there.
+     multi-account bulk operation), and Descriptions' own `SyncButton`
+     (applies existing `mapped_descriptions` rules to every uncategorized
+     transaction, see `transaction-description-rules`), reused verbatim on
+     Transactions too, right after the "+"/count slot — see below for how
+     this coexists with the per-row Sync that was already there.
+     **Why no separate "Connect bank" button here:** it used to be a
+     separate toolbar button but is now reachable only via the "+" menu,
+     see the "Accounts' '+' is a menu" bullet below. The `SyncButton` reuse
+     on Transactions was per explicit user request.
   3. **"Delete" last, and only rendered at all when `selected.size > 0` —
      this is the *only* place a row can be deleted from anywhere in the
-     app**, per explicit user request (the per-row menu's own Delete item
-     was removed for exactly this reason — see the `RowActionsMenu` bullet
-     above). `{selected.size > 0 && <Button ...>Trash2Icon</Button>}`, no
+     app.** `{selected.size > 0 && <Button ...>Trash2Icon</Button>}`, no
      wrapping wrapper needed since it's a single conditional child alongside
      its left-group siblings. Not just disabled while nothing's selected,
      the button doesn't exist in the DOM until there's a selection, so
      there's nothing to accidentally click. Stays `Trash2Icon`,
      `variant="ghost"` `size="icon-sm"`, no red fill/destructive styling;
-     `disabled` now only guards the
-     in-flight-mutation case (`isDeleting`, plus whatever other transition
-     that table's toolbar already tracks — e.g. Accounts' `isSyncing`)
-     since the `selected.size === 0` guard is redundant once the button
-     only mounts when there's a selection. Confirms via `window.confirm(...)`
-     before calling the bulk delete action, same as always.
+     `disabled` now only guards the in-flight-mutation case (`isDeleting`,
+     plus whatever other transition that table's toolbar already tracks —
+     e.g. Accounts' `isSyncing`) since the `selected.size === 0` guard is
+     redundant once the button only mounts when there's a selection.
+     Confirms via `window.confirm(...)` before calling the bulk delete
+     action, same as always.
+     **Why:** per explicit user request — the per-row menu's own Delete
+     item was removed for exactly this reason, see the `RowActionsMenu`
+     bullet above.
   **Transactions has two different "Sync" affordances now, doing two
   different things — don't conflate them.** The per-row `RowActionsMenu`'s
   `onSync` item (on both `transactions-table.tsx` and its
@@ -192,13 +194,14 @@ list page instead of inventing a fresh layout.
   `SyncButton` (see above) instead just *applies the existing rule set* —
   `syncMappedDescriptions()`, no new rule created — to every uncategorized
   transaction in the whole account, not scoped to the visible month or any
-  selection; this is the same button/behavior Descriptions' own page
-  already has, reused here per explicit user request after a stretch of
-  this toolbar deliberately *not* having a bulk Sync (the removal
+  selection. Don't merge the two or remove either without checking first;
+  they're both still doing distinct, real work.
+  **Why both exist:** this is the same button/behavior Descriptions' own
+  page already has, reused here per explicit user request after a stretch
+  of this toolbar deliberately *not* having a bulk Sync (the removal
   reasoning — "inherently per-transaction, the per-row menu already covers
   it" — no longer holds now that there's a genuinely bulk, no-selection-
-  needed sync operation to expose). Don't merge the two or remove either
-  without checking first; they're both still doing distinct, real work.
+  needed sync operation to expose).
   There is no "Edit" button in the toolbar
   anywhere — it's redundant now that every row has its own Edit via the "⋮"
   menu. Icon-only toolbar buttons need `aria-label` *and* `title` set to
@@ -247,13 +250,15 @@ list page instead of inventing a fresh layout.
   (`src/components/sortable-table-head.tsx`, `align` is `"left" | "right" |
   "center"`) defaults `align` to `"center"` — a column omits `align`
   entirely in `COLUMNS` unless it needs to deviate from that (nothing
-  currently does; there used to be per-column `align: "center"` overrides
-  before centering became the default, most of which are now redundant but
-  harmless). This is a *header-only* setting — it doesn't touch the body
+  currently does). This is a *header-only* setting — it doesn't touch the body
   cell's own alignment, which is controlled independently by that column's
   `cellClassName` (e.g. Transactions' `amount` and Accounts' `balance` have
   a centered header but keep `cellClassName: "text-right"` on the cell, so
   the numbers themselves still right-align under a centered title).
+  **Why some `COLUMNS` entries still set `align: "center"` explicitly:**
+  there used to be per-column overrides before centering became the
+  default — most are now redundant but harmless, no need to strip them out
+  proactively.
 - **Sorting**: still via the shared `SortableTableHead` component. Each
   page keeps its own `sort.ts` exporting `SORT_KEYS as
   const`, `SortKey`, and `isSortKey`, imported by both `page.tsx` (to parse
@@ -281,8 +286,7 @@ list page instead of inventing a fresh layout.
   `DialogTrigger` renders `<Button variant="ghost" size="icon"
   aria-label="Add account" title="Add account"><PlusIcon /></Button>`
   instead of a filled button reading "Add account". `ghost` (no background
-  fill) is the standard for every "+" trigger across the app — Accounts set
-  the precedent, the rest were brought in line with it. Always pair the icon
+  fill) is the standard for every "+" trigger across the app. Always pair the icon
   with `aria-label` *and* `title` set to the same descriptive text ("Add
   account", "Add category", ...) — the icon alone doesn't convey which row
   type it adds, and dropping the label removes the only other cue, so both
@@ -290,36 +294,39 @@ list page instead of inventing a fresh layout.
   component itself is rendered from inside the `<X>Table` client component's
   toolbar button group, not from the server `page.tsx` header — `page.tsx`
   keeps only the `<h1>` and any page-level, non-row controls (Transactions'
-  month nav — Descriptions' `SyncButton` used to live in `page.tsx` too but
-  now renders inside the table's own toolbar, see below). Classes and
+  month nav). Classes and
   Descriptions render their `Add*Dialog` unconditionally inside the table
   (safe because `page.tsx` only mounts the table when categories exist);
   Transactions swaps its "+" for a "Create an account first" link button
   when `accounts.length === 0`, using the same `accounts` prop the table
   already receives.
-- **Accounts' "+" is a menu, not a plain dialog trigger** —
-  `AddAccountMenu` (`src/app/accounts/add-account-menu.tsx`) replaces what
-  used to be two separate toolbar entries (a standalone `AddAccountDialog`
-  and a standalone "Connect bank" `ConnectBankButton`, both now deleted).
-  Same `<Button variant="ghost" size="icon" aria-label="Add account"
+  **Why:** Accounts set the `ghost`-variant "+" precedent, the rest were
+  brought in line with it. Descriptions' `SyncButton` used to live in
+  `page.tsx` too but now renders inside the table's own toolbar (see
+  above).
+- **Accounts' "+" is a menu, not a plain dialog trigger**: `AddAccountMenu`
+  (`src/app/accounts/add-account-menu.tsx`). Same `<Button variant="ghost"
+  size="icon" aria-label="Add account"
   title="Add account"><PlusIcon /></Button>` trigger, but it opens a
   `DropdownMenu` (same primitives as `RowActionsMenu`) with two items:
   "Manually" (`PencilIcon`, sets local `manualOpen` state true, which opens
-  the same plain-`Dialog` manual-entry form the old `AddAccountDialog`
-  used to own — unchanged fields/behavior, just relocated) and "Connect"
-  (`PlugZapIcon`, calls the same Pluggy-connect flow the old
-  `ConnectBankButton` used to own — fetch a connect token via
-  `getPluggyConnectToken`, then render the dynamically-imported
-  `PluggyConnect` modal once the token resolves). `AddAccountMenu` takes
-  the same `onError`/`onConnected` callback props `ConnectBankButton` used
-  to take — `AccountsTable` still wires `onError={setActionError}` and
+  a plain-`Dialog` manual-entry form) and "Connect" (`PlugZapIcon`, fetches
+  a connect token via `getPluggyConnectToken`, then renders the
+  dynamically-imported `PluggyConnect` modal once the token resolves).
+  `AddAccountMenu` takes `onError`/`onConnected` callback props —
+  `AccountsTable` wires `onError={setActionError}` and
   `onConnected={() => router.refresh()}` — so a failure from either path
   (manual validation is separate, this is specifically the Pluggy-connect
   error path) surfaces through the same shared `actionError` paragraph as
-  Edit/Delete/Sync. There is no more standalone "Connect bank" toolbar
+  Edit/Delete/Sync. There is no standalone "Connect bank" toolbar
   button on any table — don't reintroduce one; the bulk "Sync" button
   (for already-connected accounts) is the only Pluggy-specific button left
   in the toolbar's left group, right after "+".
+  **Why:** `AddAccountMenu` replaces what used to be two separate toolbar
+  entries — a standalone `AddAccountDialog` and a standalone "Connect
+  bank" `ConnectBankButton`, both now deleted; the "Manually"/"Connect"
+  items own the same fields/behavior and callback props those two
+  components used to, just relocated into one menu.
 - **Edit/Add dialogs**: `Label` + `Input`/`Select` fields per `@/components/ui`.
   Add dialogs (still a standalone `DialogTrigger`-wrapped `Dialog`, e.g.
   `AddAccountDialog`) keep their own local `error` state, shown as
@@ -335,18 +342,19 @@ list page instead of inventing a fresh layout.
   (`src/lib/category-icons.ts`), a curated set of `lucide-react` icons picked
   to fit common finance categories (groceries, transport, salary, etc.),
   with `"tag"` as both the last palette entry and the fallback for an
-  unrecognized/missing key. Categories used to carry a `color` field instead
-  — that column was dropped (see
-  `supabase/migrations/0015_categories_icon.sql`, which also re-seeds the
-  on-signup default categories with fitting icons) and nothing should
-  reintroduce per-category color. Render the icon with the shared
+  unrecognized/missing key. Nothing should reintroduce per-category color.
+  Render the icon with the shared
   `<CategoryIcon icon={category.icon} className="..." />`
   (`src/components/category-icon.tsx`) rather than looking up
   `CATEGORY_ICON_MAP` directly, so the fallback stays centralized. Add/Edit
   Category dialogs let the user pick one via `<IconSwatchPicker name="icon"
-  value={icon} onChange={setIcon} />` (`src/components/icon-swatch-picker.tsx`),
-  the same swap-a-button-grid pattern the old `ColorSwatchPicker` used.
-  **Category-as-foreign-column is icon-only, no name, no `Badge`, and
+  value={icon} onChange={setIcon} />` (`src/components/icon-swatch-picker.tsx`).
+  **Why:** categories used to carry a `color` field instead — that column
+  was dropped (see `supabase/migrations/0015_categories_icon.sql`, which
+  also re-seeds the on-signup default categories with fitting icons); the
+  icon picker uses the same swap-a-button-grid pattern the old
+  `ColorSwatchPicker` used.
+- **Category-as-foreign-column is icon-only, no name, no `Badge`, and
   center-aligned.** Classes', Descriptions', and Transactions' `renderCell`
   "category" case each render `<span title={category.name}
   className="inline-flex"><CategoryIcon icon={category.icon}
@@ -357,16 +365,17 @@ list page instead of inventing a fresh layout.
   `align={column.align}` through to `SortableTableHead` — Classes and
   Descriptions didn't wire that prop through at all until this column
   needed it) so the icon sits centered under the header rather than
-  left-aligned like a text column. **The wrapping span's `inline-flex` is
-  load-bearing, not decorative**: Tailwind's preflight sets `svg { display:
-  block }`, so a bare `<CategoryIcon>` is a block box and `text-align:
-  center` on the `<td>` (which only affects inline-level content) has no
-  effect on it — the icon stays pinned left regardless of `cellClassName`.
-  Wrapping it in an `inline-flex` span makes the *span* the inline box that
-  `text-align: center` positions, while the icon lays out fine inside as a
-  flex item. Don't drop that wrapper or swap it for a plain `<span>` when
-  touching this cell. (The column's *header*, above this cell, is a
-  separate icon-only `TagIcon` via `headerIcon`/`ColumnHeaderIcon` — see the
+  left-aligned like a text column.
+  **Why the wrapping `<span className="inline-flex">` is load-bearing, not
+  decorative**: Tailwind's preflight sets `svg { display: block }`, so a
+  bare `<CategoryIcon>` is a block box and `text-align: center` on the
+  `<td>` (which only affects inline-level content) has no effect on it —
+  the icon stays pinned left regardless of `cellClassName`. Wrapping it in
+  an `inline-flex` span makes the *span* the inline box that `text-align:
+  center` positions, while the icon lays out fine inside as a flex item.
+  Don't drop that wrapper or swap it for a plain `<span>` when touching
+  this cell. (The column's *header*, above this cell, is a separate
+  icon-only `TagIcon` via `headerIcon`/`ColumnHeaderIcon` — see the
   "Column header icons" bullet above; don't conflate the two, the header
   icon is generic/per-column and the cell icon is per-row/per-category.)
   This is different from the
@@ -377,13 +386,14 @@ list page instead of inventing a fresh layout.
   reference to it. Transactions' Account and Class columns (which have no
   icon of their own) instead use a `Badge` (`variant="secondary"
   className="max-w-full gap-1 truncate"`, no leading icon) — see
-  `transactions-column-formatting`. (The Dashboard used to have three
-  category-breakdown bar charts that needed a real fill color per bar
-  instead of an icon — `sequentialColor()`, `src/lib/chart-colors.ts` —
-  but all were removed per explicit user request; see
-  `dashboard-conventions`'s "removed charts" history and
+  `transactions-column-formatting`.
+  **Why there's no fill-color version any more:** the Dashboard used to
+  have three category-breakdown bar charts that needed a real fill color
+  per bar instead of an icon — `sequentialColor()`,
+  `src/lib/chart-colors.ts` — but all were removed per explicit user
+  request; see `dashboard-conventions`'s "removed charts" history and
   `amount-color-conventions` for what's left of the Dashboard's own
-  red/green/gray usage now that they're gone.)
+  red/green/gray usage now that they're gone.
 - **Mutations**: bulk actions take an array (`deleteAccounts(ids: string[])`,
   `deleteMappedDescriptions(descriptions: string[])`, etc.) and delete/update
   via `.in(...)`, guarded by `.eq("user_id", user.id)` like every other

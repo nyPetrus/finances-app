@@ -16,12 +16,13 @@ These are presentation choices specific to `transactions-table.tsx`'s
   no-symbol style (its own local `formatCurrency` copy), and so does the
   Dashboard's embedded transactions table (see `dashboard-conventions`)
   and its monthly breakdown table (see `dashboard-monthly-table`, which
-  additionally rounds to 0 decimals) — the `R$` symbol used to be reserved
-  for the Dashboard's 6 stat cards specifically, but those were removed
-  (see `dashboard-conventions`'s "removed-cards" history) and nothing on
-  the Dashboard shows `R$` any more. Budget's planned/actual/variance and
+  additionally rounds to 0 decimals). Budget's planned/actual/variance and
   the month header still keep their own `formatCurrency` copy with
   currency style and the `R$` symbol — don't change those unless asked.
+  **Why:** the `R$` symbol used to be reserved for the Dashboard's 6 stat
+  cards specifically, but those were removed (see `dashboard-conventions`'s
+  "removed-cards" history) and nothing on the Dashboard shows `R$` any
+  more now.
 - **Date abbreviates the month, uses a 2-digit year, and never wraps**:
   `formatDate` renders `DD mmm YY` (e.g. `11 set 26`) via a local
   `MONTH_ABBREVIATIONS` array (`["jan", "fev", ..., "dez"]`, no periods),
@@ -29,15 +30,16 @@ These are presentation choices specific to `transactions-table.tsx`'s
   transaction's date string (year sliced to its last 2 digits). This is
   the same format on the Dashboard's embedded table
   (`dashboard-transactions-table.tsx` — a separate copy, kept in sync by
-  hand, see `dashboard-conventions`), by explicit user request; it used to
-  drop the year entirely there since the month/year is already shown in
-  the page header above the Transactions table (`formatMonthLabel` in
-  `transactions/page.tsx`) — that reasoning no longer applies now that the
-  year prints inline. The Date column also sets `cellClassName:
-  "whitespace-nowrap"` in `COLUMNS` — needed because the shared
-  `TableCell` wraps by default (see `table-page-conventions`), and `DD mmm
-  YY` has spaces that would otherwise let it break across lines in a
-  narrow column.
+  hand, see `dashboard-conventions`). The Date column also sets
+  `cellClassName: "whitespace-nowrap"` in `COLUMNS` — needed because the
+  shared `TableCell` wraps by default (see `table-page-conventions`), and
+  `DD mmm YY` has spaces that would otherwise let it break across lines in
+  a narrow column.
+  **Why:** the 2-digit year is shown by explicit user request; the
+  Dashboard's copy used to drop the year entirely there since the
+  month/year is already shown in the page header above the Transactions
+  table (`formatMonthLabel` in `transactions/page.tsx`) — that reasoning
+  no longer applies now that the year prints inline everywhere.
 - **Account and Class render as a `Badge` chip**
   (`variant="secondary" className="max-w-full gap-1 truncate"`), instead
   of plain text. Unlike Category (which is icon-only, no `Badge` — see

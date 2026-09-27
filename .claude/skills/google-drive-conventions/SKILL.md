@@ -19,42 +19,44 @@ subfolders, an "Update accounts folders" bulk button, or any bank format
 besides Contabilizei Bank's CSV.
 
 - **Every Drive read is a user-initiated click, never a background/cron
-  job — this was an explicit, deliberate design decision, not a
-  simplification to fix later.** It directly shapes the OAuth setup: an
-  unverified Google app (see below) can have its refresh tokens expire:
+  job.** Don't add a Vercel Cron / webhook-based trigger for this without
+  revisiting the tradeoff below first — it changes the risk profile of the
+  OAuth scope/verification choice.
+  **Why:** this was an explicit, deliberate design decision, not a
+  simplification to fix later. It directly shapes the OAuth setup: an
+  unverified Google app (see below) can have its refresh tokens expire —
   with an unattended background job, that's a silent failure nobody
   notices; with a button click, an expired token just means the next click
   surfaces a "reconnect" state, the same self-healing shape Pluggy's own
-  "Connect" flow already has. Don't add a Vercel Cron / webhook-based
-  trigger for this without revisiting that tradeoff first — it changes the
-  risk profile of the OAuth scope/verification choice below.
+  "Connect" flow already has.
 - **OAuth scope is `drive.readonly` (+ `userinfo.email`), not
-  `drive.file`.** `drive.file` is Google's "non-sensitive" scope (no
-  verification review needed) but only grants access to files/folders the
-  app itself created or that the user explicitly grants through Google's
-  Picker UI — since the user creates these folders themselves in their own
-  Drive (not through this app), `drive.file` would need a Picker
-  integration to grant folder access. `drive.readonly` is simpler (any
-  folder id/link just works, no Picker) at the cost of being a "sensitive"
-  scope, which is why the app has to stay in Google Cloud Console's
-  "Testing" publishing status with the user's own account listed as a test
-  user rather than going through full verification — acceptable for a
-  single-user personal app, and consistent with the "every read is a
-  manual click" design above making token expiry low-stakes. Revisit this
-  choice (probably switching to `drive.file` + Picker) only if re-auth
-  friction actually becomes annoying in practice, not preemptively.
+  `drive.file`.** Revisit this choice (probably switching to `drive.file`
+  + Picker) only if re-auth friction actually becomes annoying in
+  practice, not preemptively.
+  **Why:** `drive.file` is Google's "non-sensitive" scope (no verification
+  review needed) but only grants access to files/folders the app itself
+  created or that the user explicitly grants through Google's Picker UI —
+  since the user creates these folders themselves in their own Drive (not
+  through this app), `drive.file` would need a Picker integration to grant
+  folder access. `drive.readonly` is simpler (any folder id/link just
+  works, no Picker) at the cost of being a "sensitive" scope, which is why
+  the app has to stay in Google Cloud Console's "Testing" publishing
+  status with the user's own account listed as a test user rather than
+  going through full verification — acceptable for a single-user personal
+  app, and consistent with the "every read is a manual click" design above
+  making token expiry low-stakes.
 - **The OAuth client lives entirely in `src/lib/google-drive/client.ts`,
   raw `fetch` calls against Google's REST endpoints — no `googleapis`
-  npm package.** That package pulls in the entire Google API surface for
-  what's here three endpoints (token exchange, token refresh, list files)
-  plus a userinfo call; matches this app's existing preference for a
-  narrow, hand-rolled client over a heavy SDK for a small surface (compare
+  npm package.** `client.ts` is `import "server-only"` and knows nothing
+  about Supabase — it's a pure API client, same separation `pluggyClient`
+  keeps from `pluggy-actions.ts`'s DB/business-logic layer.
+  **Why:** that package pulls in the entire Google API surface for what's
+  here three endpoints (token exchange, token refresh, list files) plus a
+  userinfo call; matches this app's existing preference for a narrow,
+  hand-rolled client over a heavy SDK for a small surface (compare
   `src/lib/pluggy/client.ts`, which *does* use `pluggy-sdk` — that one's
   justified because Pluggy's own SDK is the primary, actively-used
-  integration with much more surface area). `client.ts` is `import
-  "server-only"` and knows nothing about Supabase — it's a pure API
-  client, same separation `pluggyClient` keeps from `pluggy-actions.ts`'s
-  DB/business-logic layer.
+  integration with much more surface area).
 - **Token storage/refresh**: one row per user in `google_drive_tokens`
   (`user_id` primary key, `refresh_token`, `access_token`,
   `access_token_expires_at`, `google_email`) — RLS-owned like every other
@@ -81,26 +83,27 @@ besides Contabilizei Bank's CSV.
   from Google after changing where the app is hosted, check that console
   config first, not this code.
 - **Disconnecting best-effort-revokes the token with Google
-  (`revokeGoogleToken`, swallows any error) before deleting the DB row** —
-  a revoke failure shouldn't block the user from clearing their own stored
-  credential; the DB delete is the part that actually matters locally.
+  (`revokeGoogleToken`, swallows any error) before deleting the DB row.**
+  **Why:** a revoke failure shouldn't block the user from clearing their
+  own stored credential; the DB delete is the part that actually matters
+  locally.
 - **The connection-status read in `accounts/page.tsx` never throws on
-  error, only checks `.data`** — deliberately, so that before the
-  `0016_google_drive_tokens.sql` migration has been run (a manual
-  Supabase SQL Editor step, see `CLAUDE.md`), the query's resulting
-  "relation does not exist" error just reads as "not connected" instead
-  of crashing the whole Accounts page. Don't tighten this to `if (error)
-  throw` the way most other queries on that page do — this one specifically
+  error, only checks `.data`.** Don't tighten this to `if (error) throw`
+  the way most other queries on that page do — this one specifically
   needs to degrade gracefully since, unlike most migrations, this table is
   read by a page that already existed and worked before this feature
   shipped.
+  **Why:** deliberately, so that before the `0016_google_drive_tokens.sql`
+  migration has been run (a manual Supabase SQL Editor step, see
+  `CLAUDE.md`), the query's resulting "relation does not exist" error just
+  reads as "not connected" instead of crashing the whole Accounts page.
 - **UI lives in `accounts/google-drive-panel.tsx`**, a card above
   `AccountsTable` on the Accounts page — not wired into any specific
-  account row. Shows
-  connect/disconnect plus, once connected, a free-text folder link/ID
-  input and a "List files" button that calls `listGoogleDriveFolderFiles()`
-  and renders `{name, modifiedTime}` for each result. `extractDriveFolderId()`
-  (`client.ts`) accepts either a bare folder id or a full
+  account row. Shows connect/disconnect plus, once connected, a free-text
+  folder link/ID input and a "List files" button that calls
+  `listGoogleDriveFolderFiles()` and renders `{name, modifiedTime}` for
+  each result. `extractDriveFolderId()` (`client.ts`) accepts either a
+  bare folder id or a full
   `https://drive.google.com/drive/folders/<id>` link, since that's what a
   user actually copies from their browser.
 - **Statement CSV import pipeline (shared by disk upload and Drive).**
