@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { syncMappedDescriptions } from "@/app/descriptions/actions";
 import { isGordura } from "@/lib/classification";
+import type { Gordura } from "@/lib/supabase/types";
 
 function combineDateAndTime(dateInput: string, timeInput: string) {
   return `${dateInput}T${timeInput || "00:00"}:00`;
@@ -130,6 +131,47 @@ export async function syncDescriptionsFromTransactions(transactionIds: string[])
   if (upsertError) throw new Error(upsertError.message);
 
   return syncMappedDescriptions();
+}
+
+// Batch-edits category/class/gordura across many transactions at once — the
+// Search page's selection toolbar ("Edit" button). Each field is applied
+// only when the caller includes its key at all: an omitted key leaves every
+// selected transaction's existing value alone, while an included key
+// (even `null`, for "clear category"/"clear class"/"clear gordura
+// override") overwrites it on every one of them. This mirrors
+// updateTransaction's own `formData.has("gordura")` presence check for the
+// same "did the user actually touch this field" distinction, just across
+// three fields and many rows instead of one.
+export type BulkClassificationUpdate = {
+  category_id?: string | null;
+  class_id?: string | null;
+  gordura?: Gordura | null;
+};
+
+export async function bulkUpdateClassification(ids: string[], updates: BulkClassificationUpdate) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  if (ids.length === 0) return;
+
+  const patch: Partial<Record<"category_id" | "class_id" | "gordura", string | null>> = {};
+  if ("category_id" in updates) patch.category_id = updates.category_id ?? null;
+  if ("class_id" in updates) patch.class_id = updates.class_id ?? null;
+  if ("gordura" in updates) patch.gordura = updates.gordura ?? null;
+
+  if (Object.keys(patch).length === 0) return;
+
+  const { error } = await supabase.from("transactions").update(patch).in("id", ids).eq("user_id", user.id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/transactions");
+  revalidatePath("/search");
+  revalidatePath("/budget");
+  revalidatePath("/");
 }
 
 export async function deleteTransactions(ids: string[]) {

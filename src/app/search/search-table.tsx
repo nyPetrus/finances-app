@@ -4,7 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { LandmarkIcon, TagIcon, TagsIcon, Trash2Icon, type LucideIcon } from "lucide-react";
+import { LandmarkIcon, PencilIcon, TagIcon, TagsIcon, Trash2Icon, type LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -48,6 +48,7 @@ import {
 } from "../transactions/actions";
 import { AddTransactionDialog } from "../transactions/add-transaction-dialog";
 import { AddMappingDialog } from "../descriptions/add-mapping-dialog";
+import { BulkEditDialog } from "./bulk-edit-dialog";
 import { type SortKey } from "./sort";
 
 function formatCurrency(value: number) {
@@ -123,6 +124,7 @@ export function SearchTable({
   const [editClassId, setEditClassId] = useState<string | null>(null);
   const [editGordura, setEditGordura] = useState<Gordura | null>(null);
   const [mappingPrefill, setMappingPrefill] = useState<string | null>(null);
+  const [bulkEditOpen, setBulkEditOpen] = useState(false);
   const editFormRef = useRef<HTMLFormElement>(null);
   const { hidden: hiddenColumns, order: columnOrder, toggle: toggleColumn, move: moveColumn } =
     useColumnPreferences<SortKey>("search-table", DEFAULT_COLUMN_ORDER);
@@ -282,6 +284,17 @@ export function SearchTable({
           ) : (
             <Button size="sm" render={<Link href="/accounts" />}>
               Create an account first
+            </Button>
+          )}
+          {selected.size > 0 && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => setBulkEditOpen(true)}
+              aria-label="Edit selected"
+              title="Edit selected"
+            >
+              <PencilIcon />
             </Button>
           )}
           {selected.size > 0 && (
@@ -484,6 +497,15 @@ export function SearchTable({
           showTrigger={false}
         />
       )}
+
+      <BulkEditDialog
+        open={bulkEditOpen}
+        onOpenChange={setBulkEditOpen}
+        transactionIds={Array.from(selected)}
+        categories={categories}
+        classes={classes}
+        onSaved={clearSelection}
+      />
     </div>
   );
 }

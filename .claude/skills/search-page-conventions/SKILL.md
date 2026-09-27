@@ -1,6 +1,6 @@
 ---
 name: search-page-conventions
-description: Use when touching the Search page (src/app/search/ — page.tsx, search-form.tsx, search-table.tsx, filters.ts, sort.ts) — its 7 optional filters (Account/Category/Class/Gordura as checkbox multi-selects, Description/Date/Amount as operator+value controls), how filter state round-trips through the URL, the Supabase query-building/paging behind "Apply", or its results table (a near-copy of TransactionsTable). Not part of the shared table-page-conventions architecture (this page doesn't own/create rows the way a canonical list page does), though its results table borrows heavily from it.
+description: Use when touching the Search page (src/app/search/ — page.tsx, search-form.tsx, search-table.tsx, filters.ts, sort.ts, bulk-edit-dialog.tsx) — its 7 optional filters (Account/Category/Class/Gordura as checkbox multi-selects, Description/Date/Amount as operator+value controls), how filter state round-trips through the URL, the Supabase query-building/paging behind "Apply", its results table (a near-copy of TransactionsTable), or the Search-only batch Category/Class/Gordura editor on selected rows. Not part of the shared table-page-conventions architecture (this page doesn't own/create rows the way a canonical list page does), though its results table borrows heavily from it.
 ---
 
 # Search page conventions
@@ -147,10 +147,36 @@ then clicking "Apply". Added per explicit user request.
   just one page-level param like `month`. When a `TransactionsTable`
   feature is added, check whether it belongs here too, same as the
   Dashboard's copy.
+- **Batch-editing selected transactions' Category/Class/Gordura is a
+  Search-only feature**, per explicit user request — not added to
+  `TransactionsTable` or the Dashboard's embedded table, unlike most of
+  this table's other functionality (see the previous bullet). The "Edit
+  selected" `PencilIcon` button in the toolbar (next to Delete, same
+  `selected.size > 0` visibility) opens `BulkEditDialog`
+  (`search/bulk-edit-dialog.tsx`), which posts to `bulkUpdateClassification`
+  in `transactions/actions.ts`. **Each of the three fields defaults to "No
+  change" and is a real, separately-selectable option** (not implied by
+  leaving a `Select` untouched) — `bulkUpdateClassification(ids, updates)`
+  only writes a field when its key is present in `updates` at all (`"key"
+  in updates`, the same presence-check `updateTransaction` already uses for
+  `gordura`), so choosing only Gordura doesn't force a Category/Class onto
+  every selected row. "No change" is therefore distinct from a `CLEAR`
+  sentinel (`"Uncategorized"` / `"No class"` / `"Class default"`), which
+  *does* get sent — as an explicit `null` — to blank out that field on
+  every selected transaction. Picking a specific Category narrows the Class
+  options to `pickableClasses(classes, categoryValue, null)` (same picker
+  rule the single-transaction edit dialog uses) and drops a now-invalid
+  Class selection back to "No change"; with Category left on "No
+  change"/"Uncategorized" instead, Class offers every active class
+  unfiltered, since there's no single category to narrow by. Like
+  `deleteTransactions`, it revalidates `/transactions`, `/search`,
+  `/budget`, and `/` (category/class changes affect Budget and Dashboard
+  too), and the dialog clears the row selection on success
+  (`onSaved={clearSelection}`).
 - **Mutations from this table's row actions
-  (`deleteTransactions`/`updateTransaction`/`syncDescriptionsFromTransactions`,
-  all reused from `transactions/actions.ts` — no `search/actions.ts`
-  exists) also `revalidatePath("/search")`**, alongside their existing
+  (`deleteTransactions`/`updateTransaction`/`syncDescriptionsFromTransactions`/
+  `bulkUpdateClassification`, all reused from `transactions/actions.ts` — no
+  `search/actions.ts` exists) also `revalidatePath("/search")`**, alongside their existing
   `revalidatePath("/transactions")` calls — and so does every other action
   anywhere in the app that already revalidates `/transactions`
   (`accounts/actions.ts`, `accounts/pluggy-actions.ts`,
