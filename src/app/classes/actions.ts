@@ -5,6 +5,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { deleteIfUnused, type DeleteResult } from "@/lib/supabase/delete-if-unused";
 import { isGordura } from "@/lib/classification";
+import type { Gordura } from "@/lib/supabase/types";
 
 // Errors are returned as values rather than thrown: Next.js hides thrown
 // server-action messages in production.
@@ -76,6 +77,15 @@ export async function updateClass(formData: FormData): Promise<ClassActionResult
   const { name, categoryIds, defaultGordura } = parseClassForm(formData);
   if (!name) return { error: "Name is required." };
 
+  const { data: existing, error: existingError } = await supabase
+    .from("classes")
+    .select("default_gordura")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .single();
+  if (existingError) return { error: existingError.message };
+  const previousGordura = existing.default_gordura as Gordura | null;
+
   const { error } = await supabase
     .from("classes")
     .update({ name, default_gordura: defaultGordura })
@@ -83,6 +93,28 @@ export async function updateClass(formData: FormData): Promise<ClassActionResult
     .eq("user_id", user.id);
 
   if (error) return { error: friendlyError(error.message, error.code) };
+
+  // Changing a class's default gordura must not retroactively change what
+  // an already-existing transaction shows (see effectiveGordura, which
+  // falls back to this default only when the transaction has no gordura of
+  // its own) — only a transaction assigned to this class from now on
+  // should pick up the new default. Freeze every transaction currently
+  // relying on the *old* default by writing it directly onto their own
+  // `gordura` column before it stops being current. (If there was no old
+  // default to freeze — `previousGordura` null — there's nothing to write:
+  // a transaction with no gordura column value and no default to inherit
+  // already reads as "Sem gordura" either way, so it isn't retroactively
+  // changed to a real value here; it starts picking up the new default
+  // like any other still-uncategorized-for-gordura transaction would.)
+  if (previousGordura && previousGordura !== defaultGordura) {
+    const { error: freezeError } = await supabase
+      .from("transactions")
+      .update({ gordura: previousGordura })
+      .eq("class_id", id)
+      .eq("user_id", user.id)
+      .is("gordura", null);
+    if (freezeError) return { error: freezeError.message };
+  }
 
   const { data: links, error: linksError } = await supabase
     .from("category_classes")
