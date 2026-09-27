@@ -118,7 +118,10 @@ function TreeRows({
                     <CategoryIcon icon={row.icon} className="size-3.5 shrink-0 text-muted-foreground" />
                   )}
                   {row.symbol && (
-                    <span className="inline-flex w-3.5 shrink-0 justify-center text-muted-foreground" aria-hidden="true">
+                    <span
+                      className="inline-flex w-4 shrink-0 justify-center text-base font-bold text-muted-foreground"
+                      aria-hidden="true"
+                    >
                       {row.symbol}
                     </span>
                   )}
