@@ -1,7 +1,6 @@
 "use client";
 
 import { Fragment, useState } from "react";
-import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 import { CategoryIcon } from "@/components/category-icon";
 import { cn } from "@/lib/utils";
 import type { MonthlyRow, MonthlySelection } from "./dashboard-monthly-breakdown";
@@ -102,7 +101,10 @@ function TreeRows({
               )}
             >
               <td
-                onClick={() => onSelect(rowSelection)}
+                onClick={() => {
+                  if (hasChildren) onToggle(row.key);
+                  onSelect(rowSelection);
+                }}
                 className={cn(
                   "sticky left-0 z-10 max-w-56 cursor-pointer overflow-hidden border-r px-2 py-2 hover:brightness-95",
                   rowBg ?? "bg-background",
@@ -114,21 +116,6 @@ function TreeRows({
                   style={{ paddingLeft: `${depth * 1.25}rem` }}
                   title={hasIcon ? row.label : undefined}
                 >
-                  {hasChildren ? (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onToggle(row.key);
-                      }}
-                      aria-label={isExpanded ? `Collapse ${row.label}` : `Expand ${row.label}`}
-                      className="flex size-4 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
-                    >
-                      {isExpanded ? <ChevronDownIcon className="size-3" /> : <ChevronRightIcon className="size-3" />}
-                    </button>
-                  ) : (
-                    <span className="inline-block size-4 shrink-0" />
-                  )}
                   {row.icon && (
                     <CategoryIcon icon={row.icon} className="size-3.5 shrink-0 text-muted-foreground" />
                   )}

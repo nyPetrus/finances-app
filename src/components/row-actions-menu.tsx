@@ -63,7 +63,7 @@ export function RowActionsMenu({
         {onImport && (
           <DropdownMenuItem onClick={onImport}>
             <UploadIcon />
-            Import transactions
+            Import
           </DropdownMenuItem>
         )}
         {onToggleActive && (

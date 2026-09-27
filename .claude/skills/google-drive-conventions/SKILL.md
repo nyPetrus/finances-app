@@ -8,7 +8,8 @@ description: Use when touching Google Drive integration (src/lib/google-drive/cl
 **Status: the Drive UI is parked.** The Google Drive card was removed from
 the Accounts page (`GoogleDrivePanel` in `google-drive-panel.tsx` still
 exists but nothing renders it) in favor of a simpler flow: a manual
-account's row "⋮" menu has **Import transactions**, which uploads the
+account's row "⋮" menu has **Import** (menu label; the dialog it opens is
+still titled "Import transactions"), which uploads the
 bank's CSV straight from disk (`import-transactions-dialog.tsx` →
 `importTransactionsFromFiles` in `import-actions.ts`) — no OAuth, no Google
 Cloud setup. The Drive code below (connect, token storage, folder listing,

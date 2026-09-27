@@ -1,6 +1,6 @@
 ---
 name: dashboard-monthly-table
-description: Use when touching the Dashboard's monthly breakdown tree table (dashboard-monthly-breakdown.ts + dashboard-monthly-table.tsx) — what the user calls "the dynamic table," since its rows dynamically expand/collapse (not the embedded click-to-filter transactions table, which only appears/disappears wholesale — see dashboard-conventions for that one). Covers the Type level (static) plus the configurable Gordura/Category/Class levels (the "Levels" menu — include/exclude and reorder), the footer Total row, column auto-sizing, decimal rounding, zero-value empty cells, row color, the expand/collapse chevrons, and the sticky/frozen header row, footer row, label column, and Total column.
+description: Use when touching the Dashboard's monthly breakdown tree table (dashboard-monthly-breakdown.ts + dashboard-monthly-table.tsx) — what the user calls "the dynamic table," since its rows dynamically expand/collapse (not the embedded click-to-filter transactions table, which only appears/disappears wholesale — see dashboard-conventions for that one). Covers the Type level (static) plus the configurable Gordura/Category/Class levels (the "Levels" menu — include/exclude and reorder), the footer Total row, column auto-sizing, decimal rounding, zero-value empty cells, row color, the click-the-label expand/collapse (no separate toggle button/icon), and the sticky/frozen header row, footer row, label column, and Total column.
 ---
 
 # Dashboard monthly table ("the dynamic table")
@@ -184,25 +184,36 @@ table is meant if it's ever unclear again.
 
 - **Expand state defaults to fully collapsed** (`useState<Set<string>>(new
   Set())` in `MonthlyBreakdownTable`) — only the 3-4 Type rows are visible
-  on first render; a row only shows a toggle button when it actually has
-  children, which naturally happens to whichever level the user has placed
-  last in the "Levels" menu order. `TreeRows` styles off each row's own
-  `row.level` field, not a fixed depth number — depth 0 is always Type,
-  but which classification sits at depth 1/2/3 depends on the configured
-  order, so Gordura rows always get `border-t font-semibold` and Class
-  rows always get `text-[11px]` regardless of where in the tree they land.
-  **The toggle is `ChevronRightIcon`/`ChevronDownIcon` (collapsed/expanded).**
+  on first render; a row only toggles if it actually has children, which
+  naturally happens to whichever level the user has placed last in the
+  "Levels" menu order. `TreeRows` styles off each row's own `row.level`
+  field, not a fixed depth number — depth 0 is always Type, but which
+  classification sits at depth 1/2/3 depends on the configured order, so
+  Gordura rows always get `border-t font-semibold` and Class rows always
+  get `text-[11px]` regardless of where in the tree they land.
   **Why:** "I can see at maximum at class level" was the original explicit
   requirement, back when the level order was fixed and Class was always
   last — it's now just wherever the user puts the last configured level,
-  not hardcoded to Class specifically. The chevron toggle icon used to be
-  `PlusIcon`/`MinusIcon`, deliberately *not* chevrons (to avoid visual
+  not hardcoded to Class specifically.
+
+- **There is no dedicated expand/collapse control any more — clicking the
+  row's label cell (its icon/symbol/name area) both toggles expand/collapse
+  (when the row has children) and fires the row's normal click-to-filter
+  select, in the same click.** The label `<td>`'s `onClick` calls
+  `onToggle(row.key)` first (only when `hasChildren`), then `onSelect(
+  rowSelection)` unconditionally — both fire together, there's no separate
+  hit target for each any more. A row with no children just selects, same
+  as before.
+  **Why:** per explicit user request. This used to be a dedicated
+  `ChevronRightIcon`/`ChevronDownIcon` `<button>` inside the label cell,
+  with `e.stopPropagation()` so toggling a row didn't also change the
+  filter selection — removed once the toggle moved onto the label click
+  itself, since there's no longer a separate element to stop propagation
+  from. (That chevron button itself replaced an even earlier `PlusIcon`/
+  `MinusIcon` pair, chosen at the time specifically to avoid visual
   confusion with `SortableTableHead`'s own chevron-based sort arrows
-  elsewhere in the app), but that was reversed per explicit user request.
-  If sort-arrow confusion ever comes up again as a real complaint, that's
-  the tradeoff being made here — don't silently revert to Plus/Minus
-  without checking with the user first, since it was an explicit ask both
-  times.
+  elsewhere in the app — moot now that there's no icon of any kind here.)
+  Don't reintroduce a separate toggle button/icon without a fresh ask.
 
 - **This table is plain `<table>` markup, `table-layout: auto` (no
   `table-fixed`, no `<colgroup>`)** — columns size to their own content
@@ -266,9 +277,10 @@ table is meant if it's ever unclear again.
   "Accounts" stat card used to cover. Re-clicking the exact same selection
   clears it (`monthlySelectionsEqual` in `dashboard-explorer.tsx`). The
   clicked cell/row/column gets a `ring-2 ring-inset ring-primary`
-  highlight (`SELECTED_CELL` in `dashboard-monthly-table.tsx`) — the
-  expand/collapse chevron button calls `stopPropagation` so toggling a row
-  no longer also changes the filter.
+  highlight (`SELECTED_CELL` in `dashboard-monthly-table.tsx`). Clicking a
+  label cell on a row with children now toggles expand/collapse *and*
+  updates the filter selection together (see the expand/collapse bullet
+  above) — there's no way to do one without the other any more.
   **Why:** this table used to be deliberately unwired from a separate
   stat-card click-to-filter, then got wired in alongside the cards, then
   became the sole driver once the cards were removed (see
