@@ -86,6 +86,20 @@ export function SearchForm({
     setSet(next);
   }
 
+  // Apply/Clear are both meaningless with nothing set — Apply would just
+  // push a bare `/search` (a no-op, see hasAnyFilter's guard in page.tsx)
+  // and Clear would have nothing to clear. Disabled (dimmed via the
+  // Button component's own disabled styling) instead of hidden, so their
+  // layout position stays stable.
+  const hasAnyValue =
+    accountValues.size > 0 ||
+    categoryValues.size > 0 ||
+    classValues.size > 0 ||
+    gorduraValues.size > 0 ||
+    descriptionValue.trim() !== "" ||
+    dateValue !== "" ||
+    amountValue.trim() !== "";
+
   function handleApply() {
     const params = new URLSearchParams();
 
@@ -280,8 +294,10 @@ export function SearchForm({
       </div>
 
       <div className="flex items-center gap-2">
-        <Button onClick={handleApply}>Apply</Button>
-        <Button variant="outline" onClick={handleClear}>
+        <Button onClick={handleApply} disabled={!hasAnyValue}>
+          Apply
+        </Button>
+        <Button variant="outline" onClick={handleClear} disabled={!hasAnyValue}>
           Clear
         </Button>
       </div>

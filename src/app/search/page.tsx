@@ -189,7 +189,7 @@ export default async function SearchPage({
 
       <SearchForm accounts={allAccounts} categories={allCategories} classes={allClasses} filters={filters} />
 
-      {searchActive ? (
+      {searchActive && (
         <SearchTable
           transactions={sortedResults}
           accounts={allAccounts}
@@ -198,10 +198,6 @@ export default async function SearchPage({
           sortKey={sortKey}
           sortDir={sortDir}
         />
-      ) : (
-        <p className="text-sm text-muted-foreground">
-          Set at least one filter above and click Apply to search transactions.
-        </p>
       )}
     </div>
   );

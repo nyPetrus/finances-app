@@ -13,11 +13,18 @@ then clicking "Apply". Added per explicit user request.
 - **Every filter is optional and AND-combined; there is no default,
   unfiltered "show everything" state.** `src/app/search/page.tsx` only
   runs a query when `hasAnyFilter(filters)` is true (`filters.ts`) — with
-  zero filters set, the page shows a muted hint ("Set at least one filter
-  above and click Apply...") instead of dumping the user's entire
-  transaction history. This is deliberate, not just an easy default:
+  zero filters set, the results area renders nothing at all (no hint text;
+  one used to sit here but was removed per explicit user request — don't
+  re-add it). This guard itself is deliberate, not just an easy default:
   without it, a bare page load (or a "Clear" click) would trigger an
-  unbounded query. Don't remove this guard to "simplify" the page.
+  unbounded query. Don't remove *this* to "simplify" the page. **Apply and
+  Clear are themselves disabled (dimmed via the Button component's own
+  `disabled` styling) whenever every filter field is empty** —
+  `search-form.tsx`'s `hasAnyValue`, computed from current local state
+  (not the `filters` prop), so unchecking every checkbox / clearing every
+  field re-disables both buttons live, before the user even clicks Apply —
+  per explicit user request, replacing the removed hint text as the signal
+  that there's nothing to search yet.
 - **State is fully URL-driven, the same pattern `/transactions` uses for
   `month`/`sort`/`dir`** — `search-form.tsx` (`"use client"`) reads its
   initial field values from a `filters: ParsedFilters` prop (computed
