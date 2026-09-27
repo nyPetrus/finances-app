@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { CheckboxSelect } from "@/components/checkbox-select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -14,20 +15,16 @@ import {
 } from "@/components/ui/select";
 import type { Account, Category, Class } from "@/lib/supabase/types";
 import {
+  GORDURA_VALUE_LABELS,
+  GORDURA_VALUES,
   UNCATEGORIZED_VALUE,
   UNCLASSED_VALUE,
   type AmountOp,
   type DateGranularity,
   type DateOp,
   type DescriptionOp,
-  type EqualityOp,
   type ParsedFilters,
 } from "./filters";
-
-const EQUALITY_LABELS: Record<EqualityOp, string> = {
-  is: "Is",
-  is_not: "Is not",
-};
 
 const DESCRIPTION_OP_LABELS: Record<DescriptionOp, string> = {
   equal_to: "Equal to",
@@ -67,14 +64,10 @@ export function SearchForm({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [accountValue, setAccountValue] = useState<string | null>(filters.account?.value ?? null);
-  const [accountOp, setAccountOp] = useState<EqualityOp>(filters.account?.op ?? "is");
-
-  const [categoryValue, setCategoryValue] = useState<string | null>(filters.category?.value ?? null);
-  const [categoryOp, setCategoryOp] = useState<EqualityOp>(filters.category?.op ?? "is");
-
-  const [classValue, setClassValue] = useState<string | null>(filters.class?.value ?? null);
-  const [classOp, setClassOp] = useState<EqualityOp>(filters.class?.op ?? "is");
+  const [accountValues, setAccountValues] = useState<Set<string>>(new Set(filters.accounts));
+  const [categoryValues, setCategoryValues] = useState<Set<string>>(new Set(filters.categories));
+  const [classValues, setClassValues] = useState<Set<string>>(new Set(filters.classes));
+  const [gorduraValues, setGorduraValues] = useState<Set<string>>(new Set(filters.gorduras));
 
   const [descriptionValue, setDescriptionValue] = useState(filters.description?.value ?? "");
   const [descriptionOp, setDescriptionOp] = useState<DescriptionOp>(filters.description?.op ?? "contains");
@@ -86,21 +79,20 @@ export function SearchForm({
   const [amountOp, setAmountOp] = useState<AmountOp>(filters.amount?.op ?? "equal_to");
   const [amountValue, setAmountValue] = useState(filters.amount?.value ?? "");
 
+  function toggle(set: Set<string>, setSet: (next: Set<string>) => void, value: string) {
+    const next = new Set(set);
+    if (next.has(value)) next.delete(value);
+    else next.add(value);
+    setSet(next);
+  }
+
   function handleApply() {
     const params = new URLSearchParams();
 
-    if (accountValue) {
-      params.set("account", accountValue);
-      params.set("accountOp", accountOp);
-    }
-    if (categoryValue) {
-      params.set("category", categoryValue);
-      params.set("categoryOp", categoryOp);
-    }
-    if (classValue) {
-      params.set("class", classValue);
-      params.set("classOp", classOp);
-    }
+    for (const value of accountValues) params.append("account", value);
+    for (const value of categoryValues) params.append("category", value);
+    for (const value of classValues) params.append("class", value);
+    for (const value of gorduraValues) params.append("gordura", value);
     if (descriptionValue.trim()) {
       params.set("description", descriptionValue.trim());
       params.set("descriptionOp", descriptionOp);
@@ -124,12 +116,10 @@ export function SearchForm({
   }
 
   function handleClear() {
-    setAccountValue(null);
-    setAccountOp("is");
-    setCategoryValue(null);
-    setCategoryOp("is");
-    setClassValue(null);
-    setClassOp("is");
+    setAccountValues(new Set());
+    setCategoryValues(new Set());
+    setClassValues(new Set());
+    setGorduraValues(new Set());
     setDescriptionValue("");
     setDescriptionOp("contains");
     setDateGranularity("day");
@@ -144,79 +134,48 @@ export function SearchForm({
     <div className="flex flex-col gap-4 rounded-md border p-4">
       <div className="flex flex-wrap items-center gap-2">
         <Label className="w-24 shrink-0">Account</Label>
-        <Select value={accountOp} onValueChange={(value) => setAccountOp(value as EqualityOp)}>
-          <SelectTrigger className="w-36">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="is">{EQUALITY_LABELS.is}</SelectItem>
-            <SelectItem value="is_not">{EQUALITY_LABELS.is_not}</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={accountValue} onValueChange={setAccountValue}>
-          <SelectTrigger className="w-56">
-            <SelectValue placeholder="Any account" />
-          </SelectTrigger>
-          <SelectContent>
-            {accounts.map((account) => (
-              <SelectItem key={account.id} value={account.id}>
-                {account.label ?? account.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <CheckboxSelect
+          placeholder="Any account"
+          selected={accountValues}
+          onToggle={(value) => toggle(accountValues, setAccountValues, value)}
+          options={accounts.map((account) => ({ value: account.id, label: account.label ?? account.name }))}
+        />
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
         <Label className="w-24 shrink-0">Category</Label>
-        <Select value={categoryOp} onValueChange={(value) => setCategoryOp(value as EqualityOp)}>
-          <SelectTrigger className="w-36">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="is">{EQUALITY_LABELS.is}</SelectItem>
-            <SelectItem value="is_not">{EQUALITY_LABELS.is_not}</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={categoryValue} onValueChange={setCategoryValue}>
-          <SelectTrigger className="w-56">
-            <SelectValue placeholder="Any category" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={UNCATEGORIZED_VALUE}>Uncategorized</SelectItem>
-            {categories.map((category) => (
-              <SelectItem key={category.id} value={category.id}>
-                {category.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <CheckboxSelect
+          placeholder="Any category"
+          selected={categoryValues}
+          onToggle={(value) => toggle(categoryValues, setCategoryValues, value)}
+          options={[
+            { value: UNCATEGORIZED_VALUE, label: "Uncategorized" },
+            ...categories.map((category) => ({ value: category.id, label: category.name })),
+          ]}
+        />
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
         <Label className="w-24 shrink-0">Class</Label>
-        <Select value={classOp} onValueChange={(value) => setClassOp(value as EqualityOp)}>
-          <SelectTrigger className="w-36">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="is">{EQUALITY_LABELS.is}</SelectItem>
-            <SelectItem value="is_not">{EQUALITY_LABELS.is_not}</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={classValue} onValueChange={setClassValue}>
-          <SelectTrigger className="w-56">
-            <SelectValue placeholder="Any class" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={UNCLASSED_VALUE}>Unclassed</SelectItem>
-            {classes.map((classItem) => (
-              <SelectItem key={classItem.id} value={classItem.id}>
-                {classItem.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <CheckboxSelect
+          placeholder="Any class"
+          selected={classValues}
+          onToggle={(value) => toggle(classValues, setClassValues, value)}
+          options={[
+            { value: UNCLASSED_VALUE, label: "Unclassed" },
+            ...classes.map((classItem) => ({ value: classItem.id, label: classItem.name })),
+          ]}
+        />
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Label className="w-24 shrink-0">Gordura</Label>
+        <CheckboxSelect
+          placeholder="Any gordura"
+          selected={gorduraValues}
+          onToggle={(value) => toggle(gorduraValues, setGorduraValues, value)}
+          options={GORDURA_VALUES.map((value) => ({ value, label: GORDURA_VALUE_LABELS[value] }))}
+        />
       </div>
 
       <div className="flex flex-wrap items-center gap-2">

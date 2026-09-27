@@ -6,6 +6,7 @@ import { SearchForm } from "./search-form";
 import { SearchTable } from "./search-table";
 import {
   dateRangeFor,
+  effectiveGorduraValue,
   hasAnyFilter,
   parseFilters,
   UNCATEGORIZED_VALUE,
@@ -21,40 +22,34 @@ function escapeIlike(value: string) {
   return value.replace(/[%_]/g, (match) => `\\${match}`);
 }
 
+// Checkbox filters (account/category/class) are OR semantics: match any
+// checked value. `noneValue`, when present among `values`, means "column is
+// null" (Uncategorized/Unclassed) — combined with real ids via `.or()` when
+// both are checked at once, since `.in()` alone never matches NULL rows.
+function applyCheckboxFilter<
+  Q extends { in(column: string, values: string[]): Q; is(column: string, value: null): Q; or(filters: string): Q },
+>(query: Q, column: string, values: string[], noneValue?: string): Q {
+  if (values.length === 0) return query;
+  const realIds = noneValue ? values.filter((v) => v !== noneValue) : values;
+  const includeNone = !!noneValue && values.includes(noneValue);
+
+  if (includeNone && realIds.length > 0) {
+    return query.or(`${column}.is.null,${column}.in.(${realIds.join(",")})`);
+  }
+  if (includeNone) {
+    return query.is(column, null);
+  }
+  return query.in(column, realIds);
+}
+
 // Rebuilt fresh on every call (rather than reused across .range() pages) —
 // Supabase query builders are meant to be executed once each.
 function buildQuery(supabase: SupabaseClient, filters: ParsedFilters) {
   let query = supabase.from("transactions").select("*");
 
-  if (filters.account) {
-    query = filters.account.op === "is_not"
-      ? query.neq("account_id", filters.account.value)
-      : query.eq("account_id", filters.account.value);
-  }
-
-  if (filters.category) {
-    if (filters.category.value === UNCATEGORIZED_VALUE) {
-      query = filters.category.op === "is_not"
-        ? query.not("category_id", "is", null)
-        : query.is("category_id", null);
-    } else {
-      query = filters.category.op === "is_not"
-        ? query.neq("category_id", filters.category.value)
-        : query.eq("category_id", filters.category.value);
-    }
-  }
-
-  if (filters.class) {
-    if (filters.class.value === UNCLASSED_VALUE) {
-      query = filters.class.op === "is_not"
-        ? query.not("class_id", "is", null)
-        : query.is("class_id", null);
-    } else {
-      query = filters.class.op === "is_not"
-        ? query.neq("class_id", filters.class.value)
-        : query.eq("class_id", filters.class.value);
-    }
-  }
+  query = applyCheckboxFilter(query, "account_id", filters.accounts);
+  query = applyCheckboxFilter(query, "category_id", filters.categories, UNCATEGORIZED_VALUE);
+  query = applyCheckboxFilter(query, "class_id", filters.classes, UNCLASSED_VALUE);
 
   if (filters.description) {
     const escaped = escapeIlike(filters.description.value.trim());
@@ -144,7 +139,18 @@ export default async function SearchPage({
   const categoriesById = new Map(allCategories.map((c) => [c.id, c]));
   const classesById = new Map(allClasses.map((c) => [c.id, c]));
 
-  const sortedResults = [...results].sort((a, b) => {
+  // Gordura can't be pushed into the Supabase query — it's a transaction's
+  // *effective* gordura (its own override, else its class's default), which
+  // needs the class join, not a plain column comparison. `runSearch` already
+  // paged through every row matching the other filters, so filtering the
+  // full result set here in JS is still correct (no silent 1000-row
+  // truncation, see PITFALLS.md), just not pushed down to Postgres.
+  const gorduraFiltered =
+    filters.gorduras.length > 0
+      ? results.filter((t) => filters.gorduras.includes(effectiveGorduraValue(t, classesById)))
+      : results;
+
+  const sortedResults = [...gorduraFiltered].sort((a, b) => {
     let cmp = 0;
     switch (sortKey) {
       case "date":

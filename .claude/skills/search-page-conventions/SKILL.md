@@ -1,14 +1,14 @@
 ---
 name: search-page-conventions
-description: Use when touching the Search page (src/app/search/ — page.tsx, search-form.tsx, search-table.tsx, filters.ts, sort.ts) — its 6 optional per-filter operator+value controls (Account/Category/Class/Description/Date/Amount), how filter state round-trips through the URL, the Supabase query-building/paging behind "Apply", or its results table (a near-copy of TransactionsTable). Not part of the shared table-page-conventions architecture (this page doesn't own/create rows the way a canonical list page does), though its results table borrows heavily from it.
+description: Use when touching the Search page (src/app/search/ — page.tsx, search-form.tsx, search-table.tsx, filters.ts, sort.ts) — its 7 optional filters (Account/Category/Class/Gordura as checkbox multi-selects, Description/Date/Amount as operator+value controls), how filter state round-trips through the URL, the Supabase query-building/paging behind "Apply", or its results table (a near-copy of TransactionsTable). Not part of the shared table-page-conventions architecture (this page doesn't own/create rows the way a canonical list page does), though its results table borrows heavily from it.
 ---
 
 # Search page conventions
 
 `/search` lets the user query transactions across all time (not scoped to a
-month, unlike `/transactions`) by combining up to 6 independent, optional
-filters — Account, Category, Class, Description, Date, Amount — each with its own
-operator, then clicking "Apply". Added per explicit user request.
+month, unlike `/transactions`) by combining up to 7 independent, optional
+filters — Account, Category, Class, Gordura, Description, Date, Amount —
+then clicking "Apply". Added per explicit user request.
 
 - **Every filter is optional and AND-combined; there is no default,
   unfiltered "show everything" state.** `src/app/search/page.tsx` only
@@ -30,16 +30,46 @@ operator, then clicking "Apply". Added per explicit user request.
 - **Filter → URL param mapping** (`filters.ts` is the single source of
   truth for all of these — both `page.tsx` and `search-form.tsx` import
   from it, never redefine locally):
-  - **Account**: `account` (an account id) + `accountOp` (`"is"` |
-    `"is_not"`, default `"is"`).
-  - **Category**: `category` (a category id, or the literal string
-    `"uncategorized"` — `UNCATEGORIZED_VALUE`) + `categoryOp`. The
-    "uncategorized" pseudo-value can never collide with a real id, so it's
-    handled by branching in `buildQuery()` (`page.tsx`) rather than a
-    lookup: `.is("category_id", null)` for "is", `.not("category_id",
-    "is", null)` for "is not".
-  - **Class**: same shape as Category, with `"unclassed"`
-    (`UNCLASSED_VALUE`) as its pseudo-value.
+  - **Account, Category, Class, Gordura are checkbox multi-selects, not
+    operator+value controls** — per explicit user request, replacing an
+    earlier `is`/`is not` single-value design. Each renders via the shared
+    `CheckboxSelect` component (`src/components/checkbox-select.tsx`, also
+    used nowhere else yet) and round-trips as a **repeated** query param —
+    `?account=id1&account=id2`, parsed by `filters.ts`'s `many()` helper —
+    with OR semantics (match any checked value) and an **empty array
+    meaning "no filter"**, not "match nothing." `ParsedFilters.accounts` /
+    `.categories` / `.classes` / `.gorduras` are plain `string[]` (no `op`
+    field at all — don't reintroduce `EqualityOp`/`is`/`is_not` for these
+    four, that's exactly what this replaced).
+    - **Account**: `account` (account ids). No pseudo-value — every
+      transaction has an `account_id`.
+    - **Category**: `category` (category ids, plus the literal string
+      `"uncategorized"` — `UNCATEGORIZED_VALUE` — for "no category").
+    - **Class**: same shape, with `"unclassed"` (`UNCLASSED_VALUE`) as its
+      pseudo-value.
+    - **Gordura**: `gordura` (`"high"` | `"low"` | `"none"` —
+      `GorduraValue`, `GORDURA_VALUES` for the fixed Baixa/Alta/Sem-gordura
+      order, `GORDURA_VALUE_LABELS` for display). Filters on the
+      transaction's **effective** gordura (`effectiveGorduraValue()` in
+      `filters.ts`, wrapping `effectiveGordura()` from
+      `@/lib/classification.ts` with the "none" fallback — same concept as
+      the Dashboard monthly table's `gorduraKey()`), not just its own
+      override column. Because "effective" needs the class join, this is
+      the one filter `buildQuery()` (`page.tsx`) **can't** push into the
+      Supabase query — it's applied in JS *after* `runSearch()` has already
+      paged through everything matching the other filters (still correct
+      per `PITFALLS.md`, since the Postgres query itself isn't what's
+      narrowing on gordura, so it can't silently truncate).
+    - `buildQuery()`'s `applyCheckboxFilter()` handles Account/Category/
+      Class: plain `.in(column, ids)` when no pseudo-value is checked,
+      `.is(column, null)` when only the pseudo-value is checked, and
+      `.or(`${column}.is.null,${column}.in.(...)`)` when both are checked
+      at once (`.in()` alone never matches `NULL` rows). Multiple `.or()`
+      calls for different columns (e.g. Category's mixed case and Class's
+      mixed case in the same search) compose as AND at the PostgREST level
+      — confirmed against `postgrest-js`'s `or()`, which `.append()`s
+      rather than `.set()`s, so repeated `or` query params don't clobber
+      each other.
   - **Description**: `description` (free text, trimmed) + `descriptionOp`
     (`"equal_to"` | `"starts_with"` | `"contains"`, default `"contains"`)
     — deliberately the *same three operators* `mapped_descriptions.check_type`
@@ -121,5 +151,7 @@ operator, then clicking "Apply". Added per explicit user request.
   `revalidatePath("/transactions")` should add `revalidatePath("/search")`
   right next to it, not just the one path.
 - **Nav entry**: `sidebar-nav.tsx`'s `links` array, `SearchIcon`
-  (`lucide-react`), positioned right after Transactions (both are
-  transaction-shaped pages) and before Categories.
+  (`lucide-react`), positioned between Budget and Transactions per explicit
+  user request (moved there from directly after Transactions) — check the
+  current array rather than assuming either position if this ever comes up
+  again.
