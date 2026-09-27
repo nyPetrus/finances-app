@@ -2,15 +2,20 @@ import "server-only";
 
 import { createHash } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { ParsedStatementRow } from "./parse-contabilizei-csv";
+import type { ParsedStatementRow } from "./parsed-statement-row";
 
-// Statements have no stable transaction id, so identity is date + amount +
-// description, plus a per-file occurrence counter so genuinely identical
-// same-day rows (e.g. two R$ 195,00 card purchases) each get their own hash.
+// Most statement formats have no stable transaction id, so identity there is
+// date + amount + description, plus a per-file occurrence counter so
+// genuinely identical same-day rows (e.g. two R$ 195,00 card purchases) each
+// get their own hash. When the parser did give us a stable id
+// (`externalId`, e.g. Nubank's own transaction id), hash that directly
+// instead — it's exact, not best-effort, and doesn't need an occurrence
+// counter at all.
 function hashStatementRow(row: ParsedStatementRow, occurrence: number) {
-  return createHash("sha256")
-    .update(`${row.date}|${row.amount.toFixed(2)}|${row.description}|${occurrence}`)
-    .digest("hex");
+  const key = row.externalId
+    ? `id:${row.externalId}`
+    : `${row.date}|${row.amount.toFixed(2)}|${row.description}|${occurrence}`;
+  return createHash("sha256").update(key).digest("hex");
 }
 
 // Hashes already stored for this account. Paged with .range() since an

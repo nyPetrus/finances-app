@@ -3,58 +3,8 @@
 //   02/04/2026,Pessoa Jurídica,TED,ECUSTOMIZE ...,"R$ 5.000,00",-,"R$ 5.000,00"
 // Pure string-in/rows-out so it stays independent of Drive and Supabase.
 
-export type ParsedStatementRow = {
-  // "YYYY-MM-DD" — the statement carries no time of day.
-  date: string;
-  description: string;
-  // Entrada minus Saída: income positive, expense negative.
-  amount: number;
-  // "Saldo do dia" — the bank's per-day balance, null when blank ("-").
-  balance: number | null;
-};
-
-// Minimal RFC-4180 reader: quoted fields may contain commas and doubled
-// quotes, records end at CRLF/LF.
-function parseCsv(text: string): string[][] {
-  const rows: string[][] = [];
-  let row: string[] = [];
-  let field = "";
-  let inQuotes = false;
-
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    if (inQuotes) {
-      if (char === '"') {
-        if (text[i + 1] === '"') {
-          field += '"';
-          i++;
-        } else {
-          inQuotes = false;
-        }
-      } else {
-        field += char;
-      }
-    } else if (char === '"') {
-      inQuotes = true;
-    } else if (char === ",") {
-      row.push(field);
-      field = "";
-    } else if (char === "\n" || char === "\r") {
-      if (char === "\r" && text[i + 1] === "\n") i++;
-      row.push(field);
-      field = "";
-      if (row.some((value) => value.trim() !== "")) rows.push(row);
-      row = [];
-    } else {
-      field += char;
-    }
-  }
-
-  row.push(field);
-  if (row.some((value) => value.trim() !== "")) rows.push(row);
-
-  return rows;
-}
+import { normalizeHeader, parseCsv } from "./csv-utils";
+import type { ParsedStatementRow } from "./parsed-statement-row";
 
 // "R$ 5.000,00" / "-R$ 4.000,00" / "-" → number | null. The space after
 // "R$" is a non-breaking space in the real files; stripping everything but
@@ -66,16 +16,8 @@ function parseBrl(value: string): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function normalizeHeader(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim()
-    .toLowerCase();
-}
-
 export function parseContabilizeiCsv(text: string): ParsedStatementRow[] {
-  const [header, ...records] = parseCsv(text.replace(/^\uFEFF/, ""));
+  const [header, ...records] = parseCsv(text.replace(/^﻿/, ""));
   if (!header) throw new Error("The file is empty.");
 
   const columns = header.map(normalizeHeader);

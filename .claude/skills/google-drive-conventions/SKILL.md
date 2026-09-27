@@ -7,17 +7,18 @@ description: Use when touching Google Drive integration (src/lib/google-drive/cl
 
 **Status: the Drive UI is parked.** The Google Drive card was removed from
 the Accounts page (`GoogleDrivePanel` in `google-drive-panel.tsx` still
-exists but nothing renders it) in favor of a simpler flow: a manual
-account's row "⋮" menu has **Import** (menu label; the dialog it opens is
-still titled "Import transactions"), which uploads the
-bank's CSV straight from disk (`import-transactions-dialog.tsx` →
-`importTransactionsFromFiles` in `import-actions.ts`) — no OAuth, no Google
-Cloud setup. The Drive code below (connect, token storage, folder listing,
+exists but nothing renders it) in favor of a simpler flow: every account's
+row "⋮" menu has **Import** (menu label; the dialog it opens is still
+titled "Import transactions"), which uploads the bank's CSV straight from
+disk (`import-transactions-dialog.tsx` → `importTransactionsFromFiles` in
+`import-actions.ts`) — no OAuth, no Google Cloud setup. The Drive code
+below (connect, token storage, folder listing,
 `importAccountFolderFromDrive`) still works and is kept so a "Choose from
 Google Drive" option can be added to that same dialog later; it is not
 wired into any page today. Not built: a parent folder with auto-discovered
-subfolders, an "Update accounts folders" bulk button, or any bank format
-besides Contabilizei Bank's CSV.
+subfolders, or an "Update accounts folders" bulk button. Two bank CSV
+formats are supported today (Contabilizei, Nubank — see the pipeline
+bullet below); a third would need its own parser added the same way.
 
 - **Every Drive read is a user-initiated click, never a background/cron
   job.** Don't add a Vercel Cron / webhook-based trigger for this without
@@ -107,25 +108,60 @@ besides Contabilizei Bank's CSV.
   bare folder id or a full
   `https://drive.google.com/drive/folders/<id>` link, since that's what a
   user actually copies from their browser.
-- **Statement CSV import pipeline (shared by disk upload and Drive).**
+- **Statement CSV import pipeline (shared by disk upload and Drive) supports
+  more than one bank's format, auto-detected from the header row.**
   Migration `0017_drive_csv_import.sql` adds `accounts.google_drive_folder_id`
-  (only the parked Drive path uses it), `transactions.balance` (the bank's
-  "Saldo do dia", stored as-is on every imported row) and
-  `transactions.import_hash` (unique per account). Parsing is
-  `parseContabilizeiCsv` (`src/lib/import/`, pure, no Drive/Supabase): BOM,
-  `dd/mm/yyyy`, `"R$ 1.234,56"` with a non-breaking space, `-` for blank,
-  amount = Entrada − Saída, description lowercased (see
-  `transaction-description-rules`), `source = 'csv'`. Insert + dedupe is
-  `src/lib/import/statement-import.ts` (`loadKnownImportHashes`,
-  `insertNewStatementRows`), used by both `importTransactionsFromFiles`
-  (disk upload) and `importAccountFolderFromDrive`. Statements overlap (a
-  boundary-day row appears in two files), so dedupe is by `import_hash` =
-  sha256(date|amount|description|occurrence-within-file), checked against the
+  (only the parked Drive path uses it), `transactions.balance` (a format's
+  own running balance, when it has one, stored as-is) and
+  `transactions.import_hash` (unique per account). Every parser lives in
+  `src/lib/import/` and produces the same `ParsedStatementRow`
+  (`parsed-statement-row.ts`: `date`, `description`, `amount`, `balance`,
+  optional `externalId`) — pure, no Drive/Supabase:
+  - `parseContabilizeiCsv` (`parse-contabilizei-csv.ts`): `Data,Categoria,
+    Lançamento,Descrição,Entrada,Saída,Saldo do dia`, BOM, `dd/mm/yyyy`,
+    `"R$ 1.234,56"` with a non-breaking space, `-` for blank, amount =
+    Entrada − Saída, has a running balance, no `externalId`.
+  - `parseNubankCsv` (`parse-nubank-csv.ts`): `Data,Valor,Identificador,
+    Descrição` — Nubank's own account-statement export. `Valor` is already
+    a plain signed decimal (no `R$`, no thousands separator), there's no
+    balance column, and `Identificador` (a stable per-transaction id from
+    Nubank itself) becomes `externalId`.
+  - Both share `parseCsv()` (a minimal RFC-4180 tokenizer — quoted fields,
+    doubled quotes) and `normalizeHeader()` (accent-stripping, lowercase)
+    from `csv-utils.ts`, so a new bank format only has to add its own
+    column-mapping logic, not re-parse CSV syntax from scratch.
+  - `import-actions.ts`'s `detectParser()` picks a parser from the file's
+    header alone (Contabilizei has `entrada`+`saida`; Nubank has
+    `valor`+`identificador`) — deliberately **not** "try each parser and
+    see which one doesn't throw," so a file that matches a format's header
+    but has a genuine bad row (e.g. an unparseable date) surfaces that
+    row's specific error message instead of a confusing "no parser
+    recognized this file."
+  All formats' rows are lowercased (see `transaction-description-rules`),
+  stored `source = 'csv'`, and dated as naive midnight
+  (`YYYY-MM-DDT00:00:00`, same as the manual add form).
+  Insert + dedupe is `src/lib/import/statement-import.ts`
+  (`loadKnownImportHashes`, `insertNewStatementRows`), used by
+  `importTransactionsFromFiles` (disk upload) and
+  `importAccountFolderFromDrive` (parked Drive path) alike, across every
+  parser. **Dedup prefers a row's `externalId` when the parser provided
+  one** (hashed directly — exact, not best-effort) **and falls back to
+  `sha256(date|amount|description|occurrence-within-file)`** for formats
+  with no native id (Contabilizei) — either way it's checked against the
   account's stored hashes (paged with `.range()`, see `PITFALLS.md`) and
-  against earlier files in the same run. A file that fails to parse is
-  reported per-file and doesn't abort the others. Dates are stored as naive
-  midnight (`YYYY-MM-DDT00:00:00`), the same as the manual add form. Both
-  actions **return `{ error }` instead of throwing**, because a thrown
-  server-action error loses its message in production builds. The row-menu
-  item only shows for `type === "manual"` accounts (`RowActionsMenu`'s
-  optional `onImport`).
+  against earlier files in the same run, so overlapping statements dedupe
+  safely. A file that fails to parse is reported per-file and doesn't
+  abort the others; `importTransactionsFromFiles` **returns `{ error }`
+  instead of throwing**, because a thrown server-action error loses its
+  message in production builds.
+  **The row-menu's "Import" item (`RowActionsMenu`'s optional `onImport`)
+  shows for every account, not just manual ones** — the import path only
+  ever inserts new, deduped rows, so it's safe to use on a Pluggy-connected
+  account too, e.g. to backfill history from a bank statement export for a
+  date range Pluggy's own consent window no longer returns (see
+  `syncPluggyItem` in `accounts/pluggy-actions.ts`: it deletes any
+  `source = 'pluggy'` row missing from a fresh Pluggy fetch, but never
+  touches `source = 'csv'` rows, so this import path can't be undone by a
+  later Pluggy sync). This used to be gated to `account.type === "manual"`
+  — removed per explicit user request once CSV import became the fallback
+  for topping up a Pluggy account's history.

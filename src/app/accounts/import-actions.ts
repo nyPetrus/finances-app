@@ -2,8 +2,23 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { normalizeHeader } from "@/lib/import/csv-utils";
 import { parseContabilizeiCsv } from "@/lib/import/parse-contabilizei-csv";
+import { parseNubankCsv } from "@/lib/import/parse-nubank-csv";
 import { insertNewStatementRows, loadKnownImportHashes } from "@/lib/import/statement-import";
+import type { ParsedStatementRow } from "@/lib/import/parsed-statement-row";
+
+// Auto-detects which bank's format a file is in from its header row alone,
+// rather than trying each parser in turn — a header mismatch and a genuine
+// row-level data error need to stay distinguishable (see the callers of
+// this function), so only the header decides which parser owns the file.
+function detectParser(text: string): ((text: string) => ParsedStatementRow[]) | null {
+  const firstLine = text.replace(/^﻿/, "").split(/\r\n|\r|\n/)[0] ?? "";
+  const columns = firstLine.split(",").map(normalizeHeader);
+  if (columns.includes("entrada") && columns.includes("saida")) return parseContabilizeiCsv;
+  if (columns.includes("valor") && columns.includes("identificador")) return parseNubankCsv;
+  return null;
+}
 
 export type ImportFileResult = {
   name: string;
@@ -32,12 +47,11 @@ async function runImport(formData: FormData): Promise<ImportResult> {
 
   const { data: account, error: accountError } = await supabase
     .from("accounts")
-    .select("id, type")
+    .select("id")
     .eq("id", accountId)
     .maybeSingle();
   if (accountError) throw new Error(accountError.message);
   if (!account) throw new Error("Account not found.");
-  if (account.type !== "manual") throw new Error("Importing files is only for manual accounts.");
 
   const knownHashes = await loadKnownImportHashes(supabase, account.id);
 
@@ -49,7 +63,10 @@ async function runImport(formData: FormData): Promise<ImportResult> {
 
   for (const upload of sortedUploads) {
     try {
-      const parsed = parseContabilizeiCsv(await upload.text());
+      const text = await upload.text();
+      const parser = detectParser(text);
+      if (!parser) throw new Error("Unrecognized file format — expected a Contabilizei or Nubank statement CSV.");
+      const parsed = parser(text);
       const { inserted, skipped: fileSkipped } = await insertNewStatementRows(supabase, {
         userId: user.id,
         accountId: account.id,

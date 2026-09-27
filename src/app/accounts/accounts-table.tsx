@@ -333,7 +333,7 @@ export function AccountsTable({
                         ? () => handleSyncRow(account)
                         : undefined
                     }
-                    onImport={account.type === "manual" ? () => setImportingAccount(account) : undefined}
+                    onImport={() => setImportingAccount(account)}
                     disabled={isSyncing || isDeleting}
                   />
                 </TableCell>
