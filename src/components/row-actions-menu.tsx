@@ -6,7 +6,6 @@ import {
   MoreVerticalIcon,
   PencilIcon,
   RefreshCwIcon,
-  Trash2Icon,
   UploadIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,13 +13,11 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
 export function RowActionsMenu({
   onEdit,
-  onDelete,
   onSync,
   onImport,
   onToggleActive,
@@ -29,7 +26,6 @@ export function RowActionsMenu({
   disabled,
 }: {
   onEdit: () => void;
-  onDelete: () => void;
   onSync?: () => void;
   onImport?: () => void;
   // Deactivate/Activate item, for rows that can be hidden instead of deleted.
@@ -76,11 +72,6 @@ export function RowActionsMenu({
             {isActive ? "Deactivate" : "Activate"}
           </DropdownMenuItem>
         )}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem variant="destructive" onClick={onDelete}>
-          <Trash2Icon />
-          Delete
-        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

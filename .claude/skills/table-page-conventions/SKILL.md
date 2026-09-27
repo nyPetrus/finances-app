@@ -1,6 +1,6 @@
 ---
 name: table-page-conventions
-description: Use when adding a new list-style page or touching an existing one (Transactions, Categories, Classes, Descriptions, Accounts) — table markup, row selection, the two-group toolbar (left: Add-or-"N selected" swap, table-specific buttons, then Delete last, only when something's selected; right: just Columns), the per-row "⋮" actions menu (Edit/Sync/Delete), column show/hide & reorder, column header icons, sorting, add/edit dialogs, category/class chip rendering, or bulk mutations. Encodes this app's shared list-page architecture so new pages match instead of inventing a fresh layout.
+description: Use when adding a new list-style page or touching an existing one (Transactions, Categories, Classes, Descriptions, Accounts) — table markup, row selection, the two-group toolbar (left: Add-or-"N selected" swap, table-specific buttons, then Delete last, only when something's selected — the *only* way to delete a row, per explicit user request; right: just Columns), the per-row "⋮" actions menu (Edit/Sync — no Delete), column show/hide & reorder, column header icons, sorting, add/edit dialogs, category/class chip rendering, or bulk mutations. Encodes this app's shared list-page architecture so new pages match instead of inventing a fresh layout.
 ---
 
 # Table page conventions
@@ -94,15 +94,21 @@ list page instead of inventing a fresh layout.
   row's Edit, so it has to be reachable without hovering (keyboard, touch).
   Render one unlabeled `<TableHead className="w-0" />` right after the
   checkbox header, and one `<TableCell>` right after the checkbox cell in
-  every body row, holding `<RowActionsMenu onEdit={...} onDelete={...}
-  onSync={...} disabled={isSyncing || isDeleting} />` scoped to that row:
+  every body row, holding `<RowActionsMenu onEdit={...} onSync={...}
+  disabled={isSyncing || isDeleting} />` scoped to that row:
   - `onEdit` sets a per-row `editing<X>: <Row> | null` state (e.g.
     `editingAccount`) instead of relying on checkbox selection.
-  - `onDelete` confirms via `window.confirm("Delete this account? ...")`
-    (singular wording — this is a single row, not a bulk op) then calls the
-    existing bulk delete action with a one-element array (e.g.
-    `deleteAccounts([account.id])`), inside the existing `startDelete`
-    transition.
+  - **`RowActionsMenu` has no `onDelete` prop and no Delete item at all —
+    removed per explicit user request, for security: the *only* way to
+    delete a row anywhere in the app is now the toolbar's bulk Delete
+    button (below), which always requires an explicit selection first,
+    rather than a single accidental click in a per-row menu.** Every
+    table's own `handleDeleteRow(row)` (which used to confirm + call the
+    delete action with a one-element array, e.g. `deleteAccounts([account.id])`)
+    was deleted along with its wiring — don't reintroduce a per-row delete
+    path without a fresh ask; route any future single-row delete through
+    the existing bulk action with a one-element array instead, called from
+    the toolbar's selection, not from the row menu.
   - `onSync` is only passed on tables that have a sync concept at all
     (Accounts, Transactions — and Transactions' Dashboard-embedded copy,
     `dashboard-transactions-table.tsx`, see `dashboard-conventions`) and
@@ -114,9 +120,10 @@ list page instead of inventing a fresh layout.
     existing `startSync` transition. **Transactions has no *bulk* toolbar
     Sync any more** (see below) — row-level `onSync` is the only way to
     sync a description there now.
-  Menu item order is Edit, Sync (if present), a `DropdownMenuSeparator`,
-  then Delete with `variant="destructive"`. Items carry their own icon +
-  visible text label, so they don't need `title`.
+  Menu item order is Edit, Sync (if present), Import (if present,
+  Accounts only), Toggle active (if present) — no trailing separator, since
+  there's no destructive item after it any more. Items carry their own icon
+  + visible text label, so they don't need `title`.
   **The edit dialog is keyed off that `editing<X>` state, not
   `soleSelectedRow`** — `useRowSelection`'s `soleSelectedRow` is no longer
   destructured in any table (bulk `selected`/`toggleAll`/`toggleOne`/
@@ -158,14 +165,17 @@ list page instead of inventing a fresh layout.
      reused verbatim on Transactions too, right after the "+"/count slot.
      See below for how this coexists with the per-row Sync that was
      already there.
-  3. **"Delete" last, and only rendered at all when `selected.size > 0`** —
-     `{selected.size > 0 && <Button ...>Trash2Icon</Button>}`, no wrapping
-     wrapper needed since it's a single conditional child alongside its
-     left-group siblings. Not just disabled while nothing's selected, the
-     button doesn't exist in the DOM until there's a selection, so there's
-     nothing to accidentally click. Stays `Trash2Icon`, `variant="ghost"`
-     `size="icon-sm"`, no red fill/destructive styling (that's reserved for
-     the row-menu's Delete item); `disabled` now only guards the
+  3. **"Delete" last, and only rendered at all when `selected.size > 0` —
+     this is the *only* place a row can be deleted from anywhere in the
+     app**, per explicit user request (the per-row menu's own Delete item
+     was removed for exactly this reason — see the `RowActionsMenu` bullet
+     above). `{selected.size > 0 && <Button ...>Trash2Icon</Button>}`, no
+     wrapping wrapper needed since it's a single conditional child alongside
+     its left-group siblings. Not just disabled while nothing's selected,
+     the button doesn't exist in the DOM until there's a selection, so
+     there's nothing to accidentally click. Stays `Trash2Icon`,
+     `variant="ghost"` `size="icon-sm"`, no red fill/destructive styling;
+     `disabled` now only guards the
      in-flight-mutation case (`isDeleting`, plus whatever other transition
      that table's toolbar already tracks — e.g. Accounts' `isSyncing`)
      since the `selected.size === 0` guard is redundant once the button

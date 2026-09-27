@@ -162,11 +162,6 @@ export function CategoriesTable({
     runDelete(Array.from(selected));
   }
 
-  function handleDeleteRow(category: Category) {
-    if (!window.confirm(`Delete this category?`)) return;
-    runDelete([category.id]);
-  }
-
   const columnsByKey = new Map(COLUMNS.map((column) => [column.key, column]));
   const visibleColumns = columnOrder
     .map((key) => columnsByKey.get(key)!)
@@ -278,7 +273,6 @@ export function CategoriesTable({
                 <TableCell>
                   <RowActionsMenu
                     onEdit={() => openEditDialog(category)}
-                    onDelete={() => handleDeleteRow(category)}
                     onToggleActive={() => setActive([category.id], !category.is_active)}
                     isActive={category.is_active}
                     disabled={isBusy}

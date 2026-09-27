@@ -169,11 +169,6 @@ export function ClassesTable({
     runDelete(Array.from(selected));
   }
 
-  function handleDeleteRow(classItem: Class) {
-    if (!window.confirm(`Delete this class?`)) return;
-    runDelete([classItem.id]);
-  }
-
   const columnsByKey = new Map(COLUMNS.map((column) => [column.key, column]));
   const visibleColumns = columnOrder
     .map((key) => columnsByKey.get(key)!)
@@ -285,7 +280,6 @@ export function ClassesTable({
                 <TableCell>
                   <RowActionsMenu
                     onEdit={() => setEditingClass(classItem)}
-                    onDelete={() => handleDeleteRow(classItem)}
                     onToggleActive={() => setActive([classItem.id], !classItem.is_active)}
                     isActive={classItem.is_active}
                     disabled={isBusy}

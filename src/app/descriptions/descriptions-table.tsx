@@ -185,17 +185,6 @@ export function DescriptionsTable({
     });
   }
 
-  function handleDeleteRow(mapping: MappedDescription) {
-    if (!window.confirm(`Delete this mapping?`)) return;
-    setActionError(null);
-    startDelete(async () => {
-      try {
-        await deleteMappedDescriptions([mapping.description]);
-      } catch (err) {
-        setActionError(err instanceof Error ? err.message : "Failed to delete.");
-      }
-    });
-  }
 
   const columnsByKey = new Map(COLUMNS.map((column) => [column.key, column]));
   const visibleColumns = columnOrder
@@ -269,7 +258,6 @@ export function DescriptionsTable({
                 <TableCell>
                   <RowActionsMenu
                     onEdit={() => openEditDialog(mapping)}
-                    onDelete={() => handleDeleteRow(mapping)}
                     disabled={isDeleting}
                   />
                 </TableCell>

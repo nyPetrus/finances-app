@@ -250,18 +250,6 @@ export function TransactionsTable({
     });
   }
 
-  function handleDeleteRow(transaction: Transaction) {
-    if (!window.confirm(`Delete this transaction?`)) return;
-    setActionError(null);
-    startDelete(async () => {
-      try {
-        await deleteTransactions([transaction.id]);
-      } catch (err) {
-        setActionError(err instanceof Error ? err.message : "Failed to delete.");
-      }
-    });
-  }
-
   function handleSyncRow(transaction: Transaction) {
     setActionError(null);
     startSync(async () => {
@@ -358,7 +346,6 @@ export function TransactionsTable({
                 <TableCell>
                   <RowActionsMenu
                     onEdit={() => openEditDialog(transaction)}
-                    onDelete={() => handleDeleteRow(transaction)}
                     onSync={transaction.category_id ? () => handleSyncRow(transaction) : undefined}
                     disabled={isSyncing || isDeleting}
                   />

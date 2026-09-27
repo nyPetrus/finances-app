@@ -226,20 +226,6 @@ export function AccountsTable({
     });
   }
 
-  function handleDeleteRow(account: Account) {
-    if (!window.confirm(`Delete this account? This will also delete all of its transactions.`)) {
-      return;
-    }
-    setActionError(null);
-    startDelete(async () => {
-      try {
-        await deleteAccounts([account.id]);
-      } catch (err) {
-        setActionError(err instanceof Error ? err.message : "Failed to delete.");
-      }
-    });
-  }
-
   function handleSyncRow(account: Account) {
     if (!account.pluggy_item_id) return;
     setActionError(null);
@@ -342,7 +328,6 @@ export function AccountsTable({
                 <TableCell>
                   <RowActionsMenu
                     onEdit={() => setEditingAccount(account)}
-                    onDelete={() => handleDeleteRow(account)}
                     onSync={
                       account.is_automatic && account.pluggy_item_id
                         ? () => handleSyncRow(account)
