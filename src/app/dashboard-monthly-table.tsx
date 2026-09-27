@@ -101,12 +101,10 @@ function TreeRows({
               )}
             >
               <td
-                onClick={() => {
-                  if (hasChildren) onToggle(row.key);
-                  onSelect(rowSelection);
-                }}
+                onClick={hasChildren ? () => onToggle(row.key) : undefined}
                 className={cn(
-                  "sticky left-0 z-10 max-w-56 cursor-pointer overflow-hidden border-r px-2 py-2 hover:brightness-95",
+                  "sticky left-0 z-10 max-w-56 overflow-hidden border-r px-2 py-2",
+                  hasChildren && "cursor-pointer hover:brightness-95",
                   rowBg ?? "bg-background",
                   wholeRowSelected && SELECTED_CELL,
                 )}

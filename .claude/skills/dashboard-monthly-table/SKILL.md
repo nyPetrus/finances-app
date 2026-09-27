@@ -1,6 +1,6 @@
 ---
 name: dashboard-monthly-table
-description: Use when touching the Dashboard's monthly breakdown tree table (dashboard-monthly-breakdown.ts + dashboard-monthly-table.tsx) — what the user calls "the dynamic table," since its rows dynamically expand/collapse (not the embedded click-to-filter transactions table, which only appears/disappears wholesale — see dashboard-conventions for that one). Covers the Type level (static) plus the configurable Gordura/Category/Class levels (the "Levels" menu — include/exclude and reorder), the footer Total row, column auto-sizing, decimal rounding, zero-value empty cells, row color, the click-the-label expand/collapse (no separate toggle button/icon), and the sticky/frozen header row, footer row, label column, and Total column.
+description: Use when touching the Dashboard's monthly breakdown tree table (dashboard-monthly-breakdown.ts + dashboard-monthly-table.tsx) — what the user calls "the dynamic table," since its rows dynamically expand/collapse (not the embedded click-to-filter transactions table, which only appears/disappears wholesale — see dashboard-conventions for that one). Covers the Type level (static) plus the configurable Gordura/Category/Class levels (the "Levels" menu — include/exclude and reorder), the footer Total row, column auto-sizing, decimal rounding, zero-value empty cells, row color, the click-the-label expand/collapse (no separate toggle button/icon, and the label no longer drives click-to-filter — only the month/Total cells do), and the sticky/frozen header row, footer row, label column, and Total column.
 ---
 
 # Dashboard monthly table ("the dynamic table")
@@ -196,24 +196,32 @@ table is meant if it's ever unclear again.
   last — it's now just wherever the user puts the last configured level,
   not hardcoded to Class specifically.
 
-- **There is no dedicated expand/collapse control any more — clicking the
-  row's label cell (its icon/symbol/name area) both toggles expand/collapse
-  (when the row has children) and fires the row's normal click-to-filter
-  select, in the same click.** The label `<td>`'s `onClick` calls
-  `onToggle(row.key)` first (only when `hasChildren`), then `onSelect(
-  rowSelection)` unconditionally — both fire together, there's no separate
-  hit target for each any more. A row with no children just selects, same
-  as before.
-  **Why:** per explicit user request. This used to be a dedicated
-  `ChevronRightIcon`/`ChevronDownIcon` `<button>` inside the label cell,
-  with `e.stopPropagation()` so toggling a row didn't also change the
-  filter selection — removed once the toggle moved onto the label click
-  itself, since there's no longer a separate element to stop propagation
-  from. (That chevron button itself replaced an even earlier `PlusIcon`/
-  `MinusIcon` pair, chosen at the time specifically to avoid visual
-  confusion with `SortableTableHead`'s own chevron-based sort arrows
-  elsewhere in the app — moot now that there's no icon of any kind here.)
-  Don't reintroduce a separate toggle button/icon without a fresh ask.
+- **There is no dedicated expand/collapse control any more, and the label
+  cell no longer drives click-to-filter at all — clicking a row's label
+  (its icon/symbol/name area) only toggles expand/collapse, when the row
+  has children; it never sets the filter selection.** The label `<td>`'s
+  `onClick` is `hasChildren ? () => onToggle(row.key) : undefined` — no
+  `onSelect` call at all. A row with no children has no `onClick` on its
+  label cell (and no `cursor-pointer`/hover styling either, since there's
+  nothing to click). **Click-to-filter now lives only on the month cells
+  and the trailing Total cell** (each still calls `onSelect` exactly as
+  before — a month cell scopes to `{ ...rowSelection, month: i }`, the
+  Total cell scopes to the whole row via `rowSelection` alone). The label
+  cell still shows the `SELECTED_CELL` ring when `wholeRowSelected` is
+  true, purely as a read-only indicator — selecting that state has to come
+  from clicking the row's own Total cell (or a month cell).
+  **Why:** per explicit user request, so browsing the tree (expanding
+  levels to look around) no longer has the side effect of also changing
+  what the embedded transactions table below is filtered to — only a
+  deliberate click on an actual amount (a month or the Total) does that
+  now. This briefly went through an interim state where the label click
+  did both (toggle and select together in one click) — that was reversed
+  by this same request; don't reintroduce `onSelect` on the label cell
+  without a fresh ask. The expand/collapse mechanism itself used to be a
+  dedicated `ChevronRightIcon`/`ChevronDownIcon` `<button>` inside the
+  label cell (before that, `PlusIcon`/`MinusIcon`, chosen to avoid visual
+  confusion with `SortableTableHead`'s own chevron-based sort arrows) —
+  removed once the toggle moved onto the label click itself.
 
 - **This table is plain `<table>` markup, `table-layout: auto` (no
   `table-fixed`, no `<colgroup>`)** — columns size to their own content
@@ -268,19 +276,22 @@ table is meant if it's ever unclear again.
   MonthlySelection | undefined`, passed to this table as `selected` and
   updated via its `onSelect` prop. Every `MonthlyRow` carries its own
   `kind`/`gordura`/`categoryId`/`classId` (not just its display `key`) so
-  a click handler doesn't need to re-derive them. Clicking a row's label
-  or its Total cell filters to that row's whole year; clicking one of its
-  month cells scopes it to that month too; clicking a month header/footer
-  cell filters to that month across every type (`kind` left `undefined`
-  in the `MonthlySelection`); clicking the Total header/footer cell shows
-  the full year unrestricted — the same "everything" case the now-removed
-  "Accounts" stat card used to cover. Re-clicking the exact same selection
-  clears it (`monthlySelectionsEqual` in `dashboard-explorer.tsx`). The
-  clicked cell/row/column gets a `ring-2 ring-inset ring-primary`
-  highlight (`SELECTED_CELL` in `dashboard-monthly-table.tsx`). Clicking a
-  label cell on a row with children now toggles expand/collapse *and*
-  updates the filter selection together (see the expand/collapse bullet
-  above) — there's no way to do one without the other any more.
+  a click handler doesn't need to re-derive them. **Clicking a row's Total
+  cell filters to that row's whole year; clicking one of its month cells
+  scopes it to that month too — the row's label cell is not part of this
+  at all any more** (see the expand/collapse bullet above: the label only
+  toggles expand/collapse, it never touches the selection). Clicking a
+  month header/footer cell filters to that month across every type (`kind`
+  left `undefined` in the `MonthlySelection`); clicking the Total
+  header/footer cell shows the full year unrestricted — the same
+  "everything" case the now-removed "Accounts" stat card used to cover.
+  Re-clicking the exact same selection clears it (`monthlySelectionsEqual`
+  in `dashboard-explorer.tsx`). The clicked cell/row/column gets a `ring-2
+  ring-inset ring-primary` highlight (`SELECTED_CELL` in
+  `dashboard-monthly-table.tsx`) — the label cell can still show this ring
+  when its row is `wholeRowSelected`, but only as a read-out of a
+  selection made via the Total/month cells, never as something clicking
+  the label itself causes.
   **Why:** this table used to be deliberately unwired from a separate
   stat-card click-to-filter, then got wired in alongside the cards, then
   became the sole driver once the cards were removed (see
