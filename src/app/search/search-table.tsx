@@ -395,7 +395,8 @@ export function SearchTable({
                   required
                 />
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <input type="hidden" name="time" value={splitDateTime(editingTransaction.date).time} />
+              <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="date">Date</Label>
                   <Input
@@ -404,15 +405,6 @@ export function SearchTable({
                     type="date"
                     defaultValue={splitDateTime(editingTransaction.date).date}
                     required
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="time">Time</Label>
-                  <Input
-                    id="time"
-                    name="time"
-                    type="time"
-                    defaultValue={splitDateTime(editingTransaction.date).time}
                   />
                 </div>
                 <div className="flex flex-col gap-2">
