@@ -143,8 +143,8 @@ export function DashboardTransactionsTable({
           cmp = a.description.localeCompare(b.description);
           break;
         case "account":
-          cmp = (accountsById.get(a.account_id)?.label ?? "").localeCompare(
-            accountsById.get(b.account_id)?.label ?? "",
+          cmp = (accountsById.get(a.account_id)?.name ?? "").localeCompare(
+            accountsById.get(b.account_id)?.name ?? "",
           );
           break;
         case "category": {
@@ -175,9 +175,9 @@ export function DashboardTransactionsTable({
         return <span title={transaction.description}>{transaction.description}</span>;
       case "account": {
         const account = accountsById.get(transaction.account_id);
-        return account?.label ? (
+        return account ? (
           <Badge variant="secondary" className="max-w-full gap-1 truncate">
-            {account.label}
+            {account.name}
           </Badge>
         ) : (
           <span className="text-sm text-muted-foreground">—</span>
@@ -443,7 +443,7 @@ export function DashboardTransactionsTable({
                   <SelectContent>
                     {accounts.map((account) => (
                       <SelectItem key={account.id} value={account.id}>
-                        {account.label ?? account.name}
+                        {account.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

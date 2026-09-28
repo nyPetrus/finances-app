@@ -10,7 +10,6 @@ export async function addAccount(formData: FormData) {
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
 
-  const label = (formData.get("label") as string)?.trim() || null;
   const name = (formData.get("name") as string).trim();
   const type = formData.get("type") as string;
   const current_balance = Number(formData.get("current_balance"));
@@ -19,7 +18,6 @@ export async function addAccount(formData: FormData) {
 
   const { error } = await supabase.from("accounts").insert({
     user_id: user.id,
-    label,
     name,
     source: "Manual",
     type,
@@ -40,7 +38,6 @@ export async function updateAccount(formData: FormData) {
   if (!user) throw new Error("Unauthorized");
 
   const id = formData.get("id") as string;
-  const label = (formData.get("label") as string)?.trim() || null;
   const name = (formData.get("name") as string).trim();
   const type = formData.get("type") as string;
 
@@ -51,7 +48,7 @@ export async function updateAccount(formData: FormData) {
   // editing these fields here isn't a sync.
   const { error } = await supabase
     .from("accounts")
-    .update({ label, name, type })
+    .update({ name, type })
     .eq("id", id)
     .eq("user_id", user.id);
 

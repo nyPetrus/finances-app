@@ -108,29 +108,48 @@ export async function syncPluggyItem(itemId: string) {
   // Fetch both BANK and CREDIT accounts for this item.
   const { results: pluggyAccounts } = await pluggyClient.fetchAccounts(itemId);
 
+  // The bank's account name is only a starting value: once the account
+  // exists, Name belongs to the user (editable on the Accounts page), so a
+  // re-sync must not overwrite it — per explicit user request.
+  const { data: existingAccounts, error: existingError } = await supabase
+    .from("accounts")
+    .select("pluggy_account_id")
+    .in(
+      "pluggy_account_id",
+      pluggyAccounts.map((a) => a.id),
+    );
+  if (existingError) throw new Error(existingError.message);
+  const existingPluggyIds = new Set((existingAccounts ?? []).map((a) => a.pluggy_account_id));
+
   for (const pluggyAccount of pluggyAccounts) {
     const isCreditCard = pluggyAccount.type === "CREDIT";
-    const { data: account, error: upsertError } = await supabase
-      .from("accounts")
-      .upsert(
-        {
-          user_id: user.id,
-          name: pluggyAccount.name,
-          source: item.connector.name,
-          type: isCreditCard ? "credit_card" : "checking",
-          is_automatic: true,
-          pluggy_item_id: itemId,
-          pluggy_account_id: pluggyAccount.id,
-          // Credit card balance from Pluggy is the amount owed; store it
-          // negative so it behaves like debt rather than an asset when
-          // summed with bank balances.
-          current_balance: isCreditCard ? -Math.abs(pluggyAccount.balance) : pluggyAccount.balance,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "pluggy_account_id" },
-      )
-      .select()
-      .single();
+    const fields = {
+      source: item.connector.name,
+      type: isCreditCard ? "credit_card" : "checking",
+      is_automatic: true,
+      pluggy_item_id: itemId,
+      // Credit card balance from Pluggy is the amount owed; store it
+      // negative so it behaves like debt rather than an asset when
+      // summed with bank balances.
+      current_balance: isCreditCard ? -Math.abs(pluggyAccount.balance) : pluggyAccount.balance,
+      updated_at: new Date().toISOString(),
+    };
+    // Separate update/insert rather than one upsert: `name` is NOT NULL, and
+    // an upsert payload without it would fail the insert half's check even
+    // when the row already exists.
+    const { data: account, error: upsertError } = existingPluggyIds.has(pluggyAccount.id)
+      ? await supabase
+          .from("accounts")
+          .update(fields)
+          .eq("pluggy_account_id", pluggyAccount.id)
+          .eq("user_id", user.id)
+          .select()
+          .single()
+      : await supabase
+          .from("accounts")
+          .insert({ ...fields, user_id: user.id, name: pluggyAccount.name, pluggy_account_id: pluggyAccount.id })
+          .select()
+          .single();
 
     if (upsertError) throw new Error(upsertError.message);
 

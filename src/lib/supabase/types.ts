@@ -39,7 +39,6 @@ export type Account = {
   user_id: string;
   name: string;
   source: string | null;
-  label: string | null;
   type: "checking" | "investment" | "fgts" | "manual" | "credit_card";
   is_automatic: boolean;
   pluggy_item_id: string | null;

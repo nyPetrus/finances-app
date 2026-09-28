@@ -127,7 +127,7 @@ export function SearchFilterBar({
 
   const optionsByField = useMemo<Record<CheckboxField, Option[]>>(
     () => ({
-      account: accounts.map((account) => ({ value: account.id, label: account.label ?? account.name })),
+      account: accounts.map((account) => ({ value: account.id, label: account.name })),
       category: [
         { value: UNCATEGORIZED_VALUE, label: "Uncategorized" },
         ...categories.map((category) => ({ value: category.id, label: category.name, icon: category.icon })),

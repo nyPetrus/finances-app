@@ -182,8 +182,8 @@ export default async function SearchPage({
         cmp = a.description.localeCompare(b.description);
         break;
       case "account":
-        cmp = (accountsById.get(a.account_id)?.label ?? "").localeCompare(
-          accountsById.get(b.account_id)?.label ?? "",
+        cmp = (accountsById.get(a.account_id)?.name ?? "").localeCompare(
+          accountsById.get(b.account_id)?.name ?? "",
         );
         break;
       case "category": {

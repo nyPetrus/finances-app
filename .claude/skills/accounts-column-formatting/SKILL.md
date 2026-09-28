@@ -1,6 +1,6 @@
 ---
 name: accounts-column-formatting
-description: Use when touching how the Accounts table (src/app/accounts/accounts-table.tsx) formats its own columns — Balance, Last sync, or the single-line/no-horizontal-scroll layout of Account/Name/Source/Type — bespoke to this one table's renderCell and COLUMNS, not part of the shared table-page-conventions architecture.
+description: Use when touching how the Accounts table (src/app/accounts/accounts-table.tsx) formats its own columns — Balance, Last sync, or the single-line/no-horizontal-scroll layout of Name/Source/Type, or Name being the one user-editable account name (no separate Account alias) — bespoke to this one table's renderCell and COLUMNS, not part of the shared table-page-conventions architecture.
 ---
 
 # Accounts table column formatting
@@ -26,10 +26,9 @@ description: Use when touching how the Accounts table (src/app/accounts/accounts
   Unlike the Transactions Date column, the year is kept (2-digit) since
   Accounts has no page-level month/year header to make it redundant.
 - **Every column keeps its row to a single line, and the table avoids
-  horizontal scroll by letting Account/Name/Source shrink instead of
-  wrapping.** `COLUMNS` gives Account/Name/Source `cellClassName:
-  "max-w-40 truncate"` / `"max-w-56 truncate font-medium"` /
-  `"max-w-32 truncate"` (free-text fields that can be arbitrarily long) and
+  horizontal scroll by letting Name/Source shrink instead of
+  wrapping.** `COLUMNS` gives Name/Source `cellClassName:
+  "max-w-56 truncate font-medium"` / `"max-w-32 truncate"` (free-text fields that can be arbitrarily long) and
   Last sync/Balance `whitespace-nowrap` (structured values that should
   never break across two lines). This overrides the shared `TableCell`'s
   default wrapping (see `table-page-conventions`) specifically for this
@@ -38,23 +37,31 @@ description: Use when touching how the Accounts table (src/app/accounts/accounts
   truncate`..." bullet for why `truncate` alone doesn't shrink a column in
   this app's tables. The page (`src/app/accounts/page.tsx`) also uses
   `max-w-5xl` (matching Transactions, the widest list page) rather than a
-  narrower container, to give these three columns enough room that typical
+  narrower container, to give these columns enough room that typical
   values render in full without needing to lean on the ellipsis at all.
-- **Account, Source, and Type render as a `Badge` chip**
-  (`variant="secondary"`), the same treatment as the Categories table's
-  Type column (see `table-page-conventions`). Account and Source
-  additionally get `className="max-w-full gap-1 truncate"` on the `Badge`
-  itself — unlike Categories' Type (a short, bounded enum label), both are
-  free text (`account.label`/`account.source`) that could in principle be
-  long, and `Badge`'s own `w-fit shrink-0` would otherwise let a long value
+- **Source and Type render as a `Badge` chip**
+  (`variant="secondary"`). Source additionally gets
+  `className="max-w-full gap-1 truncate"` on the `Badge` itself — it's free
+  text (`account.source`) that could in principle be long, and `Badge`'s own `w-fit shrink-0` would otherwise let a long value
   stretch the table wider than its container. Type doesn't need this since
-  `typeLabels` are always short. All three fall back to a plain muted
-  `"—"` span when the value is null (Type is never null, so it never needs
-  the fallback).
+  `typeLabels` are always short. Source falls back to a plain muted
+  `"—"` span when the value is null (Type is never null).
 - **Name is the origin-table identity column, so its header is icon+text**
   (`LandmarkIcon`, via `headerIcon` — see `table-page-conventions`'s
-  "Column header icons" bullet); Account (the short label column) stays
-  plain text, it isn't the identity column.
+  "Column header icons" bullet).
+- **Name is the only account name — there is no separate "Account"
+  alias column/field any more.** It used to be a short user nickname
+  (`accounts.label`, migration 0014) shown as an "Account" column and in
+  the transaction tables, because Pluggy sync overwrote `name` on every
+  run. Per explicit user request, sync now sets `name` only when it first
+  inserts an account (`syncPluggyItem` in `pluggy-actions.ts` does a
+  separate update — without `name` — for accounts that already exist,
+  rather than an upsert, since `name` is NOT NULL and an upsert payload
+  without it fails), so the user's edits to Name stick; migration 0019
+  copied every alias into `name` and dropped `label`. Every other place
+  that shows an account (Search/Dashboard transaction tables' Account
+  column, the Search Account filter) uses `account.name`. Sync still
+  overwrites Source, Type and the balance — only Name is user-owned.
 - **"Connect bank" and "Sync" live in this table's own toolbar** (right/
   specific zone), not in `accounts/page.tsx` — see `table-page-conventions`'s
   "Connect bank" bullet. `page.tsx` now renders only a plain `<h1>Accounts</h1>`.

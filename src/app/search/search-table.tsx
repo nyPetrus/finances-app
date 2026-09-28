@@ -152,9 +152,9 @@ export function SearchTable({
         return <span title={transaction.description}>{transaction.description}</span>;
       case "account": {
         const account = accountsById.get(transaction.account_id);
-        return account?.label ? (
+        return account ? (
           <Badge variant="secondary" className="max-w-full gap-1 truncate">
-            {account.label}
+            {account.name}
           </Badge>
         ) : (
           <span className="text-sm text-muted-foreground">—</span>
@@ -430,7 +430,7 @@ export function SearchTable({
                   <SelectContent>
                     {accounts.map((account) => (
                       <SelectItem key={account.id} value={account.id}>
-                        {account.label ?? account.name}
+                        {account.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

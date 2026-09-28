@@ -73,7 +73,6 @@ const COLUMNS: {
   headerIcon?: LucideIcon;
   headerIconOnly?: boolean;
 }[] = [
-  { key: "account", label: "Account", cellClassName: "max-w-40 truncate" },
   { key: "name", label: "Name", cellClassName: "max-w-56 truncate font-medium", headerIcon: LandmarkIcon },
   { key: "source", label: "Source", cellClassName: "max-w-32 truncate" },
   { key: "type", label: "Type" },
@@ -86,14 +85,6 @@ const DEFAULT_COLUMN_ORDER = COLUMNS.map((column) => column.key);
 
 function renderCell(account: Account, key: SortKey, transactionsTotalByAccount: Record<string, number>) {
   switch (key) {
-    case "account":
-      return account.label ? (
-        <Badge variant="secondary" className="max-w-full gap-1 truncate">
-          {account.label}
-        </Badge>
-      ) : (
-        <span className="text-sm text-muted-foreground">—</span>
-      );
     case "name":
       return account.name;
     case "source":
@@ -149,9 +140,6 @@ export function AccountsTable({
     return [...accounts].sort((a, b) => {
       let cmp = 0;
       switch (sortKey) {
-        case "account":
-          cmp = (a.label ?? "").localeCompare(b.label ?? "");
-          break;
         case "name":
           cmp = a.name.localeCompare(b.name);
           break;
@@ -375,18 +363,8 @@ export function AccountsTable({
             >
               <input type="hidden" name="id" value={editingAccount.id} />
               <div className="flex flex-col gap-2">
-                <Label htmlFor="label">Account</Label>
-                <Input
-                  id="label"
-                  name="label"
-                  placeholder="Short label for this account"
-                  defaultValue={editingAccount.label ?? ""}
-                  autoFocus
-                />
-              </div>
-              <div className="flex flex-col gap-2">
                 <Label htmlFor="name">Name</Label>
-                <Input id="name" name="name" defaultValue={editingAccount.name} required />
+                <Input id="name" name="name" defaultValue={editingAccount.name} required autoFocus />
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="type">Type</Label>
