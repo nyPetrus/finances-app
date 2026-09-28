@@ -306,6 +306,11 @@ export function DashboardTransactionsTable({
               disabled={isSyncing || isDeleting}
             />
           )}
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          {selected.size > 0 && (
+            <span className="text-sm text-muted-foreground">{selected.size} selected</span>
+          )}
           <Button
             variant="ghost"
             size="icon-sm"
@@ -316,11 +321,6 @@ export function DashboardTransactionsTable({
           >
             <Trash2Icon />
           </Button>
-        </div>
-        <div className="ml-auto flex items-center gap-2">
-          {selected.size > 0 && (
-            <span className="text-sm text-muted-foreground">{selected.size} selected</span>
-          )}
         </div>
       </div>
       {actionError && <p className="text-sm text-destructive">{actionError}</p>}

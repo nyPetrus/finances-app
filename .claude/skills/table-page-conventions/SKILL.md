@@ -1,6 +1,6 @@
 ---
 name: table-page-conventions
-description: Use when adding a new list-style page or touching an existing one (Search's results table, Categories, Classes, Descriptions, Accounts) — table markup, row selection, the two-group toolbar (left: Add-or-"N selected" swap, table-specific buttons, then Delete last, only when something's selected — the *only* way to delete a row, per explicit user request; right: just Columns), the toolbar "⋮" actions menu for the single checked row (Edit/Sync — no Delete; no per-row ⋮ column), column show/hide & reorder, column header icons, sorting, add/edit dialogs, category/class chip rendering, the app-wide symbol-display rule (a value's name only in its original table, elsewhere just its symbol — category icon, type ↑↓↔, gordura ▢△), or bulk mutations. Encodes this app's shared list-page architecture so new pages match instead of inventing a fresh layout.
+description: Use when adding a new list-style page or touching an existing one (Search's results table, Categories, Classes, Descriptions, Accounts) — table markup, row selection, the two-group toolbar (left: Add-or-"N selected" swap, table-specific buttons, "⋮" menu; right: Delete (recycle bin, only when something's selected — the *only* way to delete a row, per explicit user request) then Columns), the toolbar "⋮" actions menu for the single checked row (Edit/Sync — no Delete; no per-row ⋮ column), column show/hide & reorder, column header icons, sorting, add/edit dialogs, category/class chip rendering, the app-wide symbol-display rule (a value's name only in its original table, elsewhere just its symbol — category icon, type ↑↓↔, gordura ▢△), or bulk mutations. Encodes this app's shared list-page architecture so new pages match instead of inventing a fresh layout.
 ---
 
 # Table page conventions
@@ -97,7 +97,7 @@ list page instead of inventing a fresh layout.
   for selected row" title="Actions"><MoreVerticalIcon /></Button>`. Each
   table renders `{soleSelectedRow && <RowActionsMenu onEdit={...}
   onSync={...} disabled={isSyncing || isDeleting} />}` in the toolbar's
-  left group, **right before Delete** — so it only exists while exactly one
+  left group, **last in that group** — so it only exists while exactly one
   row is checked (with 2+ checked, only the bulk buttons show), and every
   handler closes over `soleSelectedRow`:
   - `onEdit` sets an `editing<X>: <Row> | null` state (e.g.
@@ -136,13 +136,18 @@ list page instead of inventing a fresh layout.
   so it has data to prefill from and unmounts cleanly once closed.
 - **The toolbar above the table has two button groups, left and right,
   spread apart by an outer `<div className="flex items-center
-  justify-between">`.** The **right** group is just `ColumnsMenu` alone, no
-  wrapping div needed since it's the only thing there — the outer
-  `justify-between` is what pushes it to the far right while keeping it
-  vertically aligned with the left group on the same row. Everything else
-  lives in the **left** group (`<div className="flex items-center
-  gap-2">`, always rendered — this is what keeps "+" reachable even when
-  the row list is empty, see below), in this order:
+  justify-between">`.** The **right** group is its own `<div
+  className="flex items-center gap-2">`, in this order: any right-side
+  table-specific control (Categories'/Classes' "Show/Hide inactive"
+  toggle), then **Delete** (the recycle bin, see item 3 below), then
+  `ColumnsMenu` last, at the far right — the outer `justify-between` is
+  what pushes the group right while keeping it vertically aligned with the
+  left group on the same row. **Delete moved here from the end of the left
+  group per explicit user request** ("put the recycle bin at the right
+  side above the table") — don't move it back left. Everything else lives
+  in the **left** group (`<div className="flex items-center gap-2">`,
+  always rendered — this is what keeps "+" reachable even when the row
+  list is empty, see below), in this order:
   1. **Either the page's "Add" dialog trigger, or a `"{selected.size}
      selected"` label in that exact same slot** — `{selected.size > 0 ? (
      <span className="text-sm text-muted-foreground">{selected.size}
@@ -167,11 +172,11 @@ list page instead of inventing a fresh layout.
      separate toolbar button but is now reachable only via the "+" menu,
      see the "Accounts' '+' is a menu" bullet below. The `SyncButton` reuse
      on Transactions was per explicit user request.
-  3. **"Delete" last, and only rendered at all when `selected.size > 0` —
-     this is the *only* place a row can be deleted from anywhere in the
-     app.** `{selected.size > 0 && <Button ...>Trash2Icon</Button>}`, no
-     wrapping wrapper needed since it's a single conditional child alongside
-     its left-group siblings. Not just disabled while nothing's selected,
+  3. **"Delete" — rendered in the *right* group (just before
+     `ColumnsMenu`, see above), not here — and only rendered at all when
+     `selected.size > 0` — this is the *only* place a row can be deleted
+     from anywhere in the app.** `{selected.size > 0 &&
+     <Button ...>Trash2Icon</Button>}`. Not just disabled while nothing's selected,
      the button doesn't exist in the DOM until there's a selection, so
      there's nothing to accidentally click. Stays `Trash2Icon`,
      `variant="ghost"` `size="icon-sm"`, no red fill/destructive styling;
@@ -185,7 +190,11 @@ list page instead of inventing a fresh layout.
      item was removed for exactly this reason, see the `RowActionsMenu`
      bullet above.
   The "⋮" `RowActionsMenu` (only while exactly one row is checked) sits
-  between the table-specific buttons and Delete.
+  last in the left group, after the table-specific buttons. The
+  Dashboard's embedded table (`dashboard-transactions-table.tsx`, a
+  different toolbar shape: Columns/Add/⋮ on the left, "N selected" on the
+  right) also has its Delete in its right group, after "N selected" — it
+  stays always-mounted-but-disabled there, as before.
   **The transaction tables have two different "Sync" affordances now, doing two
   different things — don't conflate them.** The `RowActionsMenu`'s
   `onSync` item (on both `search/search-table.tsx` and its

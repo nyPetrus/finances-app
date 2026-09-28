@@ -208,6 +208,8 @@ export function DescriptionsTable({
               disabled={isDeleting}
             />
           )}
+        </div>
+        <div className="flex items-center gap-2">
           {selected.size > 0 && (
             <Button
               variant="ghost"
@@ -220,8 +222,8 @@ export function DescriptionsTable({
               <Trash2Icon />
             </Button>
           )}
+          <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />
         </div>
-        <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />
       </div>
       {actionError && <p className="text-sm text-destructive">{actionError}</p>}
 

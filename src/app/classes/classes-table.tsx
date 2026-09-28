@@ -216,6 +216,13 @@ export function ClassesTable({
               disabled={isBusy}
             />
           )}
+        </div>
+        <div className="flex items-center gap-2">
+          {inactiveCount > 0 && (
+            <Button variant="ghost" size="sm" onClick={() => setShowInactive(!showInactive)}>
+              {showInactive ? "Hide inactive" : `Show inactive (${inactiveCount})`}
+            </Button>
+          )}
           {selected.size > 0 && (
             <Button
               variant="ghost"
@@ -226,13 +233,6 @@ export function ClassesTable({
               title="Delete"
             >
               <Trash2Icon />
-            </Button>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {inactiveCount > 0 && (
-            <Button variant="ghost" size="sm" onClick={() => setShowInactive(!showInactive)}>
-              {showInactive ? "Hide inactive" : `Show inactive (${inactiveCount})`}
             </Button>
           )}
           <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />
