@@ -221,8 +221,12 @@ table is meant if it's ever unclear again.
   click). **No cell in this table uses `cursor-pointer`** — clickable
   cells (label-with-children, month, Total, header, footer) keep the
   default arrow cursor and signal clickability only via
-  `hover:brightness-95`. Removed per explicit user request; don't add the
-  hand cursor back without a fresh ask. **Click-to-filter now lives only on the month cells
+  `hover:brightness-95`. The `<table>` itself is `cursor-default
+  select-none` — without `cursor-default` the browser shows the text
+  I-beam over every number, which the user read as "the cell looks
+  editable"; `select-none` stops clicks from highlighting the text. Both
+  per explicit user request; don't add the hand cursor back or drop
+  these two classes without a fresh ask. **Click-to-filter now lives only on the month cells
   and the trailing Total cell** (each still calls `onSelect` exactly as
   before — a month cell scopes to `{ ...rowSelection, month: i }`, the
   Total cell scopes to the whole row via `rowSelection` alone). The label

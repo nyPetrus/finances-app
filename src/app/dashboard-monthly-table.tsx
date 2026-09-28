@@ -230,7 +230,10 @@ export function MonthlyBreakdownTable({
 
   return (
     <div className="max-h-[70vh] overflow-auto rounded-md border">
-      <table className="w-full border-collapse text-sm">
+      {/* cursor-default: without it the browser shows the text I-beam over
+          every number, which reads as an editable cell. select-none: clicks
+          filter/expand, so they shouldn't also highlight the text. */}
+      <table className="w-full cursor-default select-none border-collapse text-sm">
         <thead>
           <tr className="border-b">
             <th className="sticky top-0 left-0 z-30 border-r bg-background px-2 py-2" />
