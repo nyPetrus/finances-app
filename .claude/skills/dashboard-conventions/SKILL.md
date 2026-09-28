@@ -11,8 +11,10 @@ that fetches the year's data and hands it to `dashboard-explorer.tsx`
 table (see `dashboard-monthly-table`) and the embedded transactions table
 documented below, which only appears once a cell in that tree table is
 selected. No page here shows a `(year)`/`— {year}` suffix in a heading —
-the page-level year nav (`← {year} {year+1} →` next to the `<h1>`) already
-establishes it once.
+the page-level year nav (`< {year} >` next to the `<h1>`) already
+establishes it once. The prev/next buttons show only `<`/`>` — no adjacent
+year number, per explicit user request (the target year lives in each
+button's `aria-label` instead). Budget's year nav still shows the numbers.
 
 **The page wrapper is `max-w-6xl`** (`mx-auto flex w-full max-w-6xl
 flex-col gap-6 p-6`), one step wider than the `max-w-5xl`

@@ -40,12 +40,22 @@ export default async function Home({
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Dashboard</h1>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" render={<Link href={`/?year=${year - 1}`} />}>
-            ← {year - 1}
+          <Button
+            variant="outline"
+            size="sm"
+            aria-label={`Previous year (${year - 1})`}
+            render={<Link href={`/?year=${year - 1}`} />}
+          >
+            &lt;
           </Button>
           <span className="w-16 text-center font-medium">{year}</span>
-          <Button variant="outline" size="sm" render={<Link href={`/?year=${year + 1}`} />}>
-            {year + 1} →
+          <Button
+            variant="outline"
+            size="sm"
+            aria-label={`Next year (${year + 1})`}
+            render={<Link href={`/?year=${year + 1}`} />}
+          >
+            &gt;
           </Button>
         </div>
       </div>
