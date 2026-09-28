@@ -104,7 +104,7 @@ function TreeRows({
                 onClick={hasChildren ? () => onToggle(row.key) : undefined}
                 className={cn(
                   "sticky left-0 z-10 max-w-56 overflow-hidden border-r px-2 py-2",
-                  hasChildren && "cursor-pointer hover:brightness-95",
+                  hasChildren && "hover:brightness-95",
                   rowBg ?? "bg-background",
                   wholeRowSelected && SELECTED_CELL,
                 )}
@@ -148,7 +148,7 @@ function TreeRows({
                     key={i}
                     onClick={() => onSelect({ ...rowSelection, month: i })}
                     className={cn(
-                      "cursor-pointer whitespace-nowrap px-0.5 py-2 text-right hover:brightness-95",
+                      "whitespace-nowrap px-0.5 py-2 text-right hover:brightness-95",
                       isClassLevel ? "text-[11px]" : "text-xs",
                       rowColor,
                       rowBg,
@@ -164,7 +164,7 @@ function TreeRows({
               <td
                 onClick={() => onSelect(rowSelection)}
                 className={cn(
-                  "sticky right-0 z-10 cursor-pointer whitespace-nowrap border-l px-2 py-2 text-right hover:brightness-95",
+                  "sticky right-0 z-10 whitespace-nowrap border-l px-2 py-2 text-right hover:brightness-95",
                   isClassLevel ? "text-[11px]" : "text-xs",
                   rowColor,
                   rowBg ?? "bg-background",
@@ -239,7 +239,7 @@ export function MonthlyBreakdownTable({
                 key={label}
                 onClick={() => onSelect({ month: i })}
                 className={cn(
-                  "sticky top-0 z-20 cursor-pointer bg-background px-0.5 py-2 text-center text-xs font-medium capitalize hover:brightness-95",
+                  "sticky top-0 z-20 bg-background px-0.5 py-2 text-center text-xs font-medium capitalize hover:brightness-95",
                   columnSelectedMonth === i && SELECTED_CELL,
                 )}
               >
@@ -249,7 +249,7 @@ export function MonthlyBreakdownTable({
             <th
               onClick={() => onSelect({})}
               className={cn(
-                "sticky top-0 right-0 z-30 cursor-pointer border-l bg-background px-2 py-2 text-right text-xs font-medium hover:brightness-95",
+                "sticky top-0 right-0 z-30 border-l bg-background px-2 py-2 text-right text-xs font-medium hover:brightness-95",
                 totalSelected && SELECTED_CELL,
               )}
             >
@@ -270,7 +270,7 @@ export function MonthlyBreakdownTable({
                 key={i}
                 onClick={() => onSelect({ month: i })}
                 className={cn(
-                  "sticky bottom-0 z-20 cursor-pointer whitespace-nowrap bg-background px-0.5 py-2 text-right text-xs font-medium hover:brightness-95",
+                  "sticky bottom-0 z-20 whitespace-nowrap bg-background px-0.5 py-2 text-right text-xs font-medium hover:brightness-95",
                   columnSelectedMonth === i && SELECTED_CELL,
                 )}
               >
@@ -280,7 +280,7 @@ export function MonthlyBreakdownTable({
             <td
               onClick={() => onSelect({})}
               className={cn(
-                "sticky right-0 bottom-0 z-30 cursor-pointer whitespace-nowrap border-l bg-background px-2 py-2 text-right text-xs font-medium hover:brightness-95",
+                "sticky right-0 bottom-0 z-30 whitespace-nowrap border-l bg-background px-2 py-2 text-right text-xs font-medium hover:brightness-95",
                 totalSelected && SELECTED_CELL,
               )}
             >

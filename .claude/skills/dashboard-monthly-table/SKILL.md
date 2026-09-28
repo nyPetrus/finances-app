@@ -217,8 +217,12 @@ table is meant if it's ever unclear again.
   has children; it never sets the filter selection.** The label `<td>`'s
   `onClick` is `hasChildren ? () => onToggle(row.key) : undefined` — no
   `onSelect` call at all. A row with no children has no `onClick` on its
-  label cell (and no `cursor-pointer`/hover styling either, since there's
-  nothing to click). **Click-to-filter now lives only on the month cells
+  label cell (and no hover styling either, since there's nothing to
+  click). **No cell in this table uses `cursor-pointer`** — clickable
+  cells (label-with-children, month, Total, header, footer) keep the
+  default arrow cursor and signal clickability only via
+  `hover:brightness-95`. Removed per explicit user request; don't add the
+  hand cursor back without a fresh ask. **Click-to-filter now lives only on the month cells
   and the trailing Total cell** (each still calls `onSelect` exactly as
   before — a month cell scopes to `{ ...rowSelection, month: i }`, the
   Total cell scopes to the whole row via `rowSelection` alone). The label
