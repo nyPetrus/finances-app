@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { LandmarkIcon, TagIcon, TagsIcon, Trash2Icon, type LucideIcon } from "lucide-react";
+import { BanknoteIcon, LandmarkIcon, TagIcon, TagsIcon, Trash2Icon, type LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -88,7 +88,7 @@ const COLUMNS: {
     headerIconOnly: true,
   },
   { key: "class", label: "Class", cellClassName: "max-w-40 truncate", headerIcon: TagsIcon, headerIconOnly: true },
-  { key: "amount", label: "Amount", cellClassName: "text-right" },
+  { key: "amount", label: "Amount", cellClassName: "text-right", headerIcon: BanknoteIcon, headerIconOnly: true },
 ];
 
 const DEFAULT_COLUMN_ORDER = COLUMNS.map((column) => column.key);

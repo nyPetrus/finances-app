@@ -235,7 +235,10 @@ list page instead of inventing a fresh layout.
   reference to another entity (Category, Class, Account) sets `headerIcon`
   to that entity's icon and `headerIconOnly: true` — reuse the same icon
   already assigned to that entity in `sidebar-nav.tsx` (Category =
-  `TagIcon`, Class = `TagsIcon`, Account = `LandmarkIcon`), rendered via the
+  `TagIcon`, Class = `TagsIcon`, Account = `LandmarkIcon`). The transaction
+  tables' **Amount** column is also icon-only, `BanknoteIcon` — per
+  explicit user request ("a symbol that represents money"; a banknote, not
+  `$`, since the app is in BRL). These are rendered via the
   shared `<ColumnHeaderIcon icon={column.headerIcon} label={column.label}
   iconOnly={column.headerIconOnly} />` (`src/components/column-header-icon.tsx`)
   as the header cell's children instead of `column.label` directly. The
