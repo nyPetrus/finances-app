@@ -1,73 +1,73 @@
 ---
 name: search-page-conventions
-description: Use when touching the Search page (src/app/search/ — page.tsx, search-form.tsx, search-table.tsx, filters.ts, sort.ts, bulk-edit-dialog.tsx) — its 7 optional filters (Account/Category/Class/Gordura as checkbox multi-selects, Description/Date/Amount as operator+value controls), how filter state round-trips through the URL, the Supabase query-building/paging behind "Apply", the count+total results-summary block, its results table (a near-copy of TransactionsTable), or the Search-only batch Category/Class/Gordura editor on selected rows. Not part of the shared table-page-conventions architecture (this page doesn't own/create rows the way a canonical list page does), though its results table borrows heavily from it.
+description: Use when touching the Search page (src/app/search/ — page.tsx, filter-bar.tsx, filter-editors.tsx, search-table.tsx, filters.ts, sort.ts, bulk-edit-dialog.tsx) — its Supabase-style single-line filter bar (chips + typed suggestions) over 7 optional filters (Account/Category/Class/Gordura as checkbox multi-selects, Description/Amount as operator+value, Date as operator + Year/Month/Day picker), how filter state round-trips through the URL, the Supabase query-building/paging behind it, the count+total results-summary block, its results table (a near-copy of TransactionsTable), or the Search-only batch Category/Class/Gordura editor on selected rows. Not part of the shared table-page-conventions architecture (this page doesn't own/create rows the way a canonical list page does), though its results table borrows heavily from it.
 ---
 
 # Search page conventions
 
 `/search` lets the user query transactions across all time (not scoped to a
 month, unlike `/transactions`) by combining up to 7 independent, optional
-filters — Account, Category, Class, Gordura, Description, Date, Amount —
-then clicking "Apply". Added per explicit user request.
+filters — Account, Category, Class, Gordura, Description, Date, Amount.
+Added per explicit user request.
 
 - **Every filter is optional and AND-combined; there is no default,
   unfiltered "show everything" state.** `src/app/search/page.tsx` only
   runs a query when `hasAnyFilter(filters)` is true (`filters.ts`) — with
   zero filters set, the results area (summary block + table, see below)
   renders nothing at all, no hint text. Don't remove this guard to
-  "simplify" the page. **Apply and Clear are themselves disabled (dimmed
-  via the Button component's own `disabled` styling) whenever every
-  filter field is empty** — `search-form.tsx`'s `hasAnyValue`, computed
-  from current local state (not the `filters` prop), so unchecking every
-  checkbox / clearing every field re-disables both buttons live, before
-  the user even clicks Apply.
+  "simplify" the page.
   **Why:** the query guard is deliberate, not just an easy default —
-  without it, a bare page load (or a "Clear" click) would trigger an
-  unbounded query. A muted hint text used to sit in the results area
-  instead of the disabled-buttons treatment, but was removed per explicit
-  user request when Apply/Clear started reflecting the same "nothing to
-  search yet" state live — don't re-add the hint text without a fresh ask.
-- **Filter labels live inside the controls, not in a separate label
-  column** — e.g. `[Account: Any ▾]`, `[Description: Contains ▾] [e.g.
-  uber]`. The four checkbox multi-selects pass `label` to
-  `CheckboxSelect` (renders `Label:` muted, then the summary; the summary
-  is also muted while nothing is checked, so active filters stand out);
-  Description/Date/Amount put an `InlineLabel` (`search-form.tsx`) inside
-  their first `SelectTrigger`, and their text/date/number inputs carry
-  `aria-label`s since there's no `<Label htmlFor>` anymore. **Description
-  and Amount each render as a single combined field** —
-  `OperatorField` (`search-form.tsx`) is one bordered box that owns the
-  border and the `focus-within` ring, holding the operator `Select` and
-  the value `Input` with their own borders/rings stripped
-  (`OPERATOR_TRIGGER_CLASS`/`OPERATOR_INPUT_CLASS`) and a thin divider
-  between them: `[Description: Contains ▾ | e.g. uber]`. The operator stays
-  a real, clickable choice — don't replace it with typed-prefix syntax
-  (`^uber`, `=uber`); that was considered and rejected as too hidden.
-  Date keeps separate controls (two selects + an input is too much for
-  one box). Layout is two
-  responsive grids: the checkbox selects at `grid-cols-1 sm:grid-cols-2
-  lg:grid-cols-4` (each `w-full`), the operator filters at `grid-cols-1
-  md:grid-cols-2 xl:grid-cols-3` with each input `flex-1`.
-  **Why:** per explicit user request, to reclaim vertical space on
-  mobile — the old fixed `w-24` label column forced every filter row to
-  wrap onto two lines on a phone. Don't swap the inline label for a bare
-  placeholder: it has to stay visible after a value is picked.
+  without it, a bare page load (or clearing every chip) would trigger an
+  unbounded query. Don't re-add a "nothing to search yet" hint text
+  without a fresh ask (one was removed per explicit user request).
+- **The filters are a single-line, Supabase-style filter bar**
+  (`filter-bar.tsx`, `SearchFilterBar`), modeled on the Supabase Table
+  Editor's filter bar per explicit user request (it replaced a
+  one-row-per-filter form, to save vertical space on mobile). One bordered
+  box holds a chip per active filter (fixed `FIELDS` order) followed by a
+  text input:
+  - **Chips** read `Account: Nubank, XP` (3+ values: `Nubank, XP +1`),
+    `Description contains "uber"`, `Amount > -50`, `Date: Sep 2026` /
+    `Date before Sep 2026` — field name muted, value bold; a colon only
+    for list-style values (`readsAsSentence()`). Clicking a chip reopens
+    that field's editor; its ✕ removes it; a trailing ✕ clears all.
+  - **The input** opens a panel (inline `absolute` div under the bar, not
+    a portal — so the outside-press listener can just check
+    `containerRef.contains`). Empty input → the 7 fields (active ones show
+    their current value). Typing → ready-made suggestions: `Amount =
+    <n>` (only when numeric), `Description contains "<text>"`, and up to 6
+    matching Account/Category/Class/Gordura option names (added to that
+    field's set); when the text is the start of a field name ("cat") the
+    field rows come first instead. Arrow keys move the highlight, Enter
+    picks it (so plain typing + Enter = Description contains), Backspace on
+    an empty input removes the last chip, Escape closes.
+  - **Editors** (`filter-editors.tsx`): `CheckboxEditor` (checkbox list,
+    a find box when > 8 options, Clear + Apply; applying none removes the
+    filter), `OperatorEditor` (segmented operator + value input, Enter or
+    Apply; an empty value removes the filter — the operator stays a real
+    choice, don't swap it for typed-prefix syntax like `^uber`, which was
+    considered and rejected as too hidden), and `DateEditor` (see Date
+    below).
+  - **Every finished edit applies immediately** — no whole-form
+    Apply/Clear buttons. `apply()` updates a local copy of the filters (so
+    the chip changes instantly, re-synced from the `filters` prop whenever
+    the URL changes) and `router.push`es inside `startTransition`; the
+    search icon turns into a spinner while pending.
 - **State is fully URL-driven, the same pattern `/transactions` uses for
-  `month`/`sort`/`dir`** — `search-form.tsx` (`"use client"`) reads its
-  initial field values from a `filters: ParsedFilters` prop (computed
-  server-side in `page.tsx` via `parseFilters()`, `filters.ts`) and, on
-  "Apply", builds a fresh `URLSearchParams` from its own local state and
-  `router.push("/search?...")`s to it — it does **not** call a server
-  action. `page.tsx` re-parses `searchParams` on every request and re-runs
-  the query; there's no client-side re-filtering of an already-fetched
-  set. "Clear" resets all local state and pushes bare `/search`.
+  `month`/`sort`/`dir`** — `filter-bar.tsx` reads the current filters
+  from a `filters: ParsedFilters` prop (computed server-side in `page.tsx`
+  via `parseFilters()`, `filters.ts`) and pushes
+  `filtersToSearchParams(next)` (`filters.ts`, the inverse of
+  `parseFilters`) — it does **not** call a server action. `page.tsx`
+  re-parses `searchParams` on every request and re-runs the query; there's
+  no client-side re-filtering of an already-fetched set. Clearing every
+  filter pushes bare `/search`.
 - **Filter → URL param mapping** (`filters.ts` is the single source of
-  truth for all of these — both `page.tsx` and `search-form.tsx` import
-  from it, never redefine locally):
+  truth for all of these — `page.tsx`, `filter-bar.tsx` and
+  `filter-editors.tsx` import from it, never redefine locally):
   - **Account, Category, Class, Gordura are checkbox multi-selects, not
-    operator+value controls.** Each renders via the shared
-    `CheckboxSelect` component (`src/components/checkbox-select.tsx`, also
-    used nowhere else yet) and round-trips as a **repeated** query param —
+    operator+value controls.** Each is edited in `CheckboxEditor` and
+    round-trips as a **repeated** query param —
     `?account=id1&account=id2`, parsed by `filters.ts`'s `many()` helper —
     with OR semantics (match any checked value) and an **empty array
     meaning "no filter"**, not "match nothing." `ParsedFilters.accounts` /
@@ -134,8 +134,16 @@ then clicking "Apply". Added per explicit user request.
     to compare directly against the `date` timestamp column, the same
     trick `transactions/page.tsx`'s own month-scoping already relies on):
     "on" is `gte(start).lt(end)`, "before" is `lt(start)`, "after" is
-    `gte(end)`. **Changing the granularity `<Select>` resets `dateValue`
-    to `""`** (`search-form.tsx`) — a value shaped for one granularity
+    `gte(end)`. **Editing UI is `DateEditor`** (`filter-editors.tsx`): an
+    On/Before/After segmented control, shortcut buttons (This month /
+    Last month / This year), and a Year | Month | Day level switch —
+    Month is the default level — over a 12-year grid, a 12-month grid
+    with year arrows, or the shadcn `Calendar`. Picking a value applies
+    at once with the current operator; the footer Apply only matters
+    after changing just the operator. Chip text comes from
+    `formatDateValue()` (`filters.ts`, fixed English `MONTH_LABELS`, no
+    `Intl`, so server and client render identically). **Switching the
+    level resets the value to `""`** — a value shaped for one granularity
     (e.g. `"2026-09-15"`) is meaningless for another (e.g. as a year), so
     don't try to convert between them instead.
   - **Amount**: `amount` (a plain number string, validated finite in
@@ -151,9 +159,9 @@ then clicking "Apply". Added per explicit user request.
     URL-driven-sort pattern — `search-table.tsx`'s `sortHref()` clones the
     *entire current* `useSearchParams()` (so every active filter param
     survives a column-header click) and only overwrites `sort`/`dir`, and
-    "Apply" itself carries forward whatever `sort`/`dir` were already in
-    the URL (`search-form.tsx` reads them via `useSearchParams()` before
-    building its new query string) so re-filtering doesn't reset the
+    every filter change carries forward whatever `sort`/`dir` were
+    already in the URL (`filter-bar.tsx`'s `apply()` reads them via
+    `useSearchParams()` before pushing) so re-filtering doesn't reset the
     user's chosen sort.
 - **Query building pages through `.range()`, the same reason
   `fetchAllTransactionsInRange()` does** (see `PITFALLS.md`) — a single

@@ -45,7 +45,7 @@ export const UNCLASSED_VALUE = "unclassed";
 export const GORDURA_VALUES: Gordura[] = ["low", "high"];
 export const GORDURA_VALUE_LABELS = GORDURA_LABELS;
 
-function isGorduraValue(value: string): value is Gordura {
+export function isGorduraValue(value: string): value is Gordura {
   return value === "high" || value === "low";
 }
 
@@ -117,6 +117,51 @@ export function hasAnyFilter(filters: ParsedFilters): boolean {
     filters.date ||
     filters.amount
   );
+}
+
+export const EMPTY_FILTERS: ParsedFilters = {
+  accounts: [],
+  categories: [],
+  classes: [],
+  gorduras: [],
+  description: null,
+  date: null,
+  amount: null,
+};
+
+// Inverse of parseFilters — the URL shape every filter change pushes.
+export function filtersToSearchParams(filters: ParsedFilters): URLSearchParams {
+  const params = new URLSearchParams();
+  for (const value of filters.accounts) params.append("account", value);
+  for (const value of filters.categories) params.append("category", value);
+  for (const value of filters.classes) params.append("class", value);
+  for (const value of filters.gorduras) params.append("gordura", value);
+  if (filters.description) {
+    params.set("description", filters.description.value);
+    params.set("descriptionOp", filters.description.op);
+  }
+  if (filters.date) {
+    params.set("dateGranularity", filters.date.granularity);
+    params.set("dateOp", filters.date.op);
+    params.set("dateValue", filters.date.value);
+  }
+  if (filters.amount) {
+    params.set("amount", filters.amount.value);
+    params.set("amountOp", filters.amount.op);
+  }
+  return params;
+}
+
+// Fixed English labels rather than Intl/toLocaleString, so server- and
+// client-rendered chip text always match (no hydration mismatch).
+export const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+// "2026" / "Sep 2026" / "15 Sep 2026" — the display form of a date filter value.
+export function formatDateValue(granularity: DateGranularity, value: string): string {
+  const [year, month, day] = value.split("-").map(Number);
+  if (granularity === "year" || !month) return String(year);
+  if (granularity === "month" || !day) return `${MONTH_LABELS[month - 1]} ${year}`;
+  return `${day} ${MONTH_LABELS[month - 1]} ${year}`;
 }
 
 // Half-open [start, end) range covering the whole year/month/day the

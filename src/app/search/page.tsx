@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { fetchClasses } from "@/lib/supabase/fetch-classes";
 import type { Account, Category, Transaction } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
-import { SearchForm } from "./search-form";
+import { SearchFilterBar } from "./filter-bar";
 import { SearchTable } from "./search-table";
 import {
   dateRangeFor,
@@ -200,7 +200,7 @@ export default async function SearchPage({
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-6">
       <h1 className="text-2xl font-semibold">Search</h1>
 
-      <SearchForm accounts={allAccounts} categories={allCategories} classes={allClasses} filters={filters} />
+      <SearchFilterBar accounts={allAccounts} categories={allCategories} classes={allClasses} filters={filters} />
 
       {searchActive && (
         <>
