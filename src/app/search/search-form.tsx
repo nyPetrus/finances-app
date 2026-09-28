@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { CheckboxSelect } from "@/components/checkbox-select";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -49,6 +48,15 @@ const AMOUNT_OP_LABELS: Record<AmountOp, string> = {
   greater_than: "Greater than",
   less_than: "Less than",
 };
+
+/**
+ * Field name rendered muted inside a control ("Description: Contains"),
+ * instead of an external <Label> column — saves a full line per filter on
+ * mobile. Stays visible after a value is picked, unlike a placeholder.
+ */
+function InlineLabel({ children }: { children: string }) {
+  return <span className="shrink-0 text-muted-foreground">{children}:</span>;
+}
 
 export function SearchForm({
   accounts,
@@ -145,21 +153,20 @@ export function SearchForm({
   }
 
   return (
-    <div className="flex flex-col gap-4 rounded-md border p-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <Label className="w-24 shrink-0">Account</Label>
+    <div className="flex flex-col gap-3 rounded-md border p-4">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <CheckboxSelect
-          placeholder="Any account"
+          label="Account"
+          placeholder="Any"
+          className="w-full"
           selected={accountValues}
           onToggle={(value) => toggle(accountValues, setAccountValues, value)}
           options={accounts.map((account) => ({ value: account.id, label: account.label ?? account.name }))}
         />
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <Label className="w-24 shrink-0">Category</Label>
         <CheckboxSelect
-          placeholder="Any category"
+          label="Category"
+          placeholder="Any"
+          className="w-full"
           selected={categoryValues}
           onToggle={(value) => toggle(categoryValues, setCategoryValues, value)}
           options={[
@@ -167,12 +174,10 @@ export function SearchForm({
             ...categories.map((category) => ({ value: category.id, label: category.name })),
           ]}
         />
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <Label className="w-24 shrink-0">Class</Label>
         <CheckboxSelect
-          placeholder="Any class"
+          label="Class"
+          placeholder="Any"
+          className="w-full"
           selected={classValues}
           onToggle={(value) => toggle(classValues, setClassValues, value)}
           options={[
@@ -180,117 +185,116 @@ export function SearchForm({
             ...classes.map((classItem) => ({ value: classItem.id, label: classItem.name })),
           ]}
         />
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <Label className="w-24 shrink-0">Gordura</Label>
         <CheckboxSelect
-          placeholder="Any gordura"
+          label="Gordura"
+          placeholder="Any"
+          className="w-full"
           selected={gorduraValues}
           onToggle={(value) => toggle(gorduraValues, setGorduraValues, value)}
           options={GORDURA_VALUES.map((value) => ({ value, label: GORDURA_VALUE_LABELS[value] }))}
         />
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <Label htmlFor="search-description" className="w-24 shrink-0">
-          Description
-        </Label>
-        <Select value={descriptionOp} onValueChange={(value) => setDescriptionOp(value as DescriptionOp)}>
-          <SelectTrigger className="w-36">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="equal_to">{DESCRIPTION_OP_LABELS.equal_to}</SelectItem>
-            <SelectItem value="starts_with">{DESCRIPTION_OP_LABELS.starts_with}</SelectItem>
-            <SelectItem value="contains">{DESCRIPTION_OP_LABELS.contains}</SelectItem>
-          </SelectContent>
-        </Select>
-        <Input
-          id="search-description"
-          value={descriptionValue}
-          onChange={(e) => setDescriptionValue(e.target.value)}
-          placeholder="e.g. uber"
-          className="w-56"
-        />
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <Label className="w-24 shrink-0">Date</Label>
-        <Select
-          value={dateGranularity}
-          onValueChange={(value) => {
-            setDateGranularity(value as DateGranularity);
-            setDateValue("");
-          }}
-        >
-          <SelectTrigger className="w-36">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="year">{DATE_GRANULARITY_LABELS.year}</SelectItem>
-            <SelectItem value="month">{DATE_GRANULARITY_LABELS.month}</SelectItem>
-            <SelectItem value="day">{DATE_GRANULARITY_LABELS.day}</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={dateOp} onValueChange={(value) => setDateOp(value as DateOp)}>
-          <SelectTrigger className="w-36">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="on">{DATE_OP_LABELS.on}</SelectItem>
-            <SelectItem value="before">{DATE_OP_LABELS.before}</SelectItem>
-            <SelectItem value="after">{DATE_OP_LABELS.after}</SelectItem>
-          </SelectContent>
-        </Select>
-        {dateGranularity === "year" ? (
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
+        <div className="flex gap-2">
+          <Select value={descriptionOp} onValueChange={(value) => setDescriptionOp(value as DescriptionOp)}>
+            <SelectTrigger>
+              <InlineLabel>Description</InlineLabel>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="equal_to">{DESCRIPTION_OP_LABELS.equal_to}</SelectItem>
+              <SelectItem value="starts_with">{DESCRIPTION_OP_LABELS.starts_with}</SelectItem>
+              <SelectItem value="contains">{DESCRIPTION_OP_LABELS.contains}</SelectItem>
+            </SelectContent>
+          </Select>
           <Input
+            aria-label="Description"
+            value={descriptionValue}
+            onChange={(e) => setDescriptionValue(e.target.value)}
+            placeholder="e.g. uber"
+            className="min-w-0 flex-1"
+          />
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Select
+            value={dateGranularity}
+            onValueChange={(value) => {
+              setDateGranularity(value as DateGranularity);
+              setDateValue("");
+            }}
+          >
+            <SelectTrigger>
+              <InlineLabel>Date</InlineLabel>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="year">{DATE_GRANULARITY_LABELS.year}</SelectItem>
+              <SelectItem value="month">{DATE_GRANULARITY_LABELS.month}</SelectItem>
+              <SelectItem value="day">{DATE_GRANULARITY_LABELS.day}</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={dateOp} onValueChange={(value) => setDateOp(value as DateOp)}>
+            <SelectTrigger aria-label="Date comparison">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="on">{DATE_OP_LABELS.on}</SelectItem>
+              <SelectItem value="before">{DATE_OP_LABELS.before}</SelectItem>
+              <SelectItem value="after">{DATE_OP_LABELS.after}</SelectItem>
+            </SelectContent>
+          </Select>
+          {dateGranularity === "year" ? (
+            <Input
+              aria-label="Date"
+              type="number"
+              value={dateValue}
+              onChange={(e) => setDateValue(e.target.value)}
+              placeholder="2026"
+              className="min-w-24 flex-1"
+            />
+          ) : dateGranularity === "month" ? (
+            <Input
+              aria-label="Date"
+              type="month"
+              value={dateValue}
+              onChange={(e) => setDateValue(e.target.value)}
+              className="min-w-36 flex-1"
+            />
+          ) : (
+            <Input
+              aria-label="Date"
+              type="date"
+              value={dateValue}
+              onChange={(e) => setDateValue(e.target.value)}
+              className="min-w-36 flex-1"
+            />
+          )}
+        </div>
+
+        <div className="flex gap-2">
+          <Select value={amountOp} onValueChange={(value) => setAmountOp(value as AmountOp)}>
+            <SelectTrigger>
+              <InlineLabel>Amount</InlineLabel>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="equal_to">{AMOUNT_OP_LABELS.equal_to}</SelectItem>
+              <SelectItem value="greater_than">{AMOUNT_OP_LABELS.greater_than}</SelectItem>
+              <SelectItem value="less_than">{AMOUNT_OP_LABELS.less_than}</SelectItem>
+            </SelectContent>
+          </Select>
+          <Input
+            aria-label="Amount"
             type="number"
-            value={dateValue}
-            onChange={(e) => setDateValue(e.target.value)}
-            placeholder="2026"
-            className="w-28"
+            step="0.01"
+            value={amountValue}
+            onChange={(e) => setAmountValue(e.target.value)}
+            placeholder="-50.00"
+            className="min-w-0 flex-1"
           />
-        ) : dateGranularity === "month" ? (
-          <Input
-            type="month"
-            value={dateValue}
-            onChange={(e) => setDateValue(e.target.value)}
-            className="w-40"
-          />
-        ) : (
-          <Input
-            type="date"
-            value={dateValue}
-            onChange={(e) => setDateValue(e.target.value)}
-            className="w-40"
-          />
-        )}
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <Label htmlFor="search-amount" className="w-24 shrink-0">
-          Amount
-        </Label>
-        <Select value={amountOp} onValueChange={(value) => setAmountOp(value as AmountOp)}>
-          <SelectTrigger className="w-36">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="equal_to">{AMOUNT_OP_LABELS.equal_to}</SelectItem>
-            <SelectItem value="greater_than">{AMOUNT_OP_LABELS.greater_than}</SelectItem>
-            <SelectItem value="less_than">{AMOUNT_OP_LABELS.less_than}</SelectItem>
-          </SelectContent>
-        </Select>
-        <Input
-          id="search-amount"
-          type="number"
-          step="0.01"
-          value={amountValue}
-          onChange={(e) => setAmountValue(e.target.value)}
-          placeholder="-50.00"
-          className="w-56"
-        />
+        </div>
       </div>
 
       <div className="flex items-center gap-2">

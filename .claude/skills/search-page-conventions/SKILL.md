@@ -27,6 +27,21 @@ then clicking "Apply". Added per explicit user request.
   instead of the disabled-buttons treatment, but was removed per explicit
   user request when Apply/Clear started reflecting the same "nothing to
   search yet" state live — don't re-add the hint text without a fresh ask.
+- **Filter labels live inside the controls, not in a separate label
+  column** — e.g. `[Account: Any ▾]`, `[Description: Contains ▾] [e.g.
+  uber]`. The four checkbox multi-selects pass `label` to
+  `CheckboxSelect` (renders `Label:` muted, then the summary; the summary
+  is also muted while nothing is checked, so active filters stand out);
+  Description/Date/Amount put an `InlineLabel` (`search-form.tsx`) inside
+  their first `SelectTrigger`, and their text/date/number inputs carry
+  `aria-label`s since there's no `<Label htmlFor>` anymore. Layout is two
+  responsive grids: the checkbox selects at `grid-cols-1 sm:grid-cols-2
+  lg:grid-cols-4` (each `w-full`), the operator filters at `grid-cols-1
+  md:grid-cols-2 xl:grid-cols-3` with each input `flex-1`.
+  **Why:** per explicit user request, to reclaim vertical space on
+  mobile — the old fixed `w-24` label column forced every filter row to
+  wrap onto two lines on a phone. Don't swap the inline label for a bare
+  placeholder: it has to stay visible after a value is picked.
 - **State is fully URL-driven, the same pattern `/transactions` uses for
   `month`/`sort`/`dir`** — `search-form.tsx` (`"use client"`) reads its
   initial field values from a `filters: ParsedFilters` prop (computed

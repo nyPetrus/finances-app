@@ -17,12 +17,15 @@ export function CheckboxSelect({
   selected,
   onToggle,
   placeholder,
+  label,
   className,
 }: {
   options: { value: string; label: string }[];
   selected: Set<string>;
   onToggle: (value: string) => void;
   placeholder: string;
+  /** Field name shown muted inside the trigger ("Account: Nubank"), in place of an external <Label>. */
+  label?: string;
   className?: string;
 }) {
   const summary =
@@ -37,7 +40,10 @@ export function CheckboxSelect({
       <DropdownMenuTrigger
         render={<Button variant="outline" className={cn("w-56 justify-between font-normal", className)} />}
       >
-        <span className="truncate">{summary}</span>
+        <span className="flex min-w-0 items-center gap-1.5">
+          {label && <span className="shrink-0 text-muted-foreground">{label}:</span>}
+          <span className={cn("truncate", selected.size === 0 && label && "text-muted-foreground")}>{summary}</span>
+        </span>
         <ChevronDownIcon className="size-4 shrink-0 opacity-50" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="max-h-72 min-w-56 overflow-auto">
