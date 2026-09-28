@@ -10,10 +10,10 @@ editing an item. Ask Claude to "sync TODO" to reconcile both sides.
 - [ ] Remover o cursor do mouse nas células da tabela dinâmica da página Dashboard <!-- todoist:6hchg25Vrm4MM7XF -->
 - [ ] Column Reference in the Transaction table <!-- todoist:6hfCwVHp622CfmWF -->
 - [ ] remover botão 3 pontos das linhas das tabelas <!-- todoist:6hfHC87FFq8p8mPm -->
-- [ ] melhorar o visual dos campos de filtros <!-- todoist:6hfHCWfC97Q6jRQF -->
 
 ## Done
 
+- [x] melhorar o visual dos campos de filtros <!-- todoist:6hfHCWfC97Q6jRQF -->
 - [x] remover a página transações e deixar a página Search com o mês vigente setado <!-- todoist:6hfHCJmPmHh9QJQm -->
 - [x] Conferir valores em dólar <!-- todoist:6hcQQqGgPGgVPR7m -->
 - [x] Conferir valores futuros e valores cancelados <!-- todoist:6hcQQqHq7Gr6MHVm -->
