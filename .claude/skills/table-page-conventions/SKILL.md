@@ -1,6 +1,6 @@
 ---
 name: table-page-conventions
-description: Use when adding a new list-style page or touching an existing one (Search's results table, Categories, Classes, Descriptions, Accounts) — table markup, row selection, the two-group toolbar (left: Add-or-"N selected" swap, table-specific buttons, then Delete last, only when something's selected — the *only* way to delete a row, per explicit user request; right: just Columns), the per-row "⋮" actions menu (Edit/Sync — no Delete), column show/hide & reorder, column header icons, sorting, add/edit dialogs, category/class chip rendering, or bulk mutations. Encodes this app's shared list-page architecture so new pages match instead of inventing a fresh layout.
+description: Use when adding a new list-style page or touching an existing one (Search's results table, Categories, Classes, Descriptions, Accounts) — table markup, row selection, the two-group toolbar (left: Add-or-"N selected" swap, table-specific buttons, then Delete last, only when something's selected — the *only* way to delete a row, per explicit user request; right: just Columns), the toolbar "⋮" actions menu for the single checked row (Edit/Sync — no Delete; no per-row ⋮ column), column show/hide & reorder, column header icons, sorting, add/edit dialogs, category/class chip rendering, or bulk mutations. Encodes this app's shared list-page architecture so new pages match instead of inventing a fresh layout.
 ---
 
 # Table page conventions
@@ -74,62 +74,63 @@ list page instead of inventing a fresh layout.
   column). It returns `selected`, `allSelected`/`someSelected` (for the
   header checkbox's `checked`/`indeterminate`), `toggleAll`/`toggleOne`,
   `clear`, `selectedRows`, and `soleSelectedRow` (non-null only when exactly
-  one row is checked) — none of the 5 tables destructure `soleSelectedRow`
-  any more (Edit no longer depends on checkbox selection, see below), but
-  the hook still returns it for a future consumer that might need it.
-  **Per-row checkboxes are hidden until hovered or checked** — the header's select-all `Checkbox` stays always visible, but
-  each body row's own `Checkbox` gets `className="opacity-0
+  one row is checked) — every table destructures `soleSelectedRow` to drive
+  the toolbar's "⋮" actions menu (see below).
+  **Per-row checkboxes are hidden until hovered or checked — except on
+  touch screens** — the header's select-all `Checkbox` stays always
+  visible, but each body row's own `Checkbox` gets `className="opacity-0
   transition-opacity group-hover:opacity-100 focus-visible:opacity-100
-  data-[checked]:opacity-100"`, and its `<TableRow>` gets `className="group"`
-  so `group-hover` has something to key off. `data-[checked]` (not
-  `data-state`) is Base UI's own attribute for a checked `Checkbox` (see
-  `src/components/ui/checkbox.tsx`) — that's what keeps a selected row's
-  checkbox visible after the mouse moves away.
-- **Per-row actions live in a "⋮" menu, one column after the checkbox
-  column — not in the toolbar.** `RowActionsMenu`
-  (`src/components/row-actions-menu.tsx`) is a `DropdownMenu` (Base UI, same
-  primitives `ColumnsMenu` uses) whose trigger is `<Button variant="ghost"
-  size="icon-sm" aria-label="Row actions" title="Row actions"><MoreVerticalIcon
-  /></Button>`. Unlike the per-row `Checkbox` (hover-revealed, see below),
-  **this trigger is always visible** — it's the only way to reach a single
-  row's Edit, so it has to be reachable without hovering (keyboard, touch).
-  Render one unlabeled `<TableHead className="w-0" />` right after the
-  checkbox header, and one `<TableCell>` right after the checkbox cell in
-  every body row, holding `<RowActionsMenu onEdit={...} onSync={...}
-  disabled={isSyncing || isDeleting} />` scoped to that row:
-  - `onEdit` sets a per-row `editing<X>: <Row> | null` state (e.g.
-    `editingAccount`) instead of relying on checkbox selection.
+  data-[checked]:opacity-100 pointer-coarse:opacity-100"`, and its
+  `<TableRow>` gets `className="group"` so `group-hover` has something to
+  key off. `data-[checked]` (not `data-state`) is Base UI's own attribute
+  for a checked `Checkbox` (see `src/components/ui/checkbox.tsx`) — that's
+  what keeps a selected row's checkbox visible after the mouse moves away.
+  **`pointer-coarse:opacity-100` is load-bearing**: phones can't hover, and
+  the checkbox is now the only way to reach a row's Edit (see the next
+  bullet), so it must always show on touch devices.
+- **Row actions live in a "⋮" menu in the toolbar, acting on the single
+  checked row — there is no per-row "⋮" column any more.** Removed per
+  explicit user request (the per-row column cost a whole column of width
+  on every table). `RowActionsMenu` (`src/components/row-actions-menu.tsx`)
+  is a `DropdownMenu` (Base UI, same primitives `ColumnsMenu` uses) whose
+  trigger is `<Button variant="ghost" size="icon-sm" aria-label="Actions
+  for selected row" title="Actions"><MoreVerticalIcon /></Button>`. Each
+  table renders `{soleSelectedRow && <RowActionsMenu onEdit={...}
+  onSync={...} disabled={isSyncing || isDeleting} />}` in the toolbar's
+  left group, **right before Delete** — so it only exists while exactly one
+  row is checked (with 2+ checked, only the bulk buttons show), and every
+  handler closes over `soleSelectedRow`:
+  - `onEdit` sets an `editing<X>: <Row> | null` state (e.g.
+    `editingAccount`) from `soleSelectedRow`; the dialog keys off that
+    state (see below), so it survives the selection changing underneath.
   - **`RowActionsMenu` has no `onDelete` prop and no Delete item at all —
     the *only* way to delete a row anywhere in the app is the toolbar's
     bulk Delete button (below), which always requires an explicit
-    selection first, rather than a single accidental click in a per-row
-    menu.** Don't reintroduce a per-row delete path without a fresh ask;
+    selection first, rather than a single accidental click in an actions
+    menu.** Don't reintroduce a menu delete path without a fresh ask;
     route any future single-row delete through the existing bulk action
-    with a one-element array instead, called from the toolbar's selection,
-    not from the row menu.
+    with a one-element array instead, called from the Delete button, not
+    from the actions menu.
     **Why:** removed per explicit user request, for security. Every
     table's own `handleDeleteRow(row)` (which used to confirm + call the
     delete action with a one-element array, e.g.
     `deleteAccounts([account.id])`) was deleted along with its wiring.
   - `onSync` is only passed on tables that have a sync concept at all
-    (Accounts, Transactions — and Transactions' Dashboard-embedded copy,
-    `dashboard-transactions-table.tsx`, see `dashboard-conventions`) and
-    only when that specific row is eligible (Accounts: `account.is_automatic
-    && account.pluggy_item_id`; Transactions: `transaction.category_id`) —
+    (Accounts, Search's transaction table — and its Dashboard-embedded
+    copy, `dashboard-transactions-table.tsx`, see `dashboard-conventions`)
+    and only when the selected row is eligible (Accounts:
+    `is_automatic && pluggy_item_id`; transactions: `category_id`) —
     passing `undefined` omits the Sync item from the menu entirely. It calls
     the existing single-item sync path (`syncPluggyItem`/
     `syncDescriptionsFromTransactions` scoped to that one id), inside the
-    existing `startSync` transition. **Transactions has no *bulk* toolbar
-    Sync any more** (see below) — row-level `onSync` is the only way to
-    sync a description there now.
+    existing `startSync` transition.
   Menu item order is Edit, Sync (if present), Import (if present,
   Accounts only), Toggle active (if present) — no trailing separator, since
   there's no destructive item after it any more. Items carry their own icon
   + visible text label, so they don't need `title`.
   **The edit dialog is keyed off that `editing<X>` state, not
-  `soleSelectedRow`** — `useRowSelection`'s `soleSelectedRow` is no longer
-  destructured in any table (bulk `selected`/`toggleAll`/`toggleOne`/
-  `clear` are still used for bulk Delete — and Accounts' bulk Sync). The dialog's
+  `soleSelectedRow` directly** — `soleSelectedRow` only decides whether the
+  menu exists and which row `onEdit` copies into `editing<X>`. The dialog's
   `open` is `editing<X> !== null`, `onOpenChange` and a successful save both
   `setEditing<X>(null)`; guard its render on `{editing<X> && <Dialog ...>}`
   so it has data to prefill from and unmounts cleanly once closed.
@@ -180,14 +181,16 @@ list page instead of inventing a fresh layout.
      redundant once the button only mounts when there's a selection.
      Confirms via `window.confirm(...)` before calling the bulk delete
      action, same as always.
-     **Why:** per explicit user request — the per-row menu's own Delete
+     **Why:** per explicit user request — the actions menu's own Delete
      item was removed for exactly this reason, see the `RowActionsMenu`
      bullet above.
+  The "⋮" `RowActionsMenu` (only while exactly one row is checked) sits
+  between the table-specific buttons and Delete.
   **The transaction tables have two different "Sync" affordances now, doing two
-  different things — don't conflate them.** The per-row `RowActionsMenu`'s
+  different things — don't conflate them.** The `RowActionsMenu`'s
   `onSync` item (on both `search/search-table.tsx` and its
   Dashboard-embedded copy) still calls `syncDescriptionsFromTransactions`
-  scoped to that one row — it *creates/updates* a `mapped_descriptions`
+  scoped to the one selected row — it *creates/updates* a `mapped_descriptions`
   rule from that row's own (already-set) category/class, then applies the
   full rule set to matching uncategorized transactions; it needs a
   category already on that row to have anything to save. The toolbar's
@@ -202,9 +205,8 @@ list page instead of inventing a fresh layout.
   reasoning — "inherently per-transaction, the per-row menu already covers
   it" — no longer holds now that there's a genuinely bulk, no-selection-
   needed sync operation to expose).
-  There is no "Edit" button in the toolbar
-  anywhere — it's redundant now that every row has its own Edit via the "⋮"
-  menu. Icon-only toolbar buttons need `aria-label` *and* `title` set to
+  There is no standalone "Edit" button in the toolbar
+  anywhere — Edit lives in the "⋮" actions menu. Icon-only toolbar buttons need `aria-label` *and* `title` set to
   the plain action word ("Columns", "Sync", "Delete") for the same reason
   "Add" buttons do (see below) — `ColumnsMenu`'s trigger needs this pair
   too, it's easy to forget since it has no visible label either.

@@ -222,6 +222,7 @@ export function DashboardTransactionsTable({
     someSelected,
     toggleAll,
     toggleOne,
+    soleSelectedRow,
     clear: clearSelection,
   } = useRowSelection(sortedTransactions, (transaction) => transaction.id);
 
@@ -298,6 +299,13 @@ export function DashboardTransactionsTable({
               Create an account first
             </Button>
           )}
+          {soleSelectedRow && (
+            <RowActionsMenu
+              onEdit={() => openEditDialog(soleSelectedRow)}
+              onSync={soleSelectedRow.category_id ? () => handleSyncRow(soleSelectedRow) : undefined}
+              disabled={isSyncing || isDeleting}
+            />
+          )}
           <Button
             variant="ghost"
             size="icon-sm"
@@ -331,7 +339,6 @@ export function DashboardTransactionsTable({
                   aria-label="Select all transactions"
                 />
               </TableHead>
-              <TableHead className="w-0" />
               {visibleColumns.map((column) => (
                 <SortableTableHead
                   key={column.key}
@@ -357,14 +364,7 @@ export function DashboardTransactionsTable({
                     checked={selected.has(transaction.id)}
                     onCheckedChange={() => toggleOne(transaction.id)}
                     aria-label={`Select ${transaction.description}`}
-                    className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[checked]:opacity-100"
-                  />
-                </TableCell>
-                <TableCell>
-                  <RowActionsMenu
-                    onEdit={() => openEditDialog(transaction)}
-                    onSync={transaction.category_id ? () => handleSyncRow(transaction) : undefined}
-                    disabled={isSyncing || isDeleting}
+                    className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[checked]:opacity-100 pointer-coarse:opacity-100"
                   />
                 </TableCell>
                 {visibleColumns.map((column) => (

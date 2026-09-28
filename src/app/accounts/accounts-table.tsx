@@ -182,6 +182,7 @@ export function AccountsTable({
     someSelected,
     toggleAll,
     toggleOne,
+    soleSelectedRow,
     clear: clearSelection,
     selectedRows: selectedAccounts,
   } = useRowSelection(sorted, (account) => account.id);
@@ -263,6 +264,18 @@ export function AccountsTable({
           >
             <RefreshCwIcon className={isSyncing ? "animate-spin" : undefined} />
           </Button>
+          {soleSelectedRow && (
+            <RowActionsMenu
+              onEdit={() => setEditingAccount(soleSelectedRow)}
+              onSync={
+                soleSelectedRow.is_automatic && soleSelectedRow.pluggy_item_id
+                  ? () => handleSyncRow(soleSelectedRow)
+                  : undefined
+              }
+              onImport={() => setImportingAccount(soleSelectedRow)}
+              disabled={isSyncing || isDeleting}
+            />
+          )}
           {selected.size > 0 && (
             <Button
               variant="ghost"
@@ -296,7 +309,6 @@ export function AccountsTable({
                   aria-label="Select all accounts"
                 />
               </TableHead>
-              <TableHead className="w-0" />
               {visibleColumns.map((column) => (
                 <SortableTableHead
                   key={column.key}
@@ -322,19 +334,7 @@ export function AccountsTable({
                     checked={selected.has(account.id)}
                     onCheckedChange={() => toggleOne(account.id)}
                     aria-label={`Select ${account.name}`}
-                    className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[checked]:opacity-100"
-                  />
-                </TableCell>
-                <TableCell>
-                  <RowActionsMenu
-                    onEdit={() => setEditingAccount(account)}
-                    onSync={
-                      account.is_automatic && account.pluggy_item_id
-                        ? () => handleSyncRow(account)
-                        : undefined
-                    }
-                    onImport={() => setImportingAccount(account)}
-                    disabled={isSyncing || isDeleting}
+                    className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[checked]:opacity-100 pointer-coarse:opacity-100"
                   />
                 </TableCell>
                 {visibleColumns.map((column) => (

@@ -115,6 +115,7 @@ export function CategoriesTable({
     someSelected,
     toggleAll,
     toggleOne,
+    soleSelectedRow,
     clear: clearSelection,
   } = useRowSelection(visibleCategories, (category) => category.id);
 
@@ -200,6 +201,14 @@ export function CategoriesTable({
               <ArchiveRestoreIcon />
             </Button>
           )}
+          {soleSelectedRow && (
+            <RowActionsMenu
+              onEdit={() => openEditDialog(soleSelectedRow)}
+              onToggleActive={() => setActive([soleSelectedRow.id], !soleSelectedRow.is_active)}
+              isActive={soleSelectedRow.is_active}
+              disabled={isBusy}
+            />
+          )}
           {selected.size > 0 && (
             <Button
               variant="ghost"
@@ -247,7 +256,6 @@ export function CategoriesTable({
                   aria-label="Select all categories"
                 />
               </TableHead>
-              <TableHead className="w-0" />
               {visibleColumns.map((column) => (
                 <SortableTableHead key={column.key} href={sortHref(column.key)} active={sortKey === column.key} dir={sortDir}>
                   {column.headerIcon ? (
@@ -267,15 +275,7 @@ export function CategoriesTable({
                     checked={selected.has(category.id)}
                     onCheckedChange={() => toggleOne(category.id)}
                     aria-label={`Select ${category.name}`}
-                    className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[checked]:opacity-100"
-                  />
-                </TableCell>
-                <TableCell>
-                  <RowActionsMenu
-                    onEdit={() => openEditDialog(category)}
-                    onToggleActive={() => setActive([category.id], !category.is_active)}
-                    isActive={category.is_active}
-                    disabled={isBusy}
+                    className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[checked]:opacity-100 pointer-coarse:opacity-100"
                   />
                 </TableCell>
                 {visibleColumns.map((column) => (

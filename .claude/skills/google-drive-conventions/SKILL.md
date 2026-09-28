@@ -8,7 +8,7 @@ description: Use when touching Google Drive integration (src/lib/google-drive/cl
 **Status: the Drive UI is parked.** The Google Drive card was removed from
 the Accounts page (`GoogleDrivePanel` in `google-drive-panel.tsx` still
 exists but nothing renders it) in favor of a simpler flow: every account's
-row "⋮" menu has **Import** (menu label; the dialog it opens is still
+"⋮" actions menu (toolbar, shown when that one account is checked) has **Import** (menu label; the dialog it opens is still
 titled "Import transactions"), which uploads the bank's CSV straight from
 disk (`import-transactions-dialog.tsx` → `importTransactionsFromFiles` in
 `import-actions.ts`) — no OAuth, no Google Cloud setup. The Drive code
@@ -154,7 +154,7 @@ bullet below); a third would need its own parser added the same way.
   abort the others; `importTransactionsFromFiles` **returns `{ error }`
   instead of throwing**, because a thrown server-action error loses its
   message in production builds.
-  **The row-menu's "Import" item (`RowActionsMenu`'s optional `onImport`)
+  **The actions menu's "Import" item (`RowActionsMenu`'s optional `onImport`)
   shows for every account, not just manual ones** — the import path only
   ever inserts new, deduped rows, so it's safe to use on a Pluggy-connected
   account too, e.g. to backfill history from a bank statement export for a

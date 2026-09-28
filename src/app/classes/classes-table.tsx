@@ -128,6 +128,7 @@ export function ClassesTable({
     someSelected,
     toggleAll,
     toggleOne,
+    soleSelectedRow,
     clear: clearSelection,
   } = useRowSelection(visibleClasses, (classItem) => classItem.id);
 
@@ -207,6 +208,14 @@ export function ClassesTable({
               <ArchiveRestoreIcon />
             </Button>
           )}
+          {soleSelectedRow && (
+            <RowActionsMenu
+              onEdit={() => setEditingClass(soleSelectedRow)}
+              onToggleActive={() => setActive([soleSelectedRow.id], !soleSelectedRow.is_active)}
+              isActive={soleSelectedRow.is_active}
+              disabled={isBusy}
+            />
+          )}
           {selected.size > 0 && (
             <Button
               variant="ghost"
@@ -254,7 +263,6 @@ export function ClassesTable({
                   aria-label="Select all classes"
                 />
               </TableHead>
-              <TableHead className="w-0" />
               {visibleColumns.map((column) => (
                 <SortableTableHead key={column.key} href={sortHref(column.key)} active={sortKey === column.key} dir={sortDir} align={column.align}>
                   {column.headerIcon ? (
@@ -274,15 +282,7 @@ export function ClassesTable({
                     checked={selected.has(classItem.id)}
                     onCheckedChange={() => toggleOne(classItem.id)}
                     aria-label={`Select ${classItem.name}`}
-                    className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[checked]:opacity-100"
-                  />
-                </TableCell>
-                <TableCell>
-                  <RowActionsMenu
-                    onEdit={() => setEditingClass(classItem)}
-                    onToggleActive={() => setActive([classItem.id], !classItem.is_active)}
-                    isActive={classItem.is_active}
-                    disabled={isBusy}
+                    className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[checked]:opacity-100 pointer-coarse:opacity-100"
                   />
                 </TableCell>
                 {visibleColumns.map((column) => (

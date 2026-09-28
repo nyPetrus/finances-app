@@ -140,6 +140,7 @@ export function DescriptionsTable({
     someSelected,
     toggleAll,
     toggleOne,
+    soleSelectedRow,
     clear: clearSelection,
   } = useRowSelection(mappings, (mapping) => mapping.description);
 
@@ -201,6 +202,12 @@ export function DescriptionsTable({
             <AddMappingDialog categories={categories} classes={classes} />
           )}
           <SyncButton />
+          {soleSelectedRow && (
+            <RowActionsMenu
+              onEdit={() => openEditDialog(soleSelectedRow)}
+              disabled={isDeleting}
+            />
+          )}
           {selected.size > 0 && (
             <Button
               variant="ghost"
@@ -232,7 +239,6 @@ export function DescriptionsTable({
                   aria-label="Select all mappings"
                 />
               </TableHead>
-              <TableHead className="w-0" />
               {visibleColumns.map((column) => (
                 <SortableTableHead key={column.key} href={sortHref(column.key)} active={sortKey === column.key} dir={sortDir} align={column.align}>
                   {column.headerIcon ? (
@@ -252,13 +258,7 @@ export function DescriptionsTable({
                     checked={selected.has(mapping.description)}
                     onCheckedChange={() => toggleOne(mapping.description)}
                     aria-label={`Select mapping for ${mapping.description}`}
-                    className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[checked]:opacity-100"
-                  />
-                </TableCell>
-                <TableCell>
-                  <RowActionsMenu
-                    onEdit={() => openEditDialog(mapping)}
-                    disabled={isDeleting}
+                    className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[checked]:opacity-100 pointer-coarse:opacity-100"
                   />
                 </TableCell>
                 {visibleColumns.map((column) => (

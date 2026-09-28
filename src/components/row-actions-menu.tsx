@@ -16,6 +16,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+// Rendered in a table's toolbar (not per row) only while exactly one row is
+// checked — every handler acts on that `soleSelectedRow`.
 export function RowActionsMenu({
   onEdit,
   onSync,
@@ -41,8 +43,8 @@ export function RowActionsMenu({
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label="Row actions"
-            title="Row actions"
+            aria-label="Actions for selected row"
+            title="Actions"
             disabled={disabled}
           />
         }

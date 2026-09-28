@@ -199,6 +199,7 @@ export function SearchTable({
     someSelected,
     toggleAll,
     toggleOne,
+    soleSelectedRow,
     clear: clearSelection,
   } = useRowSelection(transactions, (transaction) => transaction.id);
 
@@ -287,6 +288,13 @@ export function SearchTable({
               <PencilIcon />
             </Button>
           )}
+          {soleSelectedRow && (
+            <RowActionsMenu
+              onEdit={() => openEditDialog(soleSelectedRow)}
+              onSync={soleSelectedRow.category_id ? () => handleSyncRow(soleSelectedRow) : undefined}
+              disabled={isSyncing || isDeleting}
+            />
+          )}
           {selected.size > 0 && (
             <Button
               variant="ghost"
@@ -318,7 +326,6 @@ export function SearchTable({
                   aria-label="Select all transactions"
                 />
               </TableHead>
-              <TableHead className="w-0" />
               {visibleColumns.map((column) => (
                 <SortableTableHead
                   key={column.key}
@@ -344,14 +351,7 @@ export function SearchTable({
                     checked={selected.has(transaction.id)}
                     onCheckedChange={() => toggleOne(transaction.id)}
                     aria-label={`Select ${transaction.description}`}
-                    className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[checked]:opacity-100"
-                  />
-                </TableCell>
-                <TableCell>
-                  <RowActionsMenu
-                    onEdit={() => openEditDialog(transaction)}
-                    onSync={transaction.category_id ? () => handleSyncRow(transaction) : undefined}
-                    disabled={isSyncing || isDeleting}
+                    className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[checked]:opacity-100 pointer-coarse:opacity-100"
                   />
                 </TableCell>
                 {visibleColumns.map((column) => (
