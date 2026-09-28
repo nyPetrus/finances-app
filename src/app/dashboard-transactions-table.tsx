@@ -3,7 +3,15 @@
 import { useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { BanknoteIcon, LandmarkIcon, TagIcon, TagsIcon, Trash2Icon, type LucideIcon } from "lucide-react";
+import {
+  ArchiveIcon,
+  ArchiveRestoreIcon,
+  BanknoteIcon,
+  LandmarkIcon,
+  TagIcon,
+  TagsIcon,
+  type LucideIcon,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -38,9 +46,10 @@ import { RowActionsMenu } from "@/components/row-actions-menu";
 import { CategoryIcon } from "@/components/category-icon";
 import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
+import { useInactiveFilter } from "@/hooks/use-inactive-filter";
 import { ClassificationFields } from "@/components/classification-fields";
 import type { Account, Category, Class, Gordura, Transaction } from "@/lib/supabase/types";
-import { deleteTransactions, syncDescriptionsFromTransactions, updateTransaction } from "./transactions/actions";
+import { setTransactionsActive, syncDescriptionsFromTransactions, updateTransaction } from "./transactions/actions";
 import { AddTransactionDialog } from "./transactions/add-transaction-dialog";
 import { AddMappingDialog } from "./descriptions/add-mapping-dialog";
 import { type SortKey } from "./transactions/sort";
@@ -105,7 +114,7 @@ export function DashboardTransactionsTable({
   classes: Class[];
 }) {
   const [isSyncing, startSync] = useTransition();
-  const [isDeleting, startDelete] = useTransition();
+  const [isTogglingActive, startToggleActive] = useTransition();
   const [isSavingEdit, startSaveEdit] = useTransition();
   const [actionError, setActionError] = useState<string | null>(null);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -118,6 +127,12 @@ export function DashboardTransactionsTable({
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const { hidden: hiddenColumns, order: columnOrder, toggle: toggleColumn, move: moveColumn } =
     useColumnPreferences<SortKey>("dashboard-transactions-table", DEFAULT_COLUMN_ORDER);
+  const {
+    showInactive,
+    setShowInactive,
+    inactiveCount,
+    visibleRows: visibleTransactions,
+  } = useInactiveFilter(transactions, (transaction) => !transaction.is_hidden);
 
   const accountsById = useMemo(() => new Map(accounts.map((a) => [a.id, a])), [accounts]);
   const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
@@ -133,7 +148,7 @@ export function DashboardTransactionsTable({
   }
 
   const sortedTransactions = useMemo(() => {
-    return [...transactions].sort((a, b) => {
+    return [...visibleTransactions].sort((a, b) => {
       let cmp = 0;
       switch (sortKey) {
         case "date":
@@ -165,14 +180,21 @@ export function DashboardTransactionsTable({
       }
       return sortDir === "asc" ? cmp : -cmp;
     });
-  }, [transactions, sortKey, sortDir, accountsById, categoriesById, classesById]);
+  }, [visibleTransactions, sortKey, sortDir, accountsById, categoriesById, classesById]);
 
   function renderCell(transaction: Transaction, key: SortKey) {
     switch (key) {
       case "date":
         return formatDate(transaction.date);
       case "description":
-        return <span title={transaction.description}>{transaction.description}</span>;
+        return (
+          <div className="flex items-center gap-2">
+            <span className="min-w-0 truncate" title={transaction.description}>
+              {transaction.description}
+            </span>
+            {transaction.is_hidden && <Badge variant="outline" className="shrink-0">Inactive</Badge>}
+          </div>
+        );
       case "account": {
         const account = accountsById.get(transaction.account_id);
         return account ? (
@@ -224,6 +246,7 @@ export function DashboardTransactionsTable({
     toggleOne,
     soleSelectedRow,
     clear: clearSelection,
+    selectedRows: selectedTransactions,
   } = useRowSelection(sortedTransactions, (transaction) => transaction.id);
 
   function openEditDialog(transaction: Transaction) {
@@ -252,17 +275,14 @@ export function DashboardTransactionsTable({
     });
   }
 
-  function handleDelete() {
-    if (selected.size === 0) return;
-    const label = selected.size === 1 ? "this transaction" : `these ${selected.size} transactions`;
-    if (!window.confirm(`Delete ${label}?`)) return;
+  function setActive(ids: string[], isActive: boolean) {
     setActionError(null);
-    startDelete(async () => {
+    startToggleActive(async () => {
       try {
-        await deleteTransactions(Array.from(selected));
+        await setTransactionsActive(ids, isActive);
         clearSelection();
       } catch (err) {
-        setActionError(err instanceof Error ? err.message : "Failed to delete.");
+        setActionError(err instanceof Error ? err.message : "Failed to update.");
       }
     });
   }
@@ -299,11 +319,37 @@ export function DashboardTransactionsTable({
               Create an account first
             </Button>
           )}
+          {selectedTransactions.some((transaction) => !transaction.is_hidden) && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              disabled={isTogglingActive}
+              onClick={() => setActive(Array.from(selected), false)}
+              aria-label="Deactivate"
+              title="Deactivate"
+            >
+              <ArchiveIcon />
+            </Button>
+          )}
+          {selectedTransactions.some((transaction) => transaction.is_hidden) && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              disabled={isTogglingActive}
+              onClick={() => setActive(Array.from(selected), true)}
+              aria-label="Activate"
+              title="Activate"
+            >
+              <ArchiveRestoreIcon />
+            </Button>
+          )}
           {soleSelectedRow && (
             <RowActionsMenu
               onEdit={() => openEditDialog(soleSelectedRow)}
               onSync={soleSelectedRow.category_id ? () => handleSyncRow(soleSelectedRow) : undefined}
-              disabled={isSyncing || isDeleting}
+              onToggleActive={() => setActive([soleSelectedRow.id], soleSelectedRow.is_hidden)}
+              isActive={!soleSelectedRow.is_hidden}
+              disabled={isSyncing || isTogglingActive}
             />
           )}
         </div>
@@ -311,16 +357,11 @@ export function DashboardTransactionsTable({
           {selected.size > 0 && (
             <span className="text-sm text-muted-foreground">{selected.size} selected</span>
           )}
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            disabled={selected.size === 0 || isDeleting}
-            onClick={handleDelete}
-            aria-label="Delete"
-            title="Delete"
-          >
-            <Trash2Icon />
-          </Button>
+          {inactiveCount > 0 && (
+            <Button variant="ghost" size="sm" onClick={() => setShowInactive(!showInactive)}>
+              {showInactive ? "Hide inactive" : `Show inactive (${inactiveCount})`}
+            </Button>
+          )}
         </div>
       </div>
       {actionError && <p className="text-sm text-destructive">{actionError}</p>}
@@ -358,7 +399,7 @@ export function DashboardTransactionsTable({
           </TableHeader>
           <TableBody className="text-xs">
             {sortedTransactions.map((transaction) => (
-              <TableRow key={transaction.id} className="group">
+              <TableRow key={transaction.id} className={transaction.is_hidden ? "group text-muted-foreground" : "group"}>
                 <TableCell>
                   <Checkbox
                     checked={selected.has(transaction.id)}

@@ -1,6 +1,6 @@
 ---
 name: table-page-conventions
-description: Use when adding a new list-style page or touching an existing one (Search's results table, Categories, Classes, Descriptions, Accounts) — table markup, row selection, the two-group toolbar (left: Add-or-"N selected" swap, table-specific buttons, "⋮" menu; right: Delete (recycle bin, only when something's selected — the *only* way to delete a row, per explicit user request) then Columns), the toolbar "⋮" actions menu for the single checked row (Edit/Sync — no Delete; no per-row ⋮ column), column show/hide & reorder, column header icons, sorting, add/edit dialogs, category/class chip rendering, the app-wide symbol-display rule (a value's name only in its original table, elsewhere just its symbol — category icon, type ↑↓↔, gordura ▢△), or bulk mutations. Encodes this app's shared list-page architecture so new pages match instead of inventing a fresh layout.
+description: Use when adding a new list-style page or touching an existing one (Search's results table, Categories, Classes, Descriptions, Accounts) — table markup, row selection, the two-group toolbar (left: Add-or-"N selected" swap, table-specific buttons, "⋮" menu; right: Delete/Deactivate depending on the table, then Columns), the toolbar "⋮" actions menu for the single checked row (Edit/Sync/Toggle active — no Delete; no per-row ⋮ column), column show/hide & reorder, column header icons, sorting, add/edit dialogs, category/class chip rendering, the app-wide symbol-display rule (a value's name only in its original table, elsewhere just its symbol — category icon, type ↑↓↔, gordura ▢△), which tables can hard-delete a row at all (Categories/Classes/Descriptions only — Search's transactions and Accounts are deactivate-only, no delete path at all, per explicit user request for safety), or bulk mutations. Encodes this app's shared list-page architecture so new pages match instead of inventing a fresh layout.
 ---
 
 # Table page conventions
@@ -104,17 +104,31 @@ list page instead of inventing a fresh layout.
     `editingAccount`) from `soleSelectedRow`; the dialog keys off that
     state (see below), so it survives the selection changing underneath.
   - **`RowActionsMenu` has no `onDelete` prop and no Delete item at all —
-    the *only* way to delete a row anywhere in the app is the toolbar's
-    bulk Delete button (below), which always requires an explicit
-    selection first, rather than a single accidental click in an actions
-    menu.** Don't reintroduce a menu delete path without a fresh ask;
-    route any future single-row delete through the existing bulk action
-    with a one-element array instead, called from the Delete button, not
-    from the actions menu.
+    on the tables that can hard-delete a row at all (Categories/Classes/
+    Descriptions), the *only* way to do it is the toolbar's bulk Delete
+    button (below), which always requires an explicit selection first,
+    rather than a single accidental click in an actions menu.** Don't
+    reintroduce a menu delete path without a fresh ask; route any future
+    single-row delete through the existing bulk action with a one-element
+    array instead, called from the Delete button, not from the actions
+    menu.
     **Why:** removed per explicit user request, for security. Every
     table's own `handleDeleteRow(row)` (which used to confirm + call the
     delete action with a one-element array, e.g.
     `deleteAccounts([account.id])`) was deleted along with its wiring.
+    **Search's transactions and Accounts went further and lost the bulk
+    Delete button too — they have no delete path at all any more, only
+    `onToggleActive`/`isActive`** (same as Categories/Classes always had),
+    backed by `setTransactionsActive`/`setAccountsActive` in
+    `transactions/actions.ts`/`accounts/actions.ts` (Accounts needed a new
+    `accounts.is_active` column for this, migration
+    `0020_accounts_is_active.sql`; Search's transactions already had an
+    unused `is_hidden` column that this repurposed — presented in the UI
+    with the same "Deactivate"/"Activate" vocabulary as everywhere else,
+    even though the underlying column is named `is_hidden` not
+    `is_active`). `deleteAccounts`/`deleteTransactions` were deleted
+    entirely, not just unwired — don't reintroduce either without a fresh
+    ask.
   - `onSync` is only passed on tables that have a sync concept at all
     (Accounts, Search's transaction table — and its Dashboard-embedded
     copy, `dashboard-transactions-table.tsx`, see `dashboard-conventions`)
@@ -137,14 +151,19 @@ list page instead of inventing a fresh layout.
 - **The toolbar above the table has two button groups, left and right,
   spread apart by an outer `<div className="flex items-center
   justify-between">`.** The **right** group is its own `<div
-  className="flex items-center gap-2">`, in this order: any right-side
-  table-specific control (Categories'/Classes' "Show/Hide inactive"
-  toggle), then **Delete** (the recycle bin, see item 3 below), then
-  `ColumnsMenu` last, at the far right — the outer `justify-between` is
-  what pushes the group right while keeping it vertically aligned with the
-  left group on the same row. **Delete moved here from the end of the left
-  group per explicit user request** ("put the recycle bin at the right
-  side above the table") — don't move it back left. Everything else lives
+  className="flex items-center gap-2">`, in this order: the "Show/Hide
+  inactive" toggle (every table has one now — Categories/Classes/Accounts/
+  Search's transactions all support deactivating a row, so all four render
+  it whenever `inactiveCount > 0`; Descriptions doesn't, since mappings
+  have no active/inactive concept), then **Delete** (the recycle bin, see
+  item 3 below) **only on the tables that can hard-delete at all —
+  Categories, Classes, Descriptions — never on Search's transactions or
+  Accounts**, then `ColumnsMenu` last, at the far right — the outer
+  `justify-between` is what pushes the group right while keeping it
+  vertically aligned with the left group on the same row. **Delete moved
+  here from the end of the left group per explicit user request** ("put
+  the recycle bin at the right side above the table") — don't move it back
+  left, on the tables that still have it. Everything else lives
   in the **left** group (`<div className="flex items-center gap-2">`,
   always rendered — this is what keeps "+" reachable even when the row
   list is empty, see below), in this order:
@@ -173,28 +192,36 @@ list page instead of inventing a fresh layout.
      see the "Accounts' '+' is a menu" bullet below. The `SyncButton` reuse
      on Transactions was per explicit user request.
   3. **"Delete" — rendered in the *right* group (just before
-     `ColumnsMenu`, see above), not here — and only rendered at all when
-     `selected.size > 0` — this is the *only* place a row can be deleted
-     from anywhere in the app.** `{selected.size > 0 &&
-     <Button ...>Trash2Icon</Button>}`. Not just disabled while nothing's selected,
-     the button doesn't exist in the DOM until there's a selection, so
-     there's nothing to accidentally click. Stays `Trash2Icon`,
-     `variant="ghost"` `size="icon-sm"`, no red fill/destructive styling;
-     `disabled` now only guards the in-flight-mutation case (`isDeleting`,
-     plus whatever other transition that table's toolbar already tracks —
-     e.g. Accounts' `isSyncing`) since the `selected.size === 0` guard is
+     `ColumnsMenu`, see above), not here, and only on Categories/Classes/
+     Descriptions — and only rendered at all when `selected.size > 0`.**
+     `{selected.size > 0 && <Button ...>Trash2Icon</Button>}`. Not just
+     disabled while nothing's selected, the button doesn't exist in the
+     DOM until there's a selection, so there's nothing to accidentally
+     click. Stays `Trash2Icon`, `variant="ghost"` `size="icon-sm"`, no red
+     fill/destructive styling; `disabled` guards the in-flight-mutation
+     case (`isDeleting`, plus whatever other transition that table's
+     toolbar already tracks) since the `selected.size === 0` guard is
      redundant once the button only mounts when there's a selection.
      Confirms via `window.confirm(...)` before calling the bulk delete
-     action, same as always.
-     **Why:** per explicit user request — the actions menu's own Delete
-     item was removed for exactly this reason, see the `RowActionsMenu`
-     bullet above.
+     action, same as always. **Search's transactions and Accounts have no
+     Delete button at all** — their right group has only the "Show
+     inactive" toggle and `ColumnsMenu`; their left group has Deactivate/
+     Activate bulk buttons instead (`ArchiveIcon`/`ArchiveRestoreIcon`,
+     same as Categories/Classes' left-group toggle buttons), shown
+     conditionally on `selectedRows.some((row) => row.is_active)` /
+     `.some((row) => !row.is_active)` exactly like Categories/Classes
+     already did.
+     **Why:** per explicit user request, for security — the actions
+     menu's own Delete item was removed for exactly this reason, see the
+     `RowActionsMenu` bullet above, and Search's transactions/Accounts
+     went one step further and dropped the toolbar Delete too.
   The "⋮" `RowActionsMenu` (only while exactly one row is checked) sits
   last in the left group, after the table-specific buttons. The
   Dashboard's embedded table (`dashboard-transactions-table.tsx`, a
   different toolbar shape: Columns/Add/⋮ on the left, "N selected" on the
-  right) also has its Delete in its right group, after "N selected" — it
-  stays always-mounted-but-disabled there, as before.
+  right) has no Delete either now — its right group has the "Show
+  inactive" toggle, and its left group has the same Deactivate/Activate
+  buttons as `search-table.tsx`.
   **The transaction tables have two different "Sync" affordances now, doing two
   different things — don't conflate them.** The `RowActionsMenu`'s
   `onSync` item (on both `search/search-table.tsx` and its
@@ -438,8 +465,8 @@ list page instead of inventing a fresh layout.
   request; see `dashboard-conventions`'s "removed charts" history and
   `amount-color-conventions` for what's left of the Dashboard's own
   red/green/gray usage now that they're gone.
-- **Mutations**: bulk actions take an array (`deleteAccounts(ids: string[])`,
-  `deleteMappedDescriptions(descriptions: string[])`, etc.) and delete/update
+- **Mutations**: bulk actions take an array (`deleteMappedDescriptions(descriptions:
+  string[])`, `setAccountsActive(ids: string[], isActive: boolean)`, etc.) and delete/update
   via `.in(...)`, guarded by `.eq("user_id", user.id)` like every other
   action. Server actions call `revalidatePath` for every page that displays
   the changed data (a category edit revalidates `/categories` *and*

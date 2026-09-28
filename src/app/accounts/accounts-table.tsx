@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { LandmarkIcon, RefreshCwIcon, Trash2Icon, type LucideIcon } from "lucide-react";
+import { ArchiveIcon, ArchiveRestoreIcon, LandmarkIcon, RefreshCwIcon, type LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -36,8 +36,9 @@ import { ColumnHeaderIcon } from "@/components/column-header-icon";
 import { RowActionsMenu } from "@/components/row-actions-menu";
 import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
+import { useInactiveFilter } from "@/hooks/use-inactive-filter";
 import type { Account } from "@/lib/supabase/types";
-import { deleteAccounts, updateAccount } from "./actions";
+import { setAccountsActive, updateAccount } from "./actions";
 import { AddAccountMenu } from "./add-account-menu";
 import { ImportTransactionsDialog } from "./import-transactions-dialog";
 import { syncPluggyItem } from "./pluggy-actions";
@@ -86,7 +87,12 @@ const DEFAULT_COLUMN_ORDER = COLUMNS.map((column) => column.key);
 function renderCell(account: Account, key: SortKey, transactionsTotalByAccount: Record<string, number>) {
   switch (key) {
     case "name":
-      return account.name;
+      return (
+        <span className="inline-flex items-center gap-2">
+          {account.name}
+          {!account.is_active && <Badge variant="outline">Inactive</Badge>}
+        </span>
+      );
     case "source":
       return account.source ? (
         <Badge variant="secondary" className="max-w-full gap-1 truncate">
@@ -123,13 +129,19 @@ export function AccountsTable({
 }) {
   const router = useRouter();
   const [isSyncing, startSync] = useTransition();
-  const [isDeleting, startDelete] = useTransition();
+  const [isTogglingActive, startToggleActive] = useTransition();
   const [isSavingEdit, startSaveEdit] = useTransition();
   const [actionError, setActionError] = useState<string | null>(null);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [importingAccount, setImportingAccount] = useState<Account | null>(null);
   const { hidden: hiddenColumns, order: columnOrder, toggle: toggleColumn, move: moveColumn } =
     useColumnPreferences<SortKey>("accounts-table", DEFAULT_COLUMN_ORDER);
+  const {
+    showInactive,
+    setShowInactive,
+    inactiveCount,
+    visibleRows: visibleAccounts,
+  } = useInactiveFilter(accounts, (account) => account.is_active);
 
   function sortHref(column: SortKey) {
     const nextDir: "asc" | "desc" = sortKey === column && sortDir === "asc" ? "desc" : "asc";
@@ -137,7 +149,7 @@ export function AccountsTable({
   }
 
   const sorted = useMemo(() => {
-    return [...accounts].sort((a, b) => {
+    return [...visibleAccounts].sort((a, b) => {
       let cmp = 0;
       switch (sortKey) {
         case "name":
@@ -162,7 +174,7 @@ export function AccountsTable({
       }
       return sortDir === "asc" ? cmp : -cmp;
     });
-  }, [accounts, sortKey, sortDir, transactionsTotalByAccount]);
+  }, [visibleAccounts, sortKey, sortDir, transactionsTotalByAccount]);
 
   const {
     selected,
@@ -198,19 +210,14 @@ export function AccountsTable({
     });
   }
 
-  function handleDelete() {
-    if (selected.size === 0) return;
-    const label = selected.size === 1 ? "this account" : `these ${selected.size} accounts`;
-    if (!window.confirm(`Delete ${label}? This will also delete all of their transactions.`)) {
-      return;
-    }
+  function setActive(ids: string[], isActive: boolean) {
     setActionError(null);
-    startDelete(async () => {
+    startToggleActive(async () => {
       try {
-        await deleteAccounts(Array.from(selected));
+        await setAccountsActive(ids, isActive);
         clearSelection();
       } catch (err) {
-        setActionError(err instanceof Error ? err.message : "Failed to delete.");
+        setActionError(err instanceof Error ? err.message : "Failed to update.");
       }
     });
   }
@@ -233,6 +240,8 @@ export function AccountsTable({
     .map((key) => columnsByKey.get(key)!)
     .filter((column) => !hiddenColumns.has(column.key));
 
+  const isBusy = isSyncing || isTogglingActive;
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
@@ -245,13 +254,37 @@ export function AccountsTable({
           <Button
             variant="outline"
             size="icon-sm"
-            disabled={syncableItemIds.length === 0 || isSyncing || isDeleting}
+            disabled={syncableItemIds.length === 0 || isBusy}
             onClick={handleSync}
             aria-label="Sync"
             title="Sync"
           >
             <RefreshCwIcon className={isSyncing ? "animate-spin" : undefined} />
           </Button>
+          {selectedAccounts.some((account) => account.is_active) && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              disabled={isBusy}
+              onClick={() => setActive(Array.from(selected), false)}
+              aria-label="Deactivate"
+              title="Deactivate"
+            >
+              <ArchiveIcon />
+            </Button>
+          )}
+          {selectedAccounts.some((account) => !account.is_active) && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              disabled={isBusy}
+              onClick={() => setActive(Array.from(selected), true)}
+              aria-label="Activate"
+              title="Activate"
+            >
+              <ArchiveRestoreIcon />
+            </Button>
+          )}
           {soleSelectedRow && (
             <RowActionsMenu
               onEdit={() => setEditingAccount(soleSelectedRow)}
@@ -261,21 +294,16 @@ export function AccountsTable({
                   : undefined
               }
               onImport={() => setImportingAccount(soleSelectedRow)}
-              disabled={isSyncing || isDeleting}
+              onToggleActive={() => setActive([soleSelectedRow.id], !soleSelectedRow.is_active)}
+              isActive={soleSelectedRow.is_active}
+              disabled={isBusy}
             />
           )}
         </div>
         <div className="flex items-center gap-2">
-          {selected.size > 0 && (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              disabled={isSyncing || isDeleting}
-              onClick={handleDelete}
-              aria-label="Delete"
-              title="Delete"
-            >
-              <Trash2Icon />
+          {inactiveCount > 0 && (
+            <Button variant="ghost" size="sm" onClick={() => setShowInactive(!showInactive)}>
+              {showInactive ? "Hide inactive" : `Show inactive (${inactiveCount})`}
             </Button>
           )}
           <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />
@@ -318,7 +346,7 @@ export function AccountsTable({
           </TableHeader>
           <TableBody>
             {sorted.map((account) => (
-              <TableRow key={account.id} className="group">
+              <TableRow key={account.id} className={account.is_active ? "group" : "group text-muted-foreground"}>
                 <TableCell>
                   <Checkbox
                     checked={selected.has(account.id)}

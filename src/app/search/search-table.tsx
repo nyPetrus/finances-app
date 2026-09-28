@@ -4,7 +4,16 @@ import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { BanknoteIcon, LandmarkIcon, PencilIcon, TagIcon, TagsIcon, Trash2Icon, type LucideIcon } from "lucide-react";
+import {
+  ArchiveIcon,
+  ArchiveRestoreIcon,
+  BanknoteIcon,
+  LandmarkIcon,
+  PencilIcon,
+  TagIcon,
+  TagsIcon,
+  type LucideIcon,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -39,10 +48,11 @@ import { RowActionsMenu } from "@/components/row-actions-menu";
 import { CategoryIcon } from "@/components/category-icon";
 import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
+import { useInactiveFilter } from "@/hooks/use-inactive-filter";
 import { ClassificationFields } from "@/components/classification-fields";
 import type { Account, Category, Class, Gordura, Transaction } from "@/lib/supabase/types";
 import {
-  deleteTransactions,
+  setTransactionsActive,
   syncDescriptionsFromTransactions,
   updateTransaction,
 } from "../transactions/actions";
@@ -117,7 +127,7 @@ export function SearchTable({
 }) {
   const searchParams = useSearchParams();
   const [isSyncing, startSync] = useTransition();
-  const [isDeleting, startDelete] = useTransition();
+  const [isTogglingActive, startToggleActive] = useTransition();
   const [isSavingEdit, startSaveEdit] = useTransition();
   const [actionError, setActionError] = useState<string | null>(null);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -129,6 +139,12 @@ export function SearchTable({
   const editFormRef = useRef<HTMLFormElement>(null);
   const { hidden: hiddenColumns, order: columnOrder, toggle: toggleColumn, move: moveColumn } =
     useColumnPreferences<SortKey>("search-table", DEFAULT_COLUMN_ORDER);
+  const {
+    showInactive,
+    setShowInactive,
+    inactiveCount,
+    visibleRows: visibleTransactions,
+  } = useInactiveFilter(transactions, (transaction) => !transaction.is_hidden);
 
   const accountsById = new Map(accounts.map((a) => [a.id, a]));
   const categoriesById = new Map(categories.map((c) => [c.id, c]));
@@ -149,7 +165,14 @@ export function SearchTable({
       case "date":
         return formatDate(transaction.date);
       case "description":
-        return <span title={transaction.description}>{transaction.description}</span>;
+        return (
+          <div className="flex items-center gap-2">
+            <span className="min-w-0 truncate" title={transaction.description}>
+              {transaction.description}
+            </span>
+            {transaction.is_hidden && <Badge variant="outline" className="shrink-0">Inactive</Badge>}
+          </div>
+        );
       case "account": {
         const account = accountsById.get(transaction.account_id);
         return account ? (
@@ -201,7 +224,8 @@ export function SearchTable({
     toggleOne,
     soleSelectedRow,
     clear: clearSelection,
-  } = useRowSelection(transactions, (transaction) => transaction.id);
+    selectedRows: selectedTransactions,
+  } = useRowSelection(visibleTransactions, (transaction) => transaction.id);
 
   function openEditDialog(transaction: Transaction) {
     setActionError(null);
@@ -229,17 +253,14 @@ export function SearchTable({
     });
   }
 
-  function handleDelete() {
-    if (selected.size === 0) return;
-    const label = selected.size === 1 ? "this transaction" : `these ${selected.size} transactions`;
-    if (!window.confirm(`Delete ${label}?`)) return;
+  function setActive(ids: string[], isActive: boolean) {
     setActionError(null);
-    startDelete(async () => {
+    startToggleActive(async () => {
       try {
-        await deleteTransactions(Array.from(selected));
+        await setTransactionsActive(ids, isActive);
         clearSelection();
       } catch (err) {
-        setActionError(err instanceof Error ? err.message : "Failed to delete.");
+        setActionError(err instanceof Error ? err.message : "Failed to update.");
       }
     });
   }
@@ -288,25 +309,44 @@ export function SearchTable({
               <PencilIcon />
             </Button>
           )}
+          {selectedTransactions.some((transaction) => !transaction.is_hidden) && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              disabled={isTogglingActive}
+              onClick={() => setActive(Array.from(selected), false)}
+              aria-label="Deactivate"
+              title="Deactivate"
+            >
+              <ArchiveIcon />
+            </Button>
+          )}
+          {selectedTransactions.some((transaction) => transaction.is_hidden) && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              disabled={isTogglingActive}
+              onClick={() => setActive(Array.from(selected), true)}
+              aria-label="Activate"
+              title="Activate"
+            >
+              <ArchiveRestoreIcon />
+            </Button>
+          )}
           {soleSelectedRow && (
             <RowActionsMenu
               onEdit={() => openEditDialog(soleSelectedRow)}
               onSync={soleSelectedRow.category_id ? () => handleSyncRow(soleSelectedRow) : undefined}
-              disabled={isSyncing || isDeleting}
+              onToggleActive={() => setActive([soleSelectedRow.id], soleSelectedRow.is_hidden)}
+              isActive={!soleSelectedRow.is_hidden}
+              disabled={isSyncing || isTogglingActive}
             />
           )}
         </div>
         <div className="flex items-center gap-2">
-          {selected.size > 0 && (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              disabled={isDeleting}
-              onClick={handleDelete}
-              aria-label="Delete"
-              title="Delete"
-            >
-              <Trash2Icon />
+          {inactiveCount > 0 && (
+            <Button variant="ghost" size="sm" onClick={() => setShowInactive(!showInactive)}>
+              {showInactive ? "Hide inactive" : `Show inactive (${inactiveCount})`}
             </Button>
           )}
           <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />
@@ -314,7 +354,7 @@ export function SearchTable({
       </div>
       {actionError && <p className="text-sm text-destructive">{actionError}</p>}
 
-      {transactions.length === 0 ? (
+      {visibleTransactions.length === 0 ? (
         <p className="text-sm text-muted-foreground">No transactions match these filters.</p>
       ) : (
         <Table>
@@ -346,8 +386,8 @@ export function SearchTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {transactions.map((transaction) => (
-              <TableRow key={transaction.id} className="group">
+            {visibleTransactions.map((transaction) => (
+              <TableRow key={transaction.id} className={transaction.is_hidden ? "group text-muted-foreground" : "group"}>
                 <TableCell>
                   <Checkbox
                     checked={selected.has(transaction.id)}

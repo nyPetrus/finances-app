@@ -111,7 +111,7 @@ export function CategoriesTable({
     setShowInactive,
     inactiveCount,
     visibleRows: visibleCategories,
-  } = useInactiveFilter(categories);
+  } = useInactiveFilter(categories, (category) => category.is_active);
 
   function sortHref(column: SortKey) {
     const nextDir: "asc" | "desc" = sortKey === column && sortDir === "asc" ? "desc" : "asc";

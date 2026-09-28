@@ -2,11 +2,15 @@
 
 import { useState } from "react";
 
-// Categories and classes can be deactivated instead of deleted; their list
-// pages hide inactive rows unless the user asks to see them.
-export function useInactiveFilter<T extends { is_active: boolean }>(rows: T[]) {
+// Rows that can be deactivated instead of deleted (categories, classes,
+// accounts, transactions) hide their inactive rows by default unless the
+// user asks to see them. `isActive` is a selector rather than a fixed
+// `is_active` field so this works for tables keyed on a differently-named
+// or inverted flag too (Transaction's `is_hidden`, for instance, passes
+// `(t) => !t.is_hidden`).
+export function useInactiveFilter<T>(rows: T[], isActive: (row: T) => boolean) {
   const [showInactive, setShowInactive] = useState(false);
-  const inactiveCount = rows.filter((row) => !row.is_active).length;
-  const visibleRows = showInactive ? rows : rows.filter((row) => row.is_active);
+  const inactiveCount = rows.filter((row) => !isActive(row)).length;
+  const visibleRows = showInactive ? rows : rows.filter(isActive);
   return { showInactive, setShowInactive, inactiveCount, visibleRows };
 }

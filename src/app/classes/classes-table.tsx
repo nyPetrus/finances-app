@@ -78,7 +78,10 @@ export function ClassesTable({
   const [editingClass, setEditingClass] = useState<Class | null>(null);
   const { hidden: hiddenColumns, order: columnOrder, toggle: toggleColumn, move: moveColumn } =
     useColumnPreferences<SortKey>("classes-table", DEFAULT_COLUMN_ORDER);
-  const { showInactive, setShowInactive, inactiveCount, visibleRows: visibleClasses } = useInactiveFilter(classes);
+  const { showInactive, setShowInactive, inactiveCount, visibleRows: visibleClasses } = useInactiveFilter(
+    classes,
+    (classItem) => classItem.is_active,
+  );
 
   const categoriesById = new Map(categories.map((c) => [c.id, c]));
 

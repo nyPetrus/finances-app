@@ -8,10 +8,10 @@ editing an item. Ask Claude to "sync TODO" to reconcile both sides.
 
 - [ ] Contagem registros categorias e classes <!-- todoist:6hWj7GG8fvFR9wRV -->
 - [ ] Column Reference in the Transaction table <!-- todoist:6hfCwVHp622CfmWF -->
-- [ ] Remove Recycle Bin buttons on menus of table where rows are transactions or accounts. For safe reasons, could be deactivated but not deleted. Only rows of category class and description tables could be deleted. <!-- todoist:6hfRXFG4gR793J6m -->
 
 ## Done
 
+- [x] Remove Recycle Bin buttons on menus of table where rows are transactions or accounts. For safe reasons, could be deactivated but not deleted. Only rows of category class and description tables could be deleted. <!-- todoist:6hfRXFG4gR793J6m -->
 - [x] Remover o cursor do mouse nas células da tabela dinâmica da página Dashboard <!-- todoist:6hchg25Vrm4MM7XF -->
 - [x] remover botão 3 pontos das linhas das tabelas <!-- todoist:6hfHC87FFq8p8mPm -->
 - [x] melhorar o visual dos campos de filtros <!-- todoist:6hfHCWfC97Q6jRQF -->

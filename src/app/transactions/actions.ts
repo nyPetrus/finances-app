@@ -171,7 +171,12 @@ export async function bulkUpdateClassification(ids: string[], updates: BulkClass
   revalidatePath("/");
 }
 
-export async function deleteTransactions(ids: string[]) {
+// Transactions have no delete path at all any more, for safety — only
+// deactivate/reactivate via the existing is_hidden column. Presented in the
+// UI as "Deactivate"/"Activate", same vocabulary as categories/classes/
+// accounts, even though the underlying column is named is_hidden rather
+// than is_active.
+export async function setTransactionsActive(ids: string[], isActive: boolean) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -182,7 +187,7 @@ export async function deleteTransactions(ids: string[]) {
 
   const { error } = await supabase
     .from("transactions")
-    .delete()
+    .update({ is_hidden: !isActive })
     .in("id", ids)
     .eq("user_id", user.id);
 

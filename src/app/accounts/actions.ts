@@ -57,7 +57,10 @@ export async function updateAccount(formData: FormData) {
   revalidatePath("/accounts");
 }
 
-export async function deleteAccounts(ids: string[]) {
+// Accounts have no delete path at all any more, for safety — only
+// deactivate/reactivate. Existing transactions on a deactivated account are
+// untouched; it's just no longer offered for new ones.
+export async function setAccountsActive(ids: string[], isActive: boolean) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -68,7 +71,7 @@ export async function deleteAccounts(ids: string[]) {
 
   const { error } = await supabase
     .from("accounts")
-    .delete()
+    .update({ is_active: isActive })
     .in("id", ids)
     .eq("user_id", user.id);
 
