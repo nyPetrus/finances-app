@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition, type KeyboardEvent, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2Icon, SearchIcon, XIcon } from "lucide-react";
 import type { Account, Category, Class } from "@/lib/supabase/types";
+import { CategoryIcon } from "@/components/category-icon";
 import { GORDURA_SYMBOLS, gorduraOptionLabel } from "@/lib/classification";
 import { cn } from "@/lib/utils";
 import {
@@ -129,7 +130,7 @@ export function SearchFilterBar({
       account: accounts.map((account) => ({ value: account.id, label: account.label ?? account.name })),
       category: [
         { value: UNCATEGORIZED_VALUE, label: "Uncategorized" },
-        ...categories.map((category) => ({ value: category.id, label: category.name })),
+        ...categories.map((category) => ({ value: category.id, label: category.name, icon: category.icon })),
       ],
       class: [
         { value: UNCLASSED_VALUE, label: "Unclassed" },
@@ -193,16 +194,33 @@ export function SearchFilterBar({
     inputRef.current?.focus();
   }
 
-  function labelsFor(field: CheckboxField, values: string[]): string {
-    const names = values.map((v) => {
-      const option = optionsByField[field].find((o) => o.value === v);
-      return option?.chip ?? option?.label ?? "?";
-    });
-    return names.length <= 2 ? names.join(", ") : `${names[0]}, ${names[1]} +${names.length - 2}`;
+  // Values with a symbol (category icon, gordura symbol) show just that,
+  // name as tooltip; the rest show their name. All-symbol lists are compact
+  // enough to show 5 before "+N"; lists with names show 2.
+  function labelsFor(field: CheckboxField, values: string[]): ReactNode {
+    const options = values.map((v) => optionsByField[field].find((o) => o.value === v));
+    const compact = options.every((o) => o?.icon || o?.chip);
+    const shown = options.slice(0, compact ? 5 : 2);
+    const rest = options.length - shown.length;
+    return (
+      <span className="inline-flex items-center gap-1 align-middle">
+        {shown.map((option, index) => (
+          <span key={option?.value ?? index} className="inline-flex items-center" title={option?.label}>
+            {option?.icon ? (
+              <CategoryIcon icon={option.icon} className="size-3.5" />
+            ) : (
+              (option?.chip ?? option?.label ?? "?")
+            )}
+            {!compact && index < shown.length - 1 && ","}
+          </span>
+        ))}
+        {rest > 0 && <span>+{rest}</span>}
+      </span>
+    );
   }
 
   // The value half of a chip / of a field row's "currently set" hint.
-  function summary(field: Field): string {
+  function summary(field: Field): ReactNode {
     if (field === "description" && filters.description) {
       const op = DESCRIPTION_OPS.find((o) => o.value === filters.description!.op)?.chip;
       return `${op} "${filters.description.value}"`;

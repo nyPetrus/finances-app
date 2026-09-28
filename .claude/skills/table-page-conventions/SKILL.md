@@ -1,6 +1,6 @@
 ---
 name: table-page-conventions
-description: Use when adding a new list-style page or touching an existing one (Search's results table, Categories, Classes, Descriptions, Accounts) — table markup, row selection, the two-group toolbar (left: Add-or-"N selected" swap, table-specific buttons, then Delete last, only when something's selected — the *only* way to delete a row, per explicit user request; right: just Columns), the toolbar "⋮" actions menu for the single checked row (Edit/Sync — no Delete; no per-row ⋮ column), column show/hide & reorder, column header icons, sorting, add/edit dialogs, category/class chip rendering, or bulk mutations. Encodes this app's shared list-page architecture so new pages match instead of inventing a fresh layout.
+description: Use when adding a new list-style page or touching an existing one (Search's results table, Categories, Classes, Descriptions, Accounts) — table markup, row selection, the two-group toolbar (left: Add-or-"N selected" swap, table-specific buttons, then Delete last, only when something's selected — the *only* way to delete a row, per explicit user request; right: just Columns), the toolbar "⋮" actions menu for the single checked row (Edit/Sync — no Delete; no per-row ⋮ column), column show/hide & reorder, column header icons, sorting, add/edit dialogs, category/class chip rendering, the app-wide symbol-display rule (a value's name only in its original table, elsewhere just its symbol — category icon, type ↑↓↔, gordura ▢△), or bulk mutations. Encodes this app's shared list-page architecture so new pages match instead of inventing a fresh layout.
 ---
 
 # Table page conventions
@@ -356,6 +356,36 @@ list page instead of inventing a fresh layout.
   also re-seeds the on-signup default categories with fitting icons); the
   icon picker uses the same swap-a-button-grid pattern the old
   `ColorSwatchPicker` used.
+- **App-wide symbol-display rule: a value's full name appears only in its
+  own original table; anywhere else, if the value has a symbol, show only
+  the symbol (name as a `title` tooltip).** Set per explicit user request.
+  Values with symbols and their sources:
+  | Value | Symbol | Defined in | Original table |
+  |---|---|---|---|
+  | Category | its icon (`CategoryIcon`) | `categories.icon` | Categories (`categories-table.tsx`: icon **and** name) |
+  | Type (income/expense/transfer) | `↑` `↓` `↔` | `TRANSACTION_TYPE_SYMBOLS`, `@/lib/transaction-type.ts` | none |
+  | Gordura (low/high) | `▢` `△` | `GORDURA_SYMBOLS`, `@/lib/classification.ts` | none |
+  Accounts, Classes and Descriptions have no symbols, so they always show
+  their names. A value with no symbol of its own (e.g. the "Uncategorized"
+  / "Unclassed" pseudo-values) keeps its text. Where it's applied today:
+  every table's Category column (see the next bullet); the Dashboard
+  dynamic table's Type/Category/Gordura rows (`dashboard-monthly-table`);
+  the Categories table's **Type** column (`TRANSACTION_TYPE_SYMBOLS`,
+  `text-base font-bold text-muted-foreground`, same as the dynamic table's
+  Type symbol); the Classes table's Gordura column; and the Search filter
+  bar's chips (`Category: 🛒 🚌`, `Gordura: △` — `search-page-conventions`).
+  **Two deliberate exceptions, both confirmed by the user:**
+  - **Pickers** (dropdowns, checkbox lists, filter suggestions) keep the
+    name, since choosing from bare icons is error-prone — category
+    dropdowns show the name, Gordura options show `gorduraOptionLabel()`
+    ("△ Alta"), the category-type `Select` shows "Income"/"Expense"/
+    "Transfer".
+  - **Budget** (`yearly-grid.tsx`, `monthly-execution.tsx`) keeps icon +
+    name: each row there is identified by its category alone, with no
+    other text, so icons alone would make rows hard to tell apart.
+  When adding a new table, chip, or other read-only display of one of
+  these values, apply the rule; when unsure whether something is a picker
+  or a display, ask.
 - **Category-as-foreign-column is icon-only, no name, no `Badge`, and
   center-aligned.** Classes', Descriptions', and Transactions' `renderCell`
   "category" case each render `<span title={category.name}
@@ -384,8 +414,8 @@ list page instead of inventing a fresh layout.
   Categories table's own Name column and Budget's category rows
   (`yearly-grid.tsx`, `monthly-execution.tsx`), which still show the icon
   *next to* the visible name (no `Badge` there either, but the name stays
-  on the page) since those are the category's own row, not a foreign-key
-  reference to it. Transactions' Account and Class columns (which have no
+  on the page) — Categories because it's the original table, Budget as a
+  confirmed exception to the symbol-display rule (see the previous bullet). Transactions' Account and Class columns (which have no
   icon of their own) instead use a `Badge` (`variant="secondary"
   className="max-w-full gap-1 truncate"`, no leading icon) — see
   `transactions-column-formatting`.

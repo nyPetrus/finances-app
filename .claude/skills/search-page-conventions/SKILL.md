@@ -27,7 +27,11 @@ Added per explicit user request.
   one-row-per-filter form, to save vertical space on mobile). One bordered
   box holds a chip per active filter (fixed `FIELDS` order) followed by a
   text input:
-  - **Chips** read `Account: Nubank, XP` (3+ values: `Nubank, XP +1`),
+  - **Chips** follow the app-wide symbol-display rule
+    (`table-page-conventions`): values with a symbol show only it, name as
+    tooltip — `Category: 🛒 🚌` (category icons via `Option.icon`),
+    `Gordura: △` (`Option.chip`), up to 5 symbols before `+N`; values
+    without one show names — `Account: Nubank, XP` (3+ values: `Nubank, XP +1`),
     `Description contains "uber"`, `Amount > -50`, `Date: Sep 2026` /
     `Date before Sep 2026` — field name muted, value bold; a colon only
     for list-style values (`readsAsSentence()`). Clicking a chip reopens

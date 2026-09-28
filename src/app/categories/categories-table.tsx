@@ -39,6 +39,7 @@ import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
 import { useInactiveFilter } from "@/hooks/use-inactive-filter";
 import type { Category } from "@/lib/supabase/types";
+import { TRANSACTION_TYPE_SYMBOLS } from "@/lib/transaction-type";
 import { deleteCategories, setCategoriesActive, updateCategory } from "./actions";
 import { AddCategoryDialog } from "./add-category-dialog";
 import { type SortKey } from "./sort";
@@ -57,7 +58,7 @@ const COLUMNS: {
   headerIconOnly?: boolean;
 }[] = [
   { key: "name", label: "Name", cellClassName: "max-w-72 font-medium", headerIcon: TagIcon },
-  { key: "type", label: "Type" },
+  { key: "type", label: "Type", cellClassName: "text-center" },
 ];
 
 const DEFAULT_COLUMN_ORDER = COLUMNS.map((column) => column.key);
@@ -73,7 +74,15 @@ function renderCell(category: Category, key: SortKey) {
         </div>
       );
     case "type":
-      return <Badge variant="secondary">{kindLabels[category.kind]}</Badge>;
+      // Symbol only, name as tooltip — Type has symbols, and this isn't a
+      // Type table of its own (see the symbol-display rule in
+      // table-page-conventions). Same size/weight as the Dashboard
+      // dynamic table's Type symbol.
+      return (
+        <span title={kindLabels[category.kind]} className="text-base font-bold text-muted-foreground">
+          {TRANSACTION_TYPE_SYMBOLS[category.kind]}
+        </span>
+      );
   }
 }
 
