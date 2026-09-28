@@ -464,7 +464,7 @@ export function SearchFilterBar({
             setEditing(null);
           }}
           onKeyDown={onInputKeyDown}
-          placeholder={activeFields.length > 0 ? "Add filter…" : "Filter by account, category, description… or just type"}
+          placeholder={activeFields.length > 0 ? undefined : "Filter by account, category, description… or just type"}
           aria-label="Add filter"
           aria-expanded={open}
           role="combobox"
