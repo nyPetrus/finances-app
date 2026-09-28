@@ -157,7 +157,6 @@ async function runDriveImport(accountId: string, folderInput: string): Promise<D
   }
 
   revalidatePath("/accounts");
-  revalidatePath("/transactions");
   revalidatePath("/search");
   revalidatePath("/budget");
   revalidatePath("/");

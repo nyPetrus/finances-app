@@ -171,8 +171,11 @@ export function SearchFilterBar({
       if (sort) params.set("sort", sort);
       if (dir) params.set("dir", dir);
     }
+    // Not bare `/search` when empty — that means "open on the current
+    // month" (see page.tsx); `cleared=1` keeps a deliberately emptied
+    // search empty. parseFilters ignores the param.
     const query = params.toString();
-    startTransition(() => router.push(query ? `/search?${query}` : "/search"));
+    startTransition(() => router.push(query ? `/search?${query}` : "/search?cleared=1"));
   }
 
   function openEditor(field: Field) {

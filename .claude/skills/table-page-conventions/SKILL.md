@@ -1,6 +1,6 @@
 ---
 name: table-page-conventions
-description: Use when adding a new list-style page or touching an existing one (Transactions, Categories, Classes, Descriptions, Accounts) — table markup, row selection, the two-group toolbar (left: Add-or-"N selected" swap, table-specific buttons, then Delete last, only when something's selected — the *only* way to delete a row, per explicit user request; right: just Columns), the per-row "⋮" actions menu (Edit/Sync — no Delete), column show/hide & reorder, column header icons, sorting, add/edit dialogs, category/class chip rendering, or bulk mutations. Encodes this app's shared list-page architecture so new pages match instead of inventing a fresh layout.
+description: Use when adding a new list-style page or touching an existing one (Search's results table, Categories, Classes, Descriptions, Accounts) — table markup, row selection, the two-group toolbar (left: Add-or-"N selected" swap, table-specific buttons, then Delete last, only when something's selected — the *only* way to delete a row, per explicit user request; right: just Columns), the per-row "⋮" actions menu (Edit/Sync — no Delete), column show/hide & reorder, column header icons, sorting, add/edit dialogs, category/class chip rendering, or bulk mutations. Encodes this app's shared list-page architecture so new pages match instead of inventing a fresh layout.
 ---
 
 # Table page conventions
@@ -9,7 +9,7 @@ All list-style pages (Transactions, Categories, Classes, Descriptions,
 Accounts) follow the same structure: a server `page.tsx` that fetches and
 sorts the rows, handing them to a client `<X>Table` component
 (`accounts-table.tsx`, `categories-table.tsx`, `classes-table.tsx`,
-`descriptions-table.tsx`, `transactions-table.tsx`) that owns selection,
+`descriptions-table.tsx`, `search/search-table.tsx`) that owns selection,
 column preferences, and all row interaction. Match this when adding a new
 list page instead of inventing a fresh layout.
 
@@ -183,9 +183,9 @@ list page instead of inventing a fresh layout.
      **Why:** per explicit user request — the per-row menu's own Delete
      item was removed for exactly this reason, see the `RowActionsMenu`
      bullet above.
-  **Transactions has two different "Sync" affordances now, doing two
+  **The transaction tables have two different "Sync" affordances now, doing two
   different things — don't conflate them.** The per-row `RowActionsMenu`'s
-  `onSync` item (on both `transactions-table.tsx` and its
+  `onSync` item (on both `search/search-table.tsx` and its
   Dashboard-embedded copy) still calls `syncDescriptionsFromTransactions`
   scoped to that one row — it *creates/updates* a `mapped_descriptions`
   rule from that row's own (already-set) category/class, then applies the
@@ -217,7 +217,7 @@ list page instead of inventing a fresh layout.
   defaultOrder)` (`src/hooks/use-column-preferences.ts`) persists both to
   localStorage under `${storageKey}-hidden-columns` /
   `${storageKey}-column-order` (pick a `storageKey` unique per table, e.g.
-  `"transactions-table"`) and reconciles a stored order against the current
+  `"search-table"`) and reconciles a stored order against the current
   column set on load, so adding/removing a column later doesn't strand it.
   Render the `ColumnsMenu` component (`src/components/columns-menu.tsx`) in
   the toolbar, passing it the page's `COLUMNS` config and the hook's
@@ -279,7 +279,7 @@ list page instead of inventing a fresh layout.
   table (`dashboard-transactions-table.tsx`, see `dashboard-conventions`) —
   a page-level table should still prefer `href`/URL sort unless it has the
   same reason not to (the Dashboard table's sort state would otherwise be
-  lost by navigating to `/transactions`, which also wouldn't reflect its
+  lost by navigating to `/search`, which also wouldn't reflect its
   category filter).
 - **"Add" buttons are icon-only**, a `PlusIcon` (`lucide-react`) with no
   label text and `variant="ghost"` — e.g. `AddAccountDialog`'s
@@ -399,7 +399,7 @@ list page instead of inventing a fresh layout.
   via `.in(...)`, guarded by `.eq("user_id", user.id)` like every other
   action. Server actions call `revalidatePath` for every page that displays
   the changed data (a category edit revalidates `/categories` *and*
-  `/transactions`, for instance) — check for cross-page dependencies before
+  `/search`, for instance) — check for cross-page dependencies before
   assuming one path is enough. A bulk action shouldn't touch `updated_at` if
   that column is read elsewhere as a meaningful timestamp (e.g. Accounts'
   "Last sync" column reads it as "last synced" for automatic accounts —

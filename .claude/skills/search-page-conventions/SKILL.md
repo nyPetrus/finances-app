@@ -1,12 +1,13 @@
 ---
 name: search-page-conventions
-description: Use when touching the Search page (src/app/search/ — page.tsx, filter-bar.tsx, filter-editors.tsx, search-table.tsx, filters.ts, sort.ts, bulk-edit-dialog.tsx) — its Supabase-style single-line filter bar (chips + typed suggestions) over 7 optional filters (Account/Category/Class/Gordura as checkbox multi-selects, Description/Amount as operator+value, Date as operator + Year/Month/Day picker), how filter state round-trips through the URL, the Supabase query-building/paging behind it, the count+total results-summary block, its results table (a near-copy of TransactionsTable), or the Search-only batch Category/Class/Gordura editor on selected rows. Not part of the shared table-page-conventions architecture (this page doesn't own/create rows the way a canonical list page does), though its results table borrows heavily from it.
+description: Use when touching the Search page (src/app/search/ — page.tsx, filter-bar.tsx, filter-editors.tsx, search-table.tsx, filters.ts, sort.ts, bulk-edit-dialog.tsx) — its Supabase-style single-line filter bar (chips + typed suggestions) over 7 optional filters (Account/Category/Class/Gordura as checkbox multi-selects, Description/Amount as operator+value, Date as operator + Year/Month/Day picker), how filter state round-trips through the URL, the Supabase query-building/paging behind it, the count+total results-summary block, its results table (the app's main transaction table, incl. the Sync descriptions button), the current-month default, the /transactions redirect, or the Search-only batch Category/Class/Gordura editor on selected rows. Not part of the shared table-page-conventions architecture (this page doesn't own/create rows the way a canonical list page does), though its results table borrows heavily from it.
 ---
 
 # Search page conventions
 
-`/search` lets the user query transactions across all time (not scoped to a
-month, unlike `/transactions`) by combining up to 7 independent, optional
+`/search` is the app's transactions page (the old `/transactions` page
+was folded into it — see below). It opens on the current month but can
+query transactions across all time by combining up to 7 independent, optional
 filters — Account, Category, Class, Gordura, Description, Date, Amount.
 Added per explicit user request.
 
@@ -53,8 +54,8 @@ Added per explicit user request.
     the chip changes instantly, re-synced from the `filters` prop whenever
     the URL changes) and `router.push`es inside `startTransition`; the
     search icon turns into a spinner while pending.
-- **State is fully URL-driven, the same pattern `/transactions` uses for
-  `month`/`sort`/`dir`** — `filter-bar.tsx` reads the current filters
+- **State is fully URL-driven, the same pattern the list pages use for
+  `sort`/`dir`** — `filter-bar.tsx` reads the current filters
   from a `filters: ParsedFilters` prop (computed server-side in `page.tsx`
   via `parseFilters()`, `filters.ts`) and pushes
   `filtersToSearchParams(next)` (`filters.ts`, the inverse of
@@ -131,8 +132,7 @@ Added per explicit user request.
     between-two-dates variants, per explicit user decision).
     `dateRangeFor()` (`filters.ts`) turns granularity+value into a
     half-open `{ start, end }` pair of plain `"YYYY-MM-DD"` strings (safe
-    to compare directly against the `date` timestamp column, the same
-    trick `transactions/page.tsx`'s own month-scoping already relies on):
+    to compare directly against the `date` timestamp column):
     "on" is `gte(start).lt(end)`, "before" is `lt(start)`, "after" is
     `gte(end)`. **Editing UI is `DateEditor`** (`filter-editors.tsx`): an
     On/Before/After segmented control, shortcut buttons (This month /
@@ -185,22 +185,26 @@ Added per explicit user request.
   so it never shows with zero filters applied, and does show "0
   transactions · Total: 0,00" when a filter matches nothing. Added per
   explicit user request.
-- **The results table (`search-table.tsx`) is a near-verbatim copy of
-  `TransactionsTable`, for the same reasons `dashboard-transactions-table.tsx`
-  is a copy and not a reuse** (see `dashboard-conventions`) — same
+- **The results table (`search-table.tsx`) is the app's main transaction
+  table** — it started as a near-verbatim copy of the old Transactions
+  page's `TransactionsTable` (since removed along with that page), and the
+  Dashboard's `dashboard-transactions-table.tsx` is a separate hand-synced
+  copy of the same design (see `dashboard-conventions`) — same
   `COLUMNS`/`renderCell`, same `RowActionsMenu`/`ColumnsMenu`/
   `useRowSelection`/`useColumnPreferences` (own `storageKey`:
   `"search-table"`), same edit dialog (including the "Save and map
   description" → `AddMappingDialog` handoff, see
   `transaction-description-rules`), same toolbar shape and
   `AddTransactionDialog`/"Create an account first" left-slot swap from
-  `table-page-conventions`. **The one real difference is `sortHref()`**:
-  it preserves the full current query string (all filters) instead of
-  just one page-level param like `month`. When a `TransactionsTable`
-  feature is added, check whether it belongs here too, same as the
+  `table-page-conventions`, plus the Sync descriptions `SyncButton`
+  (`descriptions/sync-button.tsx`) next to Add — moved here from the old
+  Transactions page per explicit user request. `sortHref()` preserves
+  the full current query string (all filters). When a transaction-table
+  feature is added here, check whether it belongs in the Dashboard's
+  copy too, same as the
   Dashboard's copy.
 - **Batch-editing selected transactions' Category/Class/Gordura is a
-  Search-only feature** — not added to `TransactionsTable` or the
+  Search-only feature** — not added to the
   Dashboard's embedded table, unlike most of this table's other
   functionality (see the previous bullet). The "Edit selected"
   `PencilIcon` button in the toolbar (next to Delete, same
@@ -221,24 +225,40 @@ Added per explicit user request.
   Class selection back to "No change"; with Category left on "No
   change"/"Uncategorized" instead, Class offers every active class
   unfiltered, since there's no single category to narrow by. Like
-  `deleteTransactions`, it revalidates `/transactions`, `/search`,
+  `deleteTransactions`, it revalidates `/search`,
   `/budget`, and `/` (category/class changes affect Budget and Dashboard
   too), and the dialog clears the row selection on success
   (`onSaved={clearSelection}`). Added per explicit user request.
 - **Mutations from this table's row actions
   (`deleteTransactions`/`updateTransaction`/`syncDescriptionsFromTransactions`/
   `bulkUpdateClassification`, all reused from `transactions/actions.ts` — no
-  `search/actions.ts` exists) also `revalidatePath("/search")`**, alongside their existing
-  `revalidatePath("/transactions")` calls — and so does every other action
-  anywhere in the app that already revalidates `/transactions`
+  `search/actions.ts` exists) `revalidatePath("/search")`** — and so does
+  every other action that can change a transaction's displayed data
   (`accounts/actions.ts`, `accounts/pluggy-actions.ts`,
-  `categories/actions.ts`, `descriptions/actions.ts`): editing a category's
-  name, deleting an account, syncing mapped descriptions, etc. can all
-  change what a live Search results page shows, the same cross-page
-  dependency reasoning `table-page-conventions`'s "Mutations" bullet
-  already documents for `/transactions` itself. A new mutation that adds
-  `revalidatePath("/transactions")` should add `revalidatePath("/search")`
-  right next to it, not just the one path.
+  `accounts/import-actions.ts`, `accounts/google-drive-actions.ts`,
+  `categories/actions.ts`, `classes/actions.ts`,
+  `descriptions/actions.ts`): editing a category's name, deleting an
+  account, syncing mapped descriptions, etc. can all change what a live
+  Search results page shows (the cross-page dependency reasoning in
+  `table-page-conventions`'s "Mutations" bullet). There is no
+  `revalidatePath("/transactions")` any more — `/transactions` is just a
+  redirect now (see the next bullet).
+- **`/transactions` redirects to Search** (`transactions/page.tsx`) — the
+  old Transactions page was removed per explicit user request, since
+  Search covers it. `?month=YYYY-MM` becomes
+  `/search?dateGranularity=month&dateOp=on&dateValue=YYYY-MM`; anything
+  else goes to bare `/search`. `transactions/actions.ts`,
+  `add-transaction-dialog.tsx` and `sort.ts` stay in that folder because
+  Search and the Dashboard import them.
+- **Search opens on the current month.** When the URL has no filter
+  params (`!hasAnyFilter(parseFilters(...))`, so a bare `/search` or one
+  with only `sort`/`dir`) and no `cleared` param, `page.tsx` substitutes
+  a `Date: <current month>` filter — it shows as a normal, removable
+  chip. Clearing every chip pushes `/search?cleared=1` (not bare
+  `/search`) so a deliberately emptied search stays empty instead of
+  snapping back to the month. The month is computed server-side, same as
+  the old Transactions page did. This doesn't weaken the no-unbounded-
+  query guard above: the default *is* a filter.
 - **Nav entry**: `sidebar-nav.tsx`'s `links` array, `SearchIcon`
   (`lucide-react`), positioned between Budget and Transactions.
   **Why:** moved there per explicit user request, from directly after

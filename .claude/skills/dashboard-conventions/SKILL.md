@@ -76,9 +76,11 @@ back.
   that also covered two now-deleted charts). The "Click a cell..." muted
   hint text that used to sit here was removed per explicit user request —
   don't re-add it without a fresh ask.
-- **The embedded table is a separate component from `TransactionsTable`,
-  not a reuse — deliberately.** `dashboard-transactions-table.tsx` copies
-  `TransactionsTable`'s structure (same `COLUMNS`, same `RowActionsMenu`/
+- **The embedded table is a separate component from `SearchTable`
+  (`search/search-table.tsx`, the main transaction table since the old
+  Transactions page and its `TransactionsTable` were removed), not a
+  reuse — deliberately.** `dashboard-transactions-table.tsx` copies
+  `SearchTable`'s structure (same `COLUMNS`, same `RowActionsMenu`/
   `ColumnsMenu`/`useRowSelection`/`useColumnPreferences` — own
   `storageKey`: `"dashboard-transactions-table"` — same edit dialog, same
   two-zone toolbar, same server actions from `transactions/actions.ts` and
@@ -88,15 +90,13 @@ back.
   the `onSort`/`href` split. It takes an already-filtered `transactions`
   array as a prop; the explorer does the filtering, this component only
   renders and sorts it. **Being a copy, not a shared component, means a
-  `TransactionsTable` feature doesn't automatically show up here** — the
+  `SearchTable` feature doesn't automatically show up here** — the
   edit dialog's "Save and map description" button and the
   `AddMappingDialog` handoff (see `transaction-description-rules`) had to
-  be added to this file too, separately, when they were added to
-  `transactions-table.tsx`. When touching one edit dialog, check whether
-  the same change belongs in the other.
-  **Why:** `TransactionsTable`'s sort links to `/transactions?month=...
-  &sort=...`, which would navigate away from the filtered Dashboard view
-  (and land on an unfiltered, differently-scoped page) on every sort
+  be added to this file too, separately. When touching one edit dialog,
+  check whether the same change belongs in the other.
+  **Why:** `SearchTable`'s sort links to `/search?...&sort=...`, which
+  would navigate away from the filtered Dashboard view on every sort
   click — a plain reuse wasn't viable.
 - **Nothing on the Dashboard shows a `R$` currency symbol any more.**
   This table's own `formatCurrency` is plain-decimal,

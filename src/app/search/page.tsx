@@ -8,6 +8,7 @@ import { SearchTable } from "./search-table";
 import {
   dateRangeFor,
   effectiveGorduraValue,
+  EMPTY_FILTERS,
   hasAnyFilter,
   parseFilters,
   UNCATEGORIZED_VALUE,
@@ -47,6 +48,11 @@ function applyCheckboxFilter<
     return query.is(column, null);
   }
   return query.in(column, realIds);
+}
+
+function currentMonthKey() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
 
 // Rebuilt fresh on every call (rather than reused across .range() pages) —
@@ -114,7 +120,16 @@ export default async function SearchPage({
   searchParams: Promise<SearchParams>;
 }) {
   const resolvedSearchParams = await searchParams;
-  const filters = parseFilters(resolvedSearchParams);
+  // No filter params (sidebar link, fresh visit, or just `?sort=…` from a
+  // column-header click on that default view) opens on the current month —
+  // this page replaced the old Transactions page, which did the same.
+  // Clearing every chip pushes `/search?cleared=1` instead, so an
+  // explicitly emptied search stays empty rather than snapping back here.
+  const parsedFilters = parseFilters(resolvedSearchParams);
+  const filters =
+    !hasAnyFilter(parsedFilters) && resolvedSearchParams.cleared === undefined
+      ? { ...EMPTY_FILTERS, date: { granularity: "month" as const, op: "on" as const, value: currentMonthKey() } }
+      : parsedFilters;
   const searchActive = hasAnyFilter(filters);
 
   const sortParam = typeof resolvedSearchParams.sort === "string" ? resolvedSearchParams.sort : undefined;

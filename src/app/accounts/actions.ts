@@ -78,7 +78,6 @@ export async function deleteAccounts(ids: string[]) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/accounts");
-  revalidatePath("/transactions");
   revalidatePath("/search");
   revalidatePath("/budget");
   revalidatePath("/");

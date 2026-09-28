@@ -180,7 +180,7 @@ table is meant if it's ever unclear again.
   **Why:** the `Intl` short form renders with a trailing period ("jan.",
   "fev.", ...) in pt-BR, which showed up as dots on every month column
   header; a plain array sidesteps that entirely and matches the same
-  `MONTH_ABBREVIATIONS` array `transactions-table.tsx`/
+  `MONTH_ABBREVIATIONS` array `search/search-table.tsx`/
   `dashboard-transactions-table.tsx` already use for their Date column.
 
 - **Row color is inherited down from the Type ancestor, not computed

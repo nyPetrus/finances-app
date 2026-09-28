@@ -61,8 +61,8 @@ description: Use when writing or touching code that inserts/updates a transactio
   Input's `defaultValue`), `defaultCategoryId`/`defaultClassId` (initial
   values for the Category/Class `Select`s, else both start unset), and
   `showTrigger` (set `false` to suppress its own "+" `DialogTrigger` when
-  something else is opening it). The external callers are Transactions'
-  edit dialog's "Save and map description" button (`transactions-table.tsx`)
+  something else is opening it). The external callers are Search's
+  edit dialog's "Save and map description" button (`search/search-table.tsx`)
   and the Dashboard's embedded transactions table's identical button
   (`dashboard-transactions-table.tsx` — a separate copy of the same edit
   dialog, see `dashboard-conventions`; the two are kept in sync by hand, not

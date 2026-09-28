@@ -18,7 +18,6 @@ function friendlyError(message: string, code?: string) {
 
 function revalidateClassPages() {
   revalidatePath("/classes");
-  revalidatePath("/transactions");
   revalidatePath("/search");
   revalidatePath("/descriptions");
   revalidatePath("/");

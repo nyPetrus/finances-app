@@ -29,7 +29,6 @@ export async function addCategory(formData: FormData) {
   if (error) throwFriendlyError(error.message, error.code);
 
   revalidatePath("/categories");
-  revalidatePath("/transactions");
   revalidatePath("/search");
 }
 
@@ -56,7 +55,6 @@ export async function updateCategory(formData: FormData) {
   if (error) throwFriendlyError(error.message, error.code);
 
   revalidatePath("/categories");
-  revalidatePath("/transactions");
   revalidatePath("/search");
 }
 
@@ -73,7 +71,6 @@ export async function deleteCategories(ids: string[]): Promise<DeleteResult> {
 
   revalidatePath("/categories");
   revalidatePath("/classes");
-  revalidatePath("/transactions");
   revalidatePath("/search");
 
   return result;
@@ -100,7 +97,6 @@ export async function setCategoriesActive(ids: string[], isActive: boolean) {
 
   revalidatePath("/categories");
   revalidatePath("/classes");
-  revalidatePath("/transactions");
   revalidatePath("/search");
   revalidatePath("/descriptions");
 }

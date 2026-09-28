@@ -49,7 +49,6 @@ export async function addTransaction(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
-  revalidatePath("/transactions");
   revalidatePath("/search");
 }
 
@@ -89,7 +88,6 @@ export async function updateTransaction(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
-  revalidatePath("/transactions");
   revalidatePath("/search");
 }
 
@@ -168,7 +166,6 @@ export async function bulkUpdateClassification(ids: string[], updates: BulkClass
 
   if (error) throw new Error(error.message);
 
-  revalidatePath("/transactions");
   revalidatePath("/search");
   revalidatePath("/budget");
   revalidatePath("/");
@@ -191,7 +188,6 @@ export async function deleteTransactions(ids: string[]) {
 
   if (error) throw new Error(error.message);
 
-  revalidatePath("/transactions");
   revalidatePath("/search");
   revalidatePath("/budget");
   revalidatePath("/");

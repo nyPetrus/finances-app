@@ -47,7 +47,7 @@ hand actually touches them rather than on every request:
 
 - `table-page-conventions` — the shared list-page architecture (markup, row
   selection, toolbar, column show/hide & reorder, sorting, add/edit
-  dialogs, category/class chip rendering, bulk mutations) that Transactions,
+  dialogs, category/class chip rendering, bulk mutations) that Search's results table,
   Categories, Classes, Descriptions, and Accounts all follow. Load this
   before adding a new list page or changing an existing one's table
   structure.

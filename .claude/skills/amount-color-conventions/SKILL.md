@@ -1,13 +1,15 @@
 ---
 name: amount-color-conventions
-description: Use when displaying a raw income/expense amount anywhere in the app (Transactions table's Amount column, the month header's income/expense summary, the Dashboard's monthly breakdown table) — the color rule differs by context, and differs from Budget's planned-vs-actual variance colors, which are a separate concept.
+description: Use when displaying a raw income/expense amount anywhere in the app (the Search/Dashboard transaction tables' Amount column, Search's results-summary total, the Dashboard's monthly breakdown table) — the color rule differs by context, and differs from Budget's planned-vs-actual variance colors, which are a separate concept.
 ---
 
 # Amount color conventions
 
-**Transactions table and the month header (`transactions-table.tsx`,
-`transactions/page.tsx`): negative/expense amounts don't get a special
-color — only positive (income) amounts do.** A positive amount is
+**Transaction tables (`search/search-table.tsx`, the Dashboard's
+`dashboard-transactions-table.tsx`) and Search's results-summary total:
+negative/expense amounts don't get a special color — only positive
+(income) amounts do.** (The old Transactions page and its month header
+were removed; Search replaced them.) A positive amount is
 `text-emerald-600`; a negative one just uses the default text color (no
 class, or explicitly omit the color class rather than adding
 `text-foreground`). Transfers stay `text-muted-foreground` regardless of

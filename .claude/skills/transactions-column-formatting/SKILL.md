@@ -1,12 +1,15 @@
 ---
 name: transactions-column-formatting
-description: Use when touching how the Transactions table (src/app/transactions/transactions-table.tsx) formats or renders its own Date, Amount, Account, or Class column values — these are bespoke to this one table's renderCell, not part of the shared table-page-conventions architecture or the cross-page amount-color-conventions rule.
+description: Use when touching how the transaction tables (src/app/search/search-table.tsx and its Dashboard copy dashboard-transactions-table.tsx) format or render their own Date, Amount, Account, or Class column values — these are bespoke to these tables' renderCell, not part of the shared table-page-conventions architecture or the cross-page amount-color-conventions rule.
 ---
 
 # Transactions table column formatting
 
-These are presentation choices specific to `transactions-table.tsx`'s
-`renderCell`, not shared with the other list pages.
+These are presentation choices specific to the transaction tables'
+`renderCell` — `search/search-table.tsx` (the main one since the old
+Transactions page and its `transactions-table.tsx` were removed) and the
+Dashboard's hand-synced copy `dashboard-transactions-table.tsx` — not
+shared with the other list pages.
 
 - **Amount has no currency symbol.** `formatCurrency` uses
   `Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2,
@@ -16,8 +19,8 @@ These are presentation choices specific to `transactions-table.tsx`'s
   no-symbol style (its own local `formatCurrency` copy), and so does the
   Dashboard's embedded transactions table (see `dashboard-conventions`)
   and its monthly breakdown table (see `dashboard-monthly-table`, which
-  additionally rounds to 0 decimals). Budget's planned/actual/variance and
-  the month header still keep their own `formatCurrency` copy with
+  additionally rounds to 0 decimals). Budget's planned/actual/variance
+  still keeps its own `formatCurrency` copy with
   currency style and the `R$` symbol — don't change those unless asked.
   **Why:** the `R$` symbol used to be reserved for the Dashboard's 6 stat
   cards specifically, but those were removed (see `dashboard-conventions`'s
@@ -37,8 +40,8 @@ These are presentation choices specific to `transactions-table.tsx`'s
   a narrow column.
   **Why:** the 2-digit year is shown by explicit user request; the
   Dashboard's copy used to drop the year entirely there since the
-  month/year is already shown in the page header above the Transactions
-  table (`formatMonthLabel` in `transactions/page.tsx`) — that reasoning
+  month/year was already shown in the old (since removed) Transactions
+  page's header — that reasoning
   no longer applies now that the year prints inline everywhere.
 - **Account and Class render as a `Badge` chip**
   (`variant="secondary" className="max-w-full gap-1 truncate"`), instead

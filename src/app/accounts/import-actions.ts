@@ -87,7 +87,6 @@ async function runImport(formData: FormData): Promise<ImportResult> {
   }
 
   revalidatePath("/accounts");
-  revalidatePath("/transactions");
   revalidatePath("/search");
   revalidatePath("/budget");
   revalidatePath("/");

@@ -47,6 +47,7 @@ import {
   updateTransaction,
 } from "../transactions/actions";
 import { AddTransactionDialog } from "../transactions/add-transaction-dialog";
+import { SyncButton } from "../descriptions/sync-button";
 import { AddMappingDialog } from "../descriptions/add-mapping-dialog";
 import { BulkEditDialog } from "./bulk-edit-dialog";
 import { type SortKey } from "./sort";
@@ -274,6 +275,7 @@ export function SearchTable({
               Create an account first
             </Button>
           )}
+          <SyncButton />
           {selected.size > 0 && (
             <Button
               variant="ghost"

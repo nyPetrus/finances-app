@@ -209,7 +209,6 @@ export async function syncMappedDescriptions() {
     (candidates ?? []) as { id: string; description: string }[],
   );
 
-  revalidatePath("/transactions");
   revalidatePath("/search");
   revalidatePath("/descriptions");
   revalidatePath("/budget");
