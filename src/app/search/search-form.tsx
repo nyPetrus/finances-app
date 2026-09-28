@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { CheckboxSelect } from "@/components/checkbox-select";
@@ -57,6 +57,27 @@ const AMOUNT_OP_LABELS: Record<AmountOp, string> = {
 function InlineLabel({ children }: { children: string }) {
   return <span className="shrink-0 text-muted-foreground">{children}:</span>;
 }
+
+/**
+ * One bordered box holding an operator <Select> and its value <Input>, so
+ * the pair reads as a single field: `[Description: Contains ▾ | e.g. uber]`.
+ * The box owns the border and the focus ring; the children drop their own
+ * (see OPERATOR_TRIGGER_CLASS / OPERATOR_INPUT_CLASS), with a thin divider
+ * after the trigger.
+ */
+function OperatorField({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex h-8 w-full min-w-0 items-center rounded-lg border border-input transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30">
+      {children}
+    </div>
+  );
+}
+
+const OPERATOR_TRIGGER_CLASS =
+  "h-full data-[size=default]:h-full shrink-0 rounded-none rounded-l-lg border-0 border-r border-input bg-transparent focus-visible:border-input focus-visible:ring-0 dark:bg-transparent";
+
+const OPERATOR_INPUT_CLASS =
+  "h-full flex-1 rounded-none rounded-r-lg border-0 bg-transparent focus-visible:ring-0 dark:bg-transparent";
 
 export function SearchForm({
   accounts,
@@ -196,9 +217,9 @@ export function SearchForm({
       </div>
 
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
-        <div className="flex gap-2">
+        <OperatorField>
           <Select value={descriptionOp} onValueChange={(value) => setDescriptionOp(value as DescriptionOp)}>
-            <SelectTrigger>
+            <SelectTrigger className={OPERATOR_TRIGGER_CLASS}>
               <InlineLabel>Description</InlineLabel>
               <SelectValue />
             </SelectTrigger>
@@ -213,9 +234,9 @@ export function SearchForm({
             value={descriptionValue}
             onChange={(e) => setDescriptionValue(e.target.value)}
             placeholder="e.g. uber"
-            className="min-w-0 flex-1"
+            className={OPERATOR_INPUT_CLASS}
           />
-        </div>
+        </OperatorField>
 
         <div className="flex flex-wrap gap-2">
           <Select
@@ -273,9 +294,9 @@ export function SearchForm({
           )}
         </div>
 
-        <div className="flex gap-2">
+        <OperatorField>
           <Select value={amountOp} onValueChange={(value) => setAmountOp(value as AmountOp)}>
-            <SelectTrigger>
+            <SelectTrigger className={OPERATOR_TRIGGER_CLASS}>
               <InlineLabel>Amount</InlineLabel>
               <SelectValue />
             </SelectTrigger>
@@ -292,9 +313,9 @@ export function SearchForm({
             value={amountValue}
             onChange={(e) => setAmountValue(e.target.value)}
             placeholder="-50.00"
-            className="min-w-0 flex-1"
+            className={OPERATOR_INPUT_CLASS}
           />
-        </div>
+        </OperatorField>
       </div>
 
       <div className="flex items-center gap-2">

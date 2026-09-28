@@ -34,7 +34,17 @@ then clicking "Apply". Added per explicit user request.
   is also muted while nothing is checked, so active filters stand out);
   Description/Date/Amount put an `InlineLabel` (`search-form.tsx`) inside
   their first `SelectTrigger`, and their text/date/number inputs carry
-  `aria-label`s since there's no `<Label htmlFor>` anymore. Layout is two
+  `aria-label`s since there's no `<Label htmlFor>` anymore. **Description
+  and Amount each render as a single combined field** —
+  `OperatorField` (`search-form.tsx`) is one bordered box that owns the
+  border and the `focus-within` ring, holding the operator `Select` and
+  the value `Input` with their own borders/rings stripped
+  (`OPERATOR_TRIGGER_CLASS`/`OPERATOR_INPUT_CLASS`) and a thin divider
+  between them: `[Description: Contains ▾ | e.g. uber]`. The operator stays
+  a real, clickable choice — don't replace it with typed-prefix syntax
+  (`^uber`, `=uber`); that was considered and rejected as too hidden.
+  Date keeps separate controls (two selects + an input is too much for
+  one box). Layout is two
   responsive grids: the checkbox selects at `grid-cols-1 sm:grid-cols-2
   lg:grid-cols-4` (each `w-full`), the operator filters at `grid-cols-1
   md:grid-cols-2 xl:grid-cols-3` with each input `flex-1`.
