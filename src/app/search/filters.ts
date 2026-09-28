@@ -2,7 +2,7 @@
 // (initializing its fields from the current URL) — no Supabase import here
 // so it stays safe to import from a "use client" file.
 
-import { effectiveGordura, GORDURA_LABELS } from "@/lib/classification";
+import { effectiveGordura } from "@/lib/classification";
 import type { Gordura } from "@/lib/supabase/types";
 
 export const DESCRIPTION_OPS = ["equal_to", "starts_with", "contains"] as const;
@@ -43,7 +43,6 @@ export const UNCLASSED_VALUE = "unclassed";
 // effectiveGordura), so this filter only ever offers/matches Alta/Baixa —
 // no "Sem gordura"/unset option any more.
 export const GORDURA_VALUES: Gordura[] = ["low", "high"];
-export const GORDURA_VALUE_LABELS = GORDURA_LABELS;
 
 export function isGorduraValue(value: string): value is Gordura {
   return value === "high" || value === "low";

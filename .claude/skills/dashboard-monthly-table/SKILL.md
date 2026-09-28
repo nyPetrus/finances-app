@@ -144,7 +144,8 @@ table is meant if it's ever unclear again.
   `TRANSACTION_TYPE_SYMBOLS` — `↑`/`↓`/`↔` for income/expense/transfer), a
   Category row's `row.icon` (`category.icon`, rendered via
   `CategoryIcon`), and a Gordura row's `row.symbol` (from `GORDURA_SYMBOLS`
-  in `dashboard-monthly-breakdown.ts` — `▢` for Baixa, `△` for Alta) are
+  in `@/lib/classification.ts`, shared app-wide — `▢` for Baixa, `△` for
+  Alta; see the "Gordura shows as a symbol" note there) are
   enough on their own; the label `<span>` in `TreeRows` only renders when
   `hasIcon` (`!!row.icon || !!row.symbol`) is false, or at the Class level
   (`isClassLevel`), since Class rows never carry an icon and would

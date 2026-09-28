@@ -5,6 +5,19 @@ export const GORDURA_LABELS: Record<Gordura, string> = {
   low: "Baixa",
 };
 
+// Per explicit user request, gordura *displays* show just the symbol (name
+// as a hover tooltip): the Dashboard dynamic table, the Classes table, the
+// Search filter chip. Pickers (dropdowns, checkbox lists) use
+// gorduraOptionLabel — symbol + name — so the choice stays unambiguous.
+export const GORDURA_SYMBOLS: Record<Gordura, string> = {
+  low: "▢",
+  high: "△",
+};
+
+export function gorduraOptionLabel(gordura: Gordura): string {
+  return `${GORDURA_SYMBOLS[gordura]} ${GORDURA_LABELS[gordura]}`;
+}
+
 // The ultimate fallback when neither the transaction nor its class specifies
 // one — per explicit user request. Before this, a transaction with no
 // override and a class with no default (or no class at all) showed as

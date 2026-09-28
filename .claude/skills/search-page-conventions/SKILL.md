@@ -85,8 +85,11 @@ Added per explicit user request.
     - **Class**: same shape, with `"unclassed"` (`UNCLASSED_VALUE`) as its
       pseudo-value.
     - **Gordura**: `gordura` (`"high"` | `"low"` — `Gordura`,
-      `GORDURA_VALUES` for the fixed Baixa/Alta order, `GORDURA_VALUE_LABELS`
-      — an alias for `GORDURA_LABELS` — for display). Filters on the
+      `GORDURA_VALUES` for the fixed Baixa/Alta order; the checkbox list
+      shows `gorduraOptionLabel()` — "▢ Baixa"/"△ Alta" — while the chip
+      shows just the symbol via the option's `chip` field, e.g.
+      `Gordura: △`, per the app-wide "gordura displays as a symbol" rule in
+      `@/lib/classification.ts`). Filters on the
       transaction's **effective** gordura (`effectiveGorduraValue()` in
       `filters.ts`, a thin alias for `effectiveGordura()` from
       `@/lib/classification.ts`, same as the Dashboard monthly table's

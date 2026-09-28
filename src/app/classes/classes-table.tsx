@@ -28,7 +28,7 @@ import { CategoryIcon } from "@/components/category-icon";
 import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
 import { useInactiveFilter } from "@/hooks/use-inactive-filter";
-import { GORDURA_LABELS } from "@/lib/classification";
+import { GORDURA_LABELS, GORDURA_SYMBOLS } from "@/lib/classification";
 import type { Category, Class } from "@/lib/supabase/types";
 import { deleteClasses, setClassesActive, updateClass } from "./actions";
 import { AddClassDialog } from "./add-class-dialog";
@@ -115,7 +115,7 @@ export function ClassesTable({
       }
       case "gordura":
         return classItem.default_gordura ? (
-          GORDURA_LABELS[classItem.default_gordura]
+          <span title={GORDURA_LABELS[classItem.default_gordura]}>{GORDURA_SYMBOLS[classItem.default_gordura]}</span>
         ) : (
           <span className="text-sm text-muted-foreground">—</span>
         );

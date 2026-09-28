@@ -4,12 +4,12 @@ import { useEffect, useMemo, useRef, useState, useTransition, type KeyboardEvent
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2Icon, SearchIcon, XIcon } from "lucide-react";
 import type { Account, Category, Class } from "@/lib/supabase/types";
+import { GORDURA_SYMBOLS, gorduraOptionLabel } from "@/lib/classification";
 import { cn } from "@/lib/utils";
 import {
   EMPTY_FILTERS,
   filtersToSearchParams,
   formatDateValue,
-  GORDURA_VALUE_LABELS,
   GORDURA_VALUES,
   hasAnyFilter,
   isGorduraValue,
@@ -135,7 +135,11 @@ export function SearchFilterBar({
         { value: UNCLASSED_VALUE, label: "Unclassed" },
         ...classes.map((classItem) => ({ value: classItem.id, label: classItem.name })),
       ],
-      gordura: GORDURA_VALUES.map((value) => ({ value, label: GORDURA_VALUE_LABELS[value] })),
+      gordura: GORDURA_VALUES.map((value) => ({
+        value,
+        label: gorduraOptionLabel(value),
+        chip: GORDURA_SYMBOLS[value],
+      })),
     }),
     [accounts, categories, classes],
   );
@@ -190,7 +194,10 @@ export function SearchFilterBar({
   }
 
   function labelsFor(field: CheckboxField, values: string[]): string {
-    const names = values.map((v) => optionsByField[field].find((option) => option.value === v)?.label ?? "?");
+    const names = values.map((v) => {
+      const option = optionsByField[field].find((o) => o.value === v);
+      return option?.chip ?? option?.label ?? "?";
+    });
     return names.length <= 2 ? names.join(", ") : `${names[0]}, ${names[1]} +${names.length - 2}`;
   }
 

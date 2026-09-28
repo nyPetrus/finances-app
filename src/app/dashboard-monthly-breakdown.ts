@@ -1,5 +1,5 @@
 import type { Category, Class, Gordura, Transaction } from "@/lib/supabase/types";
-import { effectiveGordura, GORDURA_LABELS } from "@/lib/classification";
+import { effectiveGordura, GORDURA_LABELS, GORDURA_SYMBOLS } from "@/lib/classification";
 import { TRANSACTION_TYPE_SYMBOLS } from "@/lib/transaction-type";
 
 // Thin alias kept for callers in this file and dashboard-explorer.tsx —
@@ -9,12 +9,6 @@ export const gorduraKey = effectiveGordura;
 
 const GORDURA_ORDER: Gordura[] = ["low", "high"];
 
-// Shown next to a Gordura row's name, the same way TRANSACTION_TYPE_SYMBOLS
-// marks a Type row — per explicit user request.
-const GORDURA_SYMBOLS: Record<Gordura, string> = {
-  low: "▢",
-  high: "△",
-};
 
 // The three optional breakdown levels below the always-present Type level.
 // The Dashboard's "Levels" menu (dashboard-explorer.tsx) lets the user

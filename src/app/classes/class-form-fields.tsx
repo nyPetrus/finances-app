@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CategoryIcon } from "@/components/category-icon";
-import { GORDURA_LABELS } from "@/lib/classification";
+import { gorduraOptionLabel } from "@/lib/classification";
 import type { Category, Class } from "@/lib/supabase/types";
 
 // Name, linked categories and default gordura — shared by the Add and Edit
@@ -70,9 +70,9 @@ export function ClassFormFields({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="none">None (defaults to {GORDURA_LABELS.high})</SelectItem>
-            <SelectItem value="high">{GORDURA_LABELS.high}</SelectItem>
-            <SelectItem value="low">{GORDURA_LABELS.low}</SelectItem>
+            <SelectItem value="none">None (defaults to {gorduraOptionLabel("high")})</SelectItem>
+            <SelectItem value="high">{gorduraOptionLabel("high")}</SelectItem>
+            <SelectItem value="low">{gorduraOptionLabel("low")}</SelectItem>
           </SelectContent>
         </Select>
       </div>

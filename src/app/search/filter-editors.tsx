@@ -12,7 +12,9 @@ import { MONTH_LABELS, type DateGranularity, type DateOp } from "./filters";
 // chip clicked), one of these edits that field's value. Each calls onApply
 // with the finished value — or null, meaning "remove this filter".
 
-export type Option = { value: string; label: string };
+// `chip`, when set, is the shorter text the bar's chip shows instead of
+// `label` (gordura: just the symbol).
+export type Option = { value: string; label: string; chip?: string };
 
 function pad(n: number) {
   return String(n).padStart(2, "0");

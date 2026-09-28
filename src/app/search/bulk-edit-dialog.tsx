@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { GORDURA_LABELS, pickableCategories, pickableClasses } from "@/lib/classification";
+import { gorduraOptionLabel, pickableCategories, pickableClasses } from "@/lib/classification";
 import type { Category, Class, Gordura } from "@/lib/supabase/types";
 import { bulkUpdateClassification } from "../transactions/actions";
 
@@ -171,8 +171,8 @@ export function BulkEditDialog({
               <SelectContent>
                 <SelectItem value={NO_CHANGE}>No change</SelectItem>
                 <SelectItem value={CLEAR}>Class default</SelectItem>
-                <SelectItem value="high">{GORDURA_LABELS.high}</SelectItem>
-                <SelectItem value="low">{GORDURA_LABELS.low}</SelectItem>
+                <SelectItem value="high">{gorduraOptionLabel("high")}</SelectItem>
+                <SelectItem value="low">{gorduraOptionLabel("low")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
