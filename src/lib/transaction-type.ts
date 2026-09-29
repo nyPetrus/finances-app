@@ -5,5 +5,5 @@ import type { Category } from "@/lib/supabase/types";
 export const TRANSACTION_TYPE_SYMBOLS: Record<Category["kind"], string> = {
   income: "↑",
   expense: "↓",
-  transfer: "↔",
+  transfer: "➔",
 };

@@ -1,6 +1,6 @@
 ---
 name: table-page-conventions
-description: Use when adding a new list-style page or touching an existing one (Search's results table, Categories, Classes, Descriptions, Accounts) — table markup, row selection, the two-group toolbar (left: Add-or-"N selected" swap, table-specific buttons, "⋮" menu; right: Delete/Deactivate depending on the table, then Columns), the toolbar "⋮" actions menu for the single checked row (Edit/Sync/Toggle active — no Delete; no per-row ⋮ column), column show/hide & reorder, column header icons, sorting, add/edit dialogs, category/class chip rendering, the app-wide symbol-display rule (a value's name only in its original table, elsewhere just its symbol — category icon, type ↑↓↔, gordura ▢△), which tables can hard-delete a row at all (Categories/Classes/Descriptions only — Search's transactions and Accounts are deactivate-only, no delete path at all, per explicit user request for safety), or bulk mutations. Encodes this app's shared list-page architecture so new pages match instead of inventing a fresh layout.
+description: Use when adding a new list-style page or touching an existing one (Search's results table, Categories, Classes, Descriptions, Accounts) — table markup, row selection, the two-group toolbar (left: Add-or-"N selected" swap, table-specific buttons, "⋮" menu; right: Delete/Deactivate depending on the table, then Columns), the toolbar "⋮" actions menu for the single checked row (Edit/Sync/Toggle active — no Delete; no per-row ⋮ column), column show/hide & reorder, column header icons, sorting, add/edit dialogs, category/class chip rendering, the app-wide symbol-display rule (a value's name only in its original table, elsewhere just its symbol — category icon, type ↑↓➔, gordura ▢△), which tables can hard-delete a row at all (Categories/Classes/Descriptions only — Search's transactions and Accounts are deactivate-only, no delete path at all, per explicit user request for safety), or bulk mutations. Encodes this app's shared list-page architecture so new pages match instead of inventing a fresh layout.
 ---
 
 # Table page conventions
@@ -403,7 +403,7 @@ list page instead of inventing a fresh layout.
   | Value | Symbol | Defined in | Original table |
   |---|---|---|---|
   | Category | its icon (`CategoryIcon`) | `categories.icon` | Categories (`categories-table.tsx`: icon **and** name) |
-  | Type (income/expense/transfer) | `↑` `↓` `↔` | `TRANSACTION_TYPE_SYMBOLS`, `@/lib/transaction-type.ts` | none |
+  | Type (income/expense/transfer) | `↑` `↓` `➔` | `TRANSACTION_TYPE_SYMBOLS`, `@/lib/transaction-type.ts` | none |
   | Gordura (low/high) | `▢` `△` | `GORDURA_SYMBOLS`, `@/lib/classification.ts` | none |
   Accounts, Classes and Descriptions have no symbols, so they always show
   their names. A value with no symbol of its own (e.g. the "Uncategorized"
