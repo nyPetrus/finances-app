@@ -5,6 +5,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { deleteIfUnused, type DeleteResult } from "@/lib/supabase/delete-if-unused";
 import { DEFAULT_GORDURA, isGordura } from "@/lib/classification";
+import { CATEGORY_ICONS, DEFAULT_CLASS_ICON } from "@/lib/category-icons";
 import type { Gordura } from "@/lib/supabase/types";
 
 // Errors are returned as values rather than thrown: Next.js hides thrown
@@ -25,10 +26,12 @@ function revalidateClassPages() {
 
 function parseClassForm(formData: FormData) {
   const defaultGordura = formData.get("default_gordura");
+  const icon = formData.get("icon");
   return {
     name: ((formData.get("name") as string) ?? "").trim(),
     categoryIds: [...new Set(formData.getAll("category_ids").map(String).filter(Boolean))],
     defaultGordura: isGordura(defaultGordura) ? defaultGordura : null,
+    icon: typeof icon === "string" && CATEGORY_ICONS.includes(icon) ? icon : DEFAULT_CLASS_ICON,
   };
 }
 
@@ -47,13 +50,13 @@ export async function addClass(formData: FormData): Promise<ClassActionResult> {
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
 
-  const { name, categoryIds, defaultGordura } = parseClassForm(formData);
+  const { name, categoryIds, defaultGordura, icon } = parseClassForm(formData);
   if (!name) return { error: "Name is required." };
   if (categoryIds.length === 0) return { error: "Pick at least one category." };
 
   const { data, error } = await supabase
     .from("classes")
-    .insert({ user_id: user.id, name, default_gordura: defaultGordura })
+    .insert({ user_id: user.id, name, default_gordura: defaultGordura, icon })
     .select("id")
     .single();
 
@@ -73,7 +76,7 @@ export async function updateClass(formData: FormData): Promise<ClassActionResult
   if (!user) throw new Error("Unauthorized");
 
   const id = formData.get("id") as string;
-  const { name, categoryIds, defaultGordura } = parseClassForm(formData);
+  const { name, categoryIds, defaultGordura, icon } = parseClassForm(formData);
   if (!name) return { error: "Name is required." };
 
   const { data: existing, error: existingError } = await supabase
@@ -87,7 +90,7 @@ export async function updateClass(formData: FormData): Promise<ClassActionResult
 
   const { error } = await supabase
     .from("classes")
-    .update({ name, default_gordura: defaultGordura })
+    .update({ name, default_gordura: defaultGordura, icon })
     .eq("id", id)
     .eq("user_id", user.id);
 

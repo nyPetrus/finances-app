@@ -405,8 +405,14 @@ list page instead of inventing a fresh layout.
   | Category | its icon (`CategoryIcon`) | `categories.icon` | Categories (`categories-table.tsx`: icon **and** name) |
   | Type (income/expense/transfer) | `➔` rotated up / down / right (same glyph, so identical weight — `↑`/`↓` render thinner) | `TRANSACTION_TYPE_SYMBOLS` + `TRANSACTION_TYPE_SYMBOL_ROTATION` (wrapper must be inline-block/flex), `@/lib/transaction-type.ts` | none |
   | Gordura (low/high) | `▢` `△` | `GORDURA_SYMBOLS`, `@/lib/classification.ts` | none |
-  Accounts, Classes and Descriptions have no symbols, so they always show
-  their names. A value with no symbol of its own (e.g. the "Uncategorized"
+  Accounts and Descriptions have no symbols, so they always show their
+  names. **Classes now have an icon too** (`classes.icon`, migration
+  `0021_classes_icon.sql`, same `CATEGORY_ICON_MAP` palette, default
+  `DEFAULT_CLASS_ICON = "tags"`, picked via `IconSwatchPicker` in
+  `class-form-fields.tsx`, shown next to the name in `classes-table.tsx`) —
+  but the Class column elsewhere (Search, Dashboard, Descriptions) still
+  shows the name as a `Badge`; switching those to icon-only under this
+  rule hasn't been asked for yet, so check with the user before doing it. A value with no symbol of its own (e.g. the "Uncategorized"
   / "Unclassed" pseudo-values) keeps its text. Where it's applied today:
   every table's Category column (see the next bullet); the Dashboard
   dynamic table's Type/Category/Gordura rows (`dashboard-monthly-table`);

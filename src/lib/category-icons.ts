@@ -17,6 +17,7 @@ import {
   SmartphoneIcon,
   SmileIcon,
   TagIcon,
+  TagsIcon,
   TrendingUpIcon,
   UsersRoundIcon,
   UtensilsCrossedIcon,
@@ -52,9 +53,14 @@ export const CATEGORY_ICON_MAP: Record<string, LucideIcon> = {
   family: UsersRoundIcon,
   cloud: CloudIcon,
   smile: SmileIcon,
+  tags: TagsIcon,
   tag: TagIcon,
 };
 
 export const CATEGORY_ICONS = Object.keys(CATEGORY_ICON_MAP);
 
 export const DEFAULT_CATEGORY_ICON = "tag";
+
+// Classes share the same icon palette; a new class starts on "tags" (the
+// Classes entity icon in sidebar-nav.tsx), matching the DB column default.
+export const DEFAULT_CLASS_ICON = "tags";

@@ -12,11 +12,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CategoryIcon } from "@/components/category-icon";
+import { IconSwatchPicker } from "@/components/icon-swatch-picker";
+import { DEFAULT_CLASS_ICON } from "@/lib/category-icons";
 import { gorduraOptionLabel } from "@/lib/classification";
 import type { Category, Class } from "@/lib/supabase/types";
 
-// Name, linked categories and default gordura — shared by the Add and Edit
-// class dialogs. Posts `name`, one `category_ids` per checked category, and
+// Name, icon, linked categories and default gordura — shared by the Add and Edit
+// class dialogs. Posts `name`, `icon`, one `category_ids` per checked category, and
 // `default_gordura` ("none" | "high" | "low").
 export function ClassFormFields({
   categories,
@@ -27,6 +29,7 @@ export function ClassFormFields({
   classItem?: Class;
   autoFocus?: boolean;
 }) {
+  const [icon, setIcon] = useState(classItem?.icon ?? DEFAULT_CLASS_ICON);
   const [categoryIds, setCategoryIds] = useState<Set<string>>(new Set(classItem?.category_ids ?? []));
 
   // Inactive categories aren't offered for new links, but ones already linked
@@ -47,6 +50,10 @@ export function ClassFormFields({
       <div className="flex flex-col gap-2">
         <Label htmlFor="name">Name</Label>
         <Input id="name" name="name" defaultValue={classItem?.name} required autoFocus={autoFocus} />
+      </div>
+      <div className="flex flex-col gap-2">
+        <Label>Icon</Label>
+        <IconSwatchPicker name="icon" value={icon} onChange={setIcon} />
       </div>
       <div className="flex flex-col gap-2">
         <Label>Categories</Label>

@@ -94,10 +94,11 @@ export function ClassesTable({
     switch (key) {
       case "name":
         return (
-          <span className="inline-flex items-center gap-2">
-            {classItem.name}
+          <div className="flex items-center gap-2">
+            <CategoryIcon icon={classItem.icon} className="size-4 shrink-0 text-muted-foreground" />
+            <span>{classItem.name}</span>
             {!classItem.is_active && <Badge variant="outline">Inactive</Badge>}
-          </span>
+          </div>
         );
       case "category": {
         const linked = classItem.category_ids

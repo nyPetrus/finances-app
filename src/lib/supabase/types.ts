@@ -18,6 +18,7 @@ export type Class = {
   user_id: string;
   name: string;
   default_gordura: Gordura | null;
+  icon: string;
   is_active: boolean;
   created_at: string;
   // Categories this class is linked to (category_classes rows), filled in by
