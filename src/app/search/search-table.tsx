@@ -8,6 +8,7 @@ import {
   ArchiveIcon,
   ArchiveRestoreIcon,
   BanknoteIcon,
+  CalendarIcon,
   LandmarkIcon,
   PencilIcon,
   TagIcon,
@@ -92,7 +93,7 @@ const COLUMNS: {
   headerIcon?: LucideIcon;
   headerIconOnly?: boolean;
 }[] = [
-  { key: "date", label: "Date", cellClassName: "whitespace-nowrap" },
+  { key: "date", label: "Date", cellClassName: "whitespace-nowrap", headerIcon: CalendarIcon, headerIconOnly: true },
   { key: "description", label: "Description", cellClassName: "max-w-64 truncate font-medium" },
   { key: "account", label: "Account", cellClassName: "max-w-40 truncate", headerIcon: LandmarkIcon, headerIconOnly: true },
   {

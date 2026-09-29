@@ -274,7 +274,8 @@ list page instead of inventing a fresh layout.
   `TagIcon`, Class = `TagsIcon`, Account = `LandmarkIcon`). The transaction
   tables' **Amount** column is also icon-only, `BanknoteIcon` — per
   explicit user request ("a symbol that represents money"; a banknote, not
-  `$`, since the app is in BRL). These are rendered via the
+  `$`, since the app is in BRL). Their **Date** column is likewise
+  icon-only, `CalendarIcon`, per explicit user request. These are rendered via the
   shared `<ColumnHeaderIcon icon={column.headerIcon} label={column.label}
   iconOnly={column.headerIconOnly} />` (`src/components/column-header-icon.tsx`)
   as the header cell's children instead of `column.label` directly. The
