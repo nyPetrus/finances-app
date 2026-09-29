@@ -2,6 +2,7 @@ import {
   AppleIcon,
   ArrowLeftRightIcon,
   BabyIcon,
+  BanknoteArrowUpIcon,
   BathIcon,
   BedIcon,
   BeerIcon,
@@ -55,8 +56,20 @@ import {
   WifiIcon,
   WrenchIcon,
   ZapIcon,
+  createLucideIcon,
   type LucideIcon,
 } from "lucide-react";
+
+// Lucide has no toll-booth icon, so this one is drawn here in its style (24x24,
+// stroke-only): a booth on the left with a striped boom gate across the road.
+const TollIcon = createLucideIcon("toll", [
+  ["path", { d: "M2 21h20", key: "toll-ground" }],
+  ["rect", { x: "3", y: "9", width: "6", height: "12", rx: "1", key: "toll-booth" }],
+  ["path", { d: "M5 12h2", key: "toll-window" }],
+  ["rect", { x: "9", y: "11", width: "13", height: "3", rx: "1", key: "toll-arm" }],
+  ["path", { d: "m14 11-1 3", key: "toll-stripe-1" }],
+  ["path", { d: "m19 11-1 3", key: "toll-stripe-2" }],
+]);
 
 // Predefined palette for category and class icons — matches the icons already used by
 // the default-seeded categories (see supabase/migrations/0015_categories_icon.sql).
@@ -89,6 +102,7 @@ export const CATEGORY_ICON_MAP: Record<string, LucideIcon> = {
   apple: AppleIcon,
   baby: BabyIcon,
   bath: BathIcon,
+  "banknote-arrow-up": BanknoteArrowUpIcon,
   bed: BedIcon,
   beer: BeerIcon,
   building: BuildingIcon,
@@ -118,6 +132,7 @@ export const CATEGORY_ICON_MAP: Record<string, LucideIcon> = {
   tv: TvIcon,
   wallet: WalletIcon,
   wifi: WifiIcon,
+  toll: TollIcon,
   tags: TagsIcon,
   tag: TagIcon,
 };
