@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ArchiveIcon, ArchiveRestoreIcon, LandmarkIcon, RefreshCwIcon, type LucideIcon } from "lucide-react";
+import { ArchiveRestoreIcon, LandmarkIcon, RefreshCwIcon, type LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -251,26 +251,19 @@ export function AccountsTable({
           ) : (
             <AddAccountMenu onError={setActionError} onConnected={() => router.refresh()} />
           )}
-          <Button
-            variant="outline"
-            size="icon-sm"
-            disabled={syncableItemIds.length === 0 || isBusy}
-            onClick={handleSync}
-            aria-label="Sync"
-            title="Sync"
-          >
-            <RefreshCwIcon className={isSyncing ? "animate-spin" : undefined} />
-          </Button>
-          {selectedAccounts.some((account) => account.is_active) && (
+          {/* Only mounted while the selection includes at least one
+              bank-connected account (one row or many); syncs each distinct
+              Pluggy item among them. */}
+          {syncableItemIds.length > 0 && (
             <Button
-              variant="ghost"
+              variant="outline"
               size="icon-sm"
               disabled={isBusy}
-              onClick={() => setActive(Array.from(selected), false)}
-              aria-label="Deactivate"
-              title="Deactivate"
+              onClick={handleSync}
+              aria-label="Sync"
+              title="Sync"
             >
-              <ArchiveIcon />
+              <RefreshCwIcon className={isSyncing ? "animate-spin" : undefined} />
             </Button>
           )}
           {selectedAccounts.some((account) => !account.is_active) && (

@@ -181,7 +181,10 @@ list page instead of inventing a fresh layout.
      `variant="outline"` `size="icon-sm"`, spinning via
      `className={isSyncing ? "animate-spin" : undefined}` while pending,
      driven by `selected`/`selectedRows` — Pluggy bank sync is genuinely a
-     multi-account bulk operation), and Descriptions' own `SyncButton`
+     multi-account bulk operation; **only mounted while the selection
+     includes at least one bank-connected account** (`is_automatic &&
+     pluggy_item_id`), for one row or many — not rendered-but-disabled —
+     per explicit user request), and Descriptions' own `SyncButton`
      (applies existing `mapped_descriptions` rules to every uncategorized
      transaction, see `transaction-description-rules`), reused verbatim on
      Transactions too, right after the "+"/count slot — see below for how
@@ -209,7 +212,10 @@ list page instead of inventing a fresh layout.
      same as Categories/Classes' left-group toggle buttons), shown
      conditionally on `selectedRows.some((row) => row.is_active)` /
      `.some((row) => !row.is_active)` exactly like Categories/Classes
-     already did.
+     already did. **Exception: Accounts has no toolbar Deactivate button**
+     (removed per explicit user request) — deactivating an account is only
+     via the "⋮" menu's toggle-active item, one row at a time; its bulk
+     Activate button is still there.
      **Why:** per explicit user request, for security — the actions
      menu's own Delete item was removed for exactly this reason, see the
      `RowActionsMenu` bullet above, and Search's transactions/Accounts
