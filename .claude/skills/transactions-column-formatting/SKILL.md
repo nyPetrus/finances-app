@@ -26,23 +26,18 @@ shared with the other list pages.
   cards specifically, but those were removed (see `dashboard-conventions`'s
   "removed-cards" history) and nothing on the Dashboard shows `R$` any
   more now.
-- **Date abbreviates the month, uses a 2-digit year, and never wraps**:
-  `formatDate` renders `DD mmm YY` (e.g. `11 set 26`) via a local
-  `MONTH_ABBREVIATIONS` array (`["jan", "fev", ..., "dez"]`, no periods),
-  reading `getUTCDate()` / `getUTCMonth()` / `getUTCFullYear()` off the
-  transaction's date string (year sliced to its last 2 digits). This is
-  the same format on the Dashboard's embedded table
-  (`dashboard-transactions-table.tsx` — a separate copy, kept in sync by
-  hand, see `dashboard-conventions`). The Date column also sets
-  `cellClassName: "whitespace-nowrap"` in `COLUMNS` — needed because the
-  shared `TableCell` wraps by default (see `table-page-conventions`), and
-  `DD mmm YY` has spaces that would otherwise let it break across lines in
-  a narrow column.
-  **Why:** the 2-digit year is shown by explicit user request; the
-  Dashboard's copy used to drop the year entirely there since the
-  month/year was already shown in the old (since removed) Transactions
-  page's header — that reasoning
-  no longer applies now that the year prints inline everywhere.
+- **Date is `dd mmm` (no year) and never wraps**: `formatDate` renders
+  e.g. `11 set` via a local `MONTH_ABBREVIATIONS` array (`["jan", "fev",
+  ..., "dez"]`, no periods), reading `getUTCDate()` / `getUTCMonth()` off
+  the transaction's date string. This is the same format on the
+  Dashboard's embedded table (`dashboard-transactions-table.tsx` — a
+  separate copy, kept in sync by hand, see `dashboard-conventions`). The
+  Date column also sets `cellClassName: "whitespace-nowrap"` in `COLUMNS`
+  — needed because the shared `TableCell` wraps by default (see
+  `table-page-conventions`), and `dd mmm` has a space that would otherwise
+  let it break across lines in a narrow column.
+  **Why:** `dd mmm` is by explicit user request (2026-09-29), replacing
+  the earlier `DD mmm YY` — don't add the year back unless asked.
 - **Account and Class render as a `Badge` chip**
   (`variant="secondary" className="max-w-full gap-1 truncate"`), instead
   of plain text. Unlike Category (which is icon-only, no `Badge` — see
