@@ -1,4 +1,4 @@
-import { LockIcon, LockOpenIcon, type LucideIcon } from "lucide-react";
+import { LockIcon, createLucideIcon, type LucideIcon } from "lucide-react";
 import type { Category, Class, Autonomy, Transaction } from "@/lib/supabase/types";
 
 export const AUTONOMY_LABELS: Record<Autonomy, string> = {
@@ -12,9 +12,17 @@ export const AUTONOMY_LABELS: Record<Autonomy, string> = {
 // symbol + name (AutonomyOptionLabel) so the choice stays unambiguous.
 // Padlocks per explicit user request (were ▢ / △): Baixa = locked in,
 // Alta = free. Render via AutonomyIcon (src/components/autonomy-icon.tsx).
+// Lucide's lock-open swings its shackle open to the right; per explicit user
+// request Alta's opens to the left instead, so this is that icon mirrored
+// (same rect, shackle path reflected across x = 12).
+const LockOpenLeftIcon = createLucideIcon("lock-open-left", [
+  ["rect", { width: "18", height: "11", x: "3", y: "11", rx: "2", ry: "2", key: "lock-open-left-body" }],
+  ["path", { d: "M17 11V7a5 5 0 0 0-9.9-1", key: "lock-open-left-shackle" }],
+]);
+
 export const AUTONOMY_ICONS: Record<Autonomy, LucideIcon> = {
   low: LockIcon,
-  high: LockOpenIcon,
+  high: LockOpenLeftIcon,
 };
 
 // The ultimate fallback when neither the transaction nor its class specifies
