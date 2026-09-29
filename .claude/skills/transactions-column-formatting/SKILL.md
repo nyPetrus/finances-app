@@ -42,9 +42,10 @@ shared with the other list pages.
   (`variant="secondary" className="max-w-full gap-1 truncate"`), instead
   of plain text. Unlike Category (which is icon-only, no `Badge` — see
   `table-page-conventions`'s "Category-as-foreign-column" bullet), neither
-  has a leading `CategoryIcon`, since `Account` and `Class`
-  (`src/lib/supabase/types.ts`) have no `icon` field of their own — only
-  `Category` does.
+  has a leading `CategoryIcon`. `Account` has no `icon` field at all;
+  `Class` does now (`classes.icon`), but switching the Class column to
+  icon-only here hasn't been asked for yet — see `table-page-conventions`'s
+  symbol-display rule before changing it.
 - **Description, Account, and Class also need a `max-w-*` on the cell
   alongside `truncate`** (`max-w-64`, `max-w-40`, `max-w-40` respectively
   in `COLUMNS`' `cellClassName`) — see `table-page-conventions`'s
