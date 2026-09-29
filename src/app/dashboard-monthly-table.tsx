@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment } from "react";
 import { AutonomyIcon } from "@/components/autonomy-icon";
 import { CategoryIcon } from "@/components/category-icon";
 import { cn } from "@/lib/utils";
@@ -202,26 +202,21 @@ function TreeRows({
   );
 }
 
+// Expand state is owned by dashboard-explorer.tsx, so its toolbar's
+// expand/collapse-all button can drive it too.
 export function MonthlyBreakdownTable({
   rows,
   selected,
   onSelect,
+  expanded,
+  onToggle,
 }: {
   rows: MonthlyRow[];
   selected: MonthlySelection | undefined;
   onSelect: (selection: MonthlySelection) => void;
+  expanded: Set<string>;
+  onToggle: (key: string) => void;
 }) {
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
-
-  function toggle(key: string) {
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  }
-
   // Column sums across the top-level Type rows only — Category/Class rows
   // are already folded into their parent Type's months/total, so summing
   // those too would double-count.
@@ -270,7 +265,7 @@ export function MonthlyBreakdownTable({
           </tr>
         </thead>
         <tbody>
-          <TreeRows rows={rows} depth={0} expanded={expanded} onToggle={toggle} selected={selected} onSelect={onSelect} />
+          <TreeRows rows={rows} depth={0} expanded={expanded} onToggle={onToggle} selected={selected} onSelect={onSelect} />
         </tbody>
         <tfoot>
           <tr className="border-t">

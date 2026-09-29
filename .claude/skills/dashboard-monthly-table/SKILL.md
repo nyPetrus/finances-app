@@ -200,8 +200,17 @@ table is meant if it's ever unclear again.
   stat cards' own colors, but this table keeps the rule on its own merits
   now that those cards are gone.
 
+- **Expand/collapse-all button** (per explicit user request): an icon-only
+  `variant="outline" size="icon-sm"` button just left of the "Levels" menu
+  in `dashboard-explorer.tsx` — `ChevronsUpDownIcon` "Expand all levels"
+  opens every row with children at any depth (`expandableKeys()`),
+  `ChevronsDownUpIcon` "Collapse all levels" (shown once everything is
+  open) closes them all. To make that possible the `expanded` Set lives
+  in `DashboardExplorer` and is passed to `MonthlyBreakdownTable` as
+  `expanded`/`onToggle` props — the table has no expand state of its own.
+  This is separate from the per-row label click below, which still works.
 - **Expand state defaults to fully collapsed** (`useState<Set<string>>(new
-  Set())` in `MonthlyBreakdownTable`) — only the 3-4 Type rows are visible
+  Set())` in `DashboardExplorer`) — only the 3-4 Type rows are visible
   on first render; a row only toggles if it actually has children, which
   naturally happens to whichever level the user has placed last in the
   "Levels" menu order. `TreeRows` styles off each row's own `row.level`

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ListTreeIcon } from "lucide-react";
+import { ChevronsDownUpIcon, ChevronsUpDownIcon, ListTreeIcon } from "lucide-react";
 import { DashboardTransactionsTable } from "./dashboard-transactions-table";
 import { MonthlyBreakdownTable } from "./dashboard-monthly-table";
 import {
@@ -11,13 +11,22 @@ import {
   autonomyKey,
   monthIndex,
   type ClassificationLevel,
+  type MonthlyRow,
   type MonthlySelection,
 } from "./dashboard-monthly-breakdown";
+import { Button } from "@/components/ui/button";
 import { ColumnsMenu } from "@/components/columns-menu";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
 import type { Account, Category, Class, Transaction } from "@/lib/supabase/types";
 
 const LEVEL_COLUMNS = DEFAULT_CLASSIFICATION_LEVELS.map((key) => ({ key, label: CLASSIFICATION_LEVEL_LABELS[key] }));
+
+// Keys of every row that has children, at any depth — what "expand all" opens.
+function expandableKeys(rows: MonthlyRow[]): string[] {
+  return rows.flatMap((row) =>
+    row.children && row.children.length > 0 ? [row.key, ...expandableKeys(row.children)] : [],
+  );
+}
 
 function monthlySelectionsEqual(a: MonthlySelection, b: MonthlySelection) {
   return (
@@ -56,6 +65,20 @@ export function DashboardExplorer({
     [transactions, categories, classes, levels],
   );
 
+  // Starts fully collapsed (only the Type rows); see dashboard-monthly-table.
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const allKeys = useMemo(() => expandableKeys(monthlyBreakdown), [monthlyBreakdown]);
+  const allExpanded = allKeys.length > 0 && allKeys.every((key) => expanded.has(key));
+
+  function toggleRow(key: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
   function handleSelect(value: MonthlySelection) {
     setSelection((prev) => (prev && monthlySelectionsEqual(prev, value) ? undefined : value));
   }
@@ -79,7 +102,17 @@ export function DashboardExplorer({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <Button
+          variant="outline"
+          size="icon-sm"
+          disabled={allKeys.length === 0}
+          onClick={() => setExpanded(allExpanded ? new Set() : new Set(allKeys))}
+          aria-label={allExpanded ? "Collapse all levels" : "Expand all levels"}
+          title={allExpanded ? "Collapse all levels" : "Expand all levels"}
+        >
+          {allExpanded ? <ChevronsDownUpIcon /> : <ChevronsUpDownIcon />}
+        </Button>
         <ColumnsMenu
           columns={LEVEL_COLUMNS}
           order={levelOrder}
@@ -90,7 +123,13 @@ export function DashboardExplorer({
           icon={<ListTreeIcon />}
         />
       </div>
-      <MonthlyBreakdownTable rows={monthlyBreakdown} selected={selection} onSelect={handleSelect} />
+      <MonthlyBreakdownTable
+        rows={monthlyBreakdown}
+        selected={selection}
+        onSelect={handleSelect}
+        expanded={expanded}
+        onToggle={toggleRow}
+      />
 
       {selection && (
         <DashboardTransactionsTable
