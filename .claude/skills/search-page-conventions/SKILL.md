@@ -30,7 +30,7 @@ Added per explicit user request.
   - **Chips** follow the app-wide symbol-display rule
     (`table-page-conventions`): values with a symbol show only it, name as
     tooltip — `Category: 🛒 🚌` (category icons via `Option.icon`),
-    `Autonomy: △` (`Option.chip`), up to 5 symbols before `+N`; values
+    `Autonomy: 🔓` (a lucide padlock component in `Option.symbol`), up to 5 symbols before `+N`; values
     without one show names — `Account: Nubank, XP` (3+ values: `Nubank, XP +1`),
     `Description contains "uber"`, `Amount > -50`, `Date: Sep 2026` /
     `Date before Sep 2026` — field name muted, value bold; a colon only
@@ -90,9 +90,9 @@ Added per explicit user request.
       pseudo-value.
     - **Autonomy**: `autonomy` (`"high"` | `"low"` — `Autonomy`,
       `AUTONOMY_VALUES` for the fixed Baixa/Alta order; the checkbox list
-      shows `autonomyOptionLabel()` — "▢ Baixa"/"△ Alta" — while the chip
-      shows just the symbol via the option's `chip` field, e.g.
-      `Autonomy: △`, per the app-wide "autonomy displays as a symbol" rule in
+      shows the padlock + name ("🔒 Baixa"/"🔓 Alta", the option's `symbol`
+      icon before its `label`) — while the chip shows just the padlock,
+      e.g. `Autonomy: 🔓`, per the app-wide "autonomy displays as a symbol" rule in
       `@/lib/classification.ts`). Filters on the
       transaction's **effective** autonomy (`effectiveAutonomyValue()` in
       `filters.ts`, a thin alias for `effectiveAutonomy()` from

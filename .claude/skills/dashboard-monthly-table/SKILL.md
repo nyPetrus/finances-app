@@ -143,11 +143,13 @@ table is meant if it's ever unclear again.
   their text name.** A Type row's `row.symbol` (the arrow from
   `TRANSACTION_TYPE_SYMBOLS` — `➔` rotated up/down/right via `TRANSACTION_TYPE_SYMBOL_ROTATION` for income/expense/transfer — one glyph so all three share the same heavy weight), a
   Category row's `row.icon` (`category.icon`, rendered via
-  `CategoryIcon`), and a Autonomy row's `row.symbol` (from `AUTONOMY_SYMBOLS`
-  in `@/lib/classification.ts`, shared app-wide — `▢` for Baixa, `△` for
-  Alta; see the "Autonomy shows as a symbol" note there) are
-  enough on their own; the label `<span>` in `TreeRows` only renders when
-  `hasIcon` (`!!row.icon || !!row.symbol`) is false. Class rows carry
+  `CategoryIcon`), and a Autonomy row's padlock (`<AutonomyIcon autonomy={row.autonomy}>`,
+  `src/components/autonomy-icon.tsx`, from `AUTONOMY_ICONS` in
+  `@/lib/classification.ts`, shared app-wide — closed padlock for Baixa,
+  open padlock for Alta, per explicit user request; were `▢`/`△` text
+  glyphs) are enough on their own; the label `<span>` in `TreeRows` only
+  renders when `hasIcon` (`!!row.icon || !!row.symbol || (isAutonomyLevel
+  && !!row.autonomy)`) is false. Class rows carry
   `row.icon` (`classes.icon`) too now, so they're icon-only like Category
   rows (per explicit user request). The "Uncategorized" Type row has neither an icon nor
   a symbol, so it falls into that same `!hasIcon` fallback and keeps its

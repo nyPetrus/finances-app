@@ -43,7 +43,8 @@ import { IconSwatchPicker } from "@/components/icon-swatch-picker";
 import { CategoryIcon } from "@/components/category-icon";
 import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
-import { AUTONOMY_LABELS, AUTONOMY_SYMBOLS } from "@/lib/classification";
+import { AUTONOMY_LABELS } from "@/lib/classification";
+import { AutonomyIcon } from "@/components/autonomy-icon";
 import type { Category, Class } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
 import { TRANSACTION_TYPE_SYMBOL_ROTATION, TRANSACTION_TYPE_SYMBOLS } from "@/lib/transaction-type";
@@ -385,7 +386,9 @@ export function CategoriesTable({
       }
       case "autonomy":
         return classItem.autonomy ? (
-          <span title={AUTONOMY_LABELS[classItem.autonomy]}>{AUTONOMY_SYMBOLS[classItem.autonomy]}</span>
+          <span title={AUTONOMY_LABELS[classItem.autonomy]} className="inline-flex">
+            <AutonomyIcon autonomy={classItem.autonomy} className="size-4" />
+          </span>
         ) : (
           <span className="text-sm text-muted-foreground">—</span>
         );

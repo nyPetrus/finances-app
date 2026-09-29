@@ -18,7 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { autonomyOptionLabel, pickableCategories, pickableClasses } from "@/lib/classification";
+import { pickableCategories, pickableClasses } from "@/lib/classification";
+import { AutonomyOptionLabel } from "@/components/autonomy-icon";
 import type { Category, Class, Autonomy } from "@/lib/supabase/types";
 import { bulkUpdateClassification } from "../transactions/actions";
 
@@ -171,8 +172,8 @@ export function BulkEditDialog({
               <SelectContent>
                 <SelectItem value={NO_CHANGE}>No change</SelectItem>
                 <SelectItem value={CLEAR}>Class default</SelectItem>
-                <SelectItem value="high">{autonomyOptionLabel("high")}</SelectItem>
-                <SelectItem value="low">{autonomyOptionLabel("low")}</SelectItem>
+                <SelectItem value="high"><AutonomyOptionLabel autonomy="high" /></SelectItem>
+                <SelectItem value="low"><AutonomyOptionLabel autonomy="low" /></SelectItem>
               </SelectContent>
             </Select>
           </div>

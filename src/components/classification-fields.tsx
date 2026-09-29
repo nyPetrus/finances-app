@@ -8,7 +8,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DEFAULT_AUTONOMY, autonomyOptionLabel, pickableCategories, pickableClasses } from "@/lib/classification";
+import { DEFAULT_AUTONOMY, pickableCategories, pickableClasses } from "@/lib/classification";
+import { AutonomyOptionLabel } from "@/components/autonomy-icon";
 import type { Category, Class, Autonomy } from "@/lib/supabase/types";
 
 // The Category + Class (+ optional Autonomy override) pickers shared by every
@@ -100,10 +101,10 @@ export function ClassificationFields({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="default">
-                Class default ({autonomyOptionLabel(classDefault ?? DEFAULT_AUTONOMY)})
+                Class default (<AutonomyOptionLabel autonomy={classDefault ?? DEFAULT_AUTONOMY} />)
               </SelectItem>
-              <SelectItem value="high">{autonomyOptionLabel("high")}</SelectItem>
-              <SelectItem value="low">{autonomyOptionLabel("low")}</SelectItem>
+              <SelectItem value="high"><AutonomyOptionLabel autonomy="high" /></SelectItem>
+              <SelectItem value="low"><AutonomyOptionLabel autonomy="low" /></SelectItem>
             </SelectContent>
           </Select>
         </div>

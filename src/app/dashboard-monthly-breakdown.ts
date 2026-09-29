@@ -1,5 +1,5 @@
 import type { Category, Class, Autonomy, Transaction } from "@/lib/supabase/types";
-import { effectiveAutonomy, AUTONOMY_LABELS, AUTONOMY_SYMBOLS } from "@/lib/classification";
+import { effectiveAutonomy, AUTONOMY_LABELS } from "@/lib/classification";
 import { TRANSACTION_TYPE_SYMBOLS } from "@/lib/transaction-type";
 
 // Thin alias kept for callers in this file and dashboard-explorer.tsx —
@@ -110,7 +110,6 @@ function bucketBy(level: ClassificationLevel, transactions: Transaction[], categ
       const autonomy = autonomyKey(transaction, classesById);
       id = autonomy;
       label = AUTONOMY_LABELS[autonomy];
-      symbol = AUTONOMY_SYMBOLS[autonomy];
       selection = { autonomy };
     } else if (level === "category") {
       const category = transaction.category_id ? categoriesById.get(transaction.category_id) : undefined;

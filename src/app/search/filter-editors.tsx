@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { CheckIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
@@ -14,9 +14,9 @@ import { MONTH_LABELS, type DateGranularity, type DateOp } from "./filters";
 
 // The bar's chip shows a value's symbol instead of its name when it has one
 // (see the symbol-display rule in table-page-conventions): `icon` is a
-// category icon key, `chip` a text symbol (autonomy). `label` is what the
-// pickers show.
-export type Option = { value: string; label: string; chip?: string; icon?: string | null };
+// category icon key, `symbol` an icon component (autonomy's padlocks).
+// `label` is the name; pickers show it after the symbol.
+export type Option = { value: string; label: string; symbol?: LucideIcon; icon?: string | null };
 
 function pad(n: number) {
   return String(n).padStart(2, "0");
@@ -154,6 +154,7 @@ export function CheckboxEditor({
               >
                 {checked && <CheckIcon className="size-3" />}
               </span>
+              {option.symbol && <option.symbol className="size-3.5 shrink-0" />}
               <span className="flex-1 truncate">{option.label}</span>
             </div>
           );

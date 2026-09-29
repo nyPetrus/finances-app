@@ -1,3 +1,4 @@
+import { LockIcon, LockOpenIcon, type LucideIcon } from "lucide-react";
 import type { Category, Class, Autonomy, Transaction } from "@/lib/supabase/types";
 
 export const AUTONOMY_LABELS: Record<Autonomy, string> = {
@@ -6,17 +7,15 @@ export const AUTONOMY_LABELS: Record<Autonomy, string> = {
 };
 
 // Per explicit user request, autonomy *displays* show just the symbol (name
-// as a hover tooltip): the Dashboard dynamic table, the Classes table, the
-// Search filter chip. Pickers (dropdowns, checkbox lists) use
-// autonomyOptionLabel — symbol + name — so the choice stays unambiguous.
-export const AUTONOMY_SYMBOLS: Record<Autonomy, string> = {
-  low: "▢",
-  high: "△",
+// as a hover tooltip): the Dashboard dynamic table, the Categories & Classes
+// table, the Search filter chip. Pickers (dropdowns, checkbox lists) show
+// symbol + name (AutonomyOptionLabel) so the choice stays unambiguous.
+// Padlocks per explicit user request (were ▢ / △): Baixa = locked in,
+// Alta = free. Render via AutonomyIcon (src/components/autonomy-icon.tsx).
+export const AUTONOMY_ICONS: Record<Autonomy, LucideIcon> = {
+  low: LockIcon,
+  high: LockOpenIcon,
 };
-
-export function autonomyOptionLabel(autonomy: Autonomy): string {
-  return `${AUTONOMY_SYMBOLS[autonomy]} ${AUTONOMY_LABELS[autonomy]}`;
-}
 
 // The ultimate fallback when neither the transaction nor its class specifies
 // one — per explicit user request. Before this, a transaction with no

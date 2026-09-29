@@ -1,6 +1,6 @@
 ---
 name: table-page-conventions
-description: Use when adding a new list-style page or touching an existing one (Search's results table, Categories, Classes, Descriptions, Accounts) — table markup, row selection, the two-group toolbar (left: Add-or-"N selected" swap, page-wide buttons like "Apply rules"/Accounts' Sync, then "⋮"; right: Show inactive, Columns), the toolbar "⋮" menu that holds every action on the selected rows — one or many — (Edit, Create rule, Import, Deactivate/Activate, Delete; no toolbar button may duplicate one, no per-row ⋮ column), column show/hide & reorder, column header icons, sorting, add/edit dialogs, category/class chip rendering, the app-wide symbol-display rule (a value's name only in its original table, elsewhere just its symbol — category icon, type ↑↓➔, autonomy ▢△), which tables can hard-delete a row at all (Categories/Classes/Descriptions only, via "⋮" — Search's transactions and Accounts are deactivate-only, no delete path at all, per explicit user request for safety), or bulk mutations. Encodes this app's shared list-page architecture so new pages match instead of inventing a fresh layout.
+description: Use when adding a new list-style page or touching an existing one (Search's results table, Categories, Classes, Descriptions, Accounts) — table markup, row selection, the two-group toolbar (left: Add-or-"N selected" swap, page-wide buttons like "Apply rules"/Accounts' Sync, then "⋮"; right: Show inactive, Columns), the toolbar "⋮" menu that holds every action on the selected rows — one or many — (Edit, Create rule, Import, Deactivate/Activate, Delete; no toolbar button may duplicate one, no per-row ⋮ column), column show/hide & reorder, column header icons, sorting, add/edit dialogs, category/class chip rendering, the app-wide symbol-display rule (a value's name only in its original table, elsewhere just its symbol — category icon, type ↑↓➔, autonomy 🔒🔓 padlocks), which tables can hard-delete a row at all (Categories/Classes/Descriptions only, via "⋮" — Search's transactions and Accounts are deactivate-only, no delete path at all, per explicit user request for safety), or bulk mutations. Encodes this app's shared list-page architecture so new pages match instead of inventing a fresh layout.
 ---
 
 # Table page conventions
@@ -377,7 +377,7 @@ list page instead of inventing a fresh layout.
   |---|---|---|---|
   | Category | its icon (`CategoryIcon`) | `categories.icon` | Categories (`categories-table.tsx`: icon **and** name) |
   | Type (income/expense/transfer) | `➔` rotated up / down / right (same glyph, so identical weight — `↑`/`↓` render thinner) | `TRANSACTION_TYPE_SYMBOLS` + `TRANSACTION_TYPE_SYMBOL_ROTATION` (wrapper must be inline-block/flex), `@/lib/transaction-type.ts` | none |
-  | Autonomy (low/high) — called "gordura" until renamed per explicit user request (DB columns `transactions.autonomy` / `classes.autonomy` via `0023_rename_gordura_to_autonomy.sql`) | `▢` `△` | `AUTONOMY_SYMBOLS`, `@/lib/classification.ts` | none |
+  | Autonomy (low/high) — called "gordura" until renamed per explicit user request (DB columns `transactions.autonomy` / `classes.autonomy` via `0023_rename_gordura_to_autonomy.sql`) | closed / open padlock (lucide `LockIcon`/`LockOpenIcon`; were `▢` `△` until changed per explicit user request) | `AUTONOMY_ICONS`, `@/lib/classification.ts`, rendered via `AutonomyIcon` / `AutonomyOptionLabel` (`src/components/autonomy-icon.tsx`) | none |
   | Class | its icon (`CategoryIcon`) | `classes.icon` (migration `0021_classes_icon.sql`, same `CATEGORY_ICON_MAP` palette, `DEFAULT_CLASS_ICON = "tag"`, DB default via `0022_entity_icon_defaults.sql`, picked via `IconSwatchPicker` in `class-form-fields.tsx`) | Classes (`classes-table.tsx`: icon **and** name) |
   Accounts and Descriptions have no symbols, so they always show their
   names. A value with no symbol of its own (e.g. the "Uncategorized"
@@ -388,12 +388,12 @@ list page instead of inventing a fresh layout.
   the Categories table's **Type** column (`TRANSACTION_TYPE_SYMBOLS`,
   `text-base font-bold text-muted-foreground`, same as the dynamic table's
   Type symbol); the Classes table's Autonomy column; and the Search filter
-  bar's chips (`Category: 🛒 🚌`, `Autonomy: △` — `search-page-conventions`).
+  bar's chips (`Category: 🛒 🚌`, `Autonomy: 🔓` — `search-page-conventions`).
   **Two deliberate exceptions, both confirmed by the user:**
   - **Pickers** (dropdowns, checkbox lists, filter suggestions) keep the
     name, since choosing from bare icons is error-prone — category
-    dropdowns show the name, Autonomy options show `autonomyOptionLabel()`
-    ("△ Alta"), the category-type `Select` shows "Income"/"Expense"/
+    dropdowns show the name, Autonomy options show `<AutonomyOptionLabel>`
+    (padlock + "Alta"), the category-type `Select` shows "Income"/"Expense"/
     "Transfer".
   - **Budget** (`yearly-grid.tsx`, `monthly-execution.tsx`) keeps icon +
     name: each row there is identified by its category alone, with no

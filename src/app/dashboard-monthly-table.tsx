@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useState } from "react";
+import { AutonomyIcon } from "@/components/autonomy-icon";
 import { CategoryIcon } from "@/components/category-icon";
 import { cn } from "@/lib/utils";
 import { TRANSACTION_TYPE_SYMBOL_ROTATION } from "@/lib/transaction-type";
@@ -82,7 +83,8 @@ function TreeRows({
         // off the row's own `level` field instead of a fixed depth number.
         const isAutonomyLevel = row.level === "autonomy";
         const isClassLevel = row.level === "class";
-        const hasIcon = !!row.icon || !!row.symbol;
+        // Autonomy rows show their padlock (AutonomyIcon, from row.autonomy).
+        const hasIcon = !!row.icon || !!row.symbol || (isAutonomyLevel && !!row.autonomy);
 
         const rowSelected = rowMatchesSelection(row, selected);
         const wholeRowSelected = rowSelected && selected?.month === undefined;
@@ -117,6 +119,9 @@ function TreeRows({
                 >
                   {row.icon && (
                     <CategoryIcon icon={row.icon} className="size-3.5 shrink-0 text-muted-foreground" />
+                  )}
+                  {isAutonomyLevel && row.autonomy && (
+                    <AutonomyIcon autonomy={row.autonomy} className="size-3.5 shrink-0 text-muted-foreground" />
                   )}
                   {row.symbol && (
                     <span

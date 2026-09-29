@@ -14,7 +14,7 @@ import {
 import { CategoryIcon } from "@/components/category-icon";
 import { IconSwatchPicker } from "@/components/icon-swatch-picker";
 import { DEFAULT_CLASS_ICON } from "@/lib/category-icons";
-import { autonomyOptionLabel } from "@/lib/classification";
+import { AutonomyOptionLabel } from "@/components/autonomy-icon";
 import type { Category, Class } from "@/lib/supabase/types";
 
 // Name, icon, linked categories and default autonomy — shared by the Add and Edit
@@ -80,9 +80,9 @@ export function ClassFormFields({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="none">None (defaults to {autonomyOptionLabel("high")})</SelectItem>
-            <SelectItem value="high">{autonomyOptionLabel("high")}</SelectItem>
-            <SelectItem value="low">{autonomyOptionLabel("low")}</SelectItem>
+            <SelectItem value="none">None (defaults to <AutonomyOptionLabel autonomy="high" />)</SelectItem>
+            <SelectItem value="high"><AutonomyOptionLabel autonomy="high" /></SelectItem>
+            <SelectItem value="low"><AutonomyOptionLabel autonomy="low" /></SelectItem>
           </SelectContent>
         </Select>
       </div>

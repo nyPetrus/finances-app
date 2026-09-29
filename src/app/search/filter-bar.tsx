@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2Icon, SearchIcon, XIcon } from "lucide-react";
 import type { Account, Category, Class } from "@/lib/supabase/types";
 import { CategoryIcon } from "@/components/category-icon";
-import { AUTONOMY_SYMBOLS, autonomyOptionLabel } from "@/lib/classification";
+import { AUTONOMY_ICONS, AUTONOMY_LABELS } from "@/lib/classification";
 import { cn } from "@/lib/utils";
 import {
   EMPTY_FILTERS,
@@ -138,8 +138,8 @@ export function SearchFilterBar({
       ],
       autonomy: AUTONOMY_VALUES.map((value) => ({
         value,
-        label: autonomyOptionLabel(value),
-        chip: AUTONOMY_SYMBOLS[value],
+        label: AUTONOMY_LABELS[value],
+        symbol: AUTONOMY_ICONS[value],
       })),
     }),
     [accounts, categories, classes],
@@ -199,7 +199,7 @@ export function SearchFilterBar({
   // enough to show 5 before "+N"; lists with names show 2.
   function labelsFor(field: CheckboxField, values: string[]): ReactNode {
     const options = values.map((v) => optionsByField[field].find((o) => o.value === v));
-    const compact = options.every((o) => o?.icon || o?.chip);
+    const compact = options.every((o) => o?.icon || o?.symbol);
     const shown = options.slice(0, compact ? 5 : 2);
     const rest = options.length - shown.length;
     return (
@@ -208,8 +208,10 @@ export function SearchFilterBar({
           <span key={option?.value ?? index} className="inline-flex items-center" title={option?.label}>
             {option?.icon ? (
               <CategoryIcon icon={option.icon} className="size-3.5" />
+            ) : option?.symbol ? (
+              <option.symbol className="size-3.5" />
             ) : (
-              (option?.chip ?? option?.label ?? "?")
+              (option?.label ?? "?")
             )}
             {!compact && index < shown.length - 1 && ","}
           </span>
@@ -382,7 +384,10 @@ export function SearchFilterBar({
     return (
       <span className="truncate">
         <span className="text-muted-foreground">{FIELD_LABELS[suggestion.field]}: </span>
-        <span className="font-medium">{suggestion.option.label}</span>
+        <span className="inline-flex items-center gap-1 font-medium">
+          {suggestion.option.symbol && <suggestion.option.symbol className="size-3.5 shrink-0" />}
+          {suggestion.option.label}
+        </span>
       </span>
     );
   }
