@@ -51,6 +51,7 @@ export function ColumnsMenu<K extends string>({
               disabled={index === 0}
               onClick={() => onMove(column.key, -1)}
               aria-label={`Move ${column.label} column earlier`}
+              title={`Move ${column.label} column earlier`}
             >
               <ChevronUpIcon />
             </Button>
@@ -60,6 +61,7 @@ export function ColumnsMenu<K extends string>({
               disabled={index === orderedColumns.length - 1}
               onClick={() => onMove(column.key, 1)}
               aria-label={`Move ${column.label} column later`}
+              title={`Move ${column.label} column later`}
             >
               <ChevronDownIcon />
             </Button>

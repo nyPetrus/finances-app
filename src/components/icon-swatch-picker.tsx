@@ -24,7 +24,8 @@ export function IconSwatchPicker({
             key={icon}
             type="button"
             onClick={() => onChange(icon)}
-            aria-label={icon}
+            aria-label={icon.replaceAll("-", " ")}
+            title={icon.replaceAll("-", " ")}
             aria-pressed={value === icon}
             className={cn(
               "flex h-8 w-8 shrink-0 items-center justify-center rounded-md border transition-colors",

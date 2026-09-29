@@ -67,6 +67,7 @@ export function SidebarNav() {
           size="icon-sm"
           onClick={toggleCollapsed}
           aria-label={collapsed ? "Expand menu" : "Collapse menu"}
+          title={collapsed ? "Expand menu" : "Collapse menu"}
         >
           <MenuIcon />
         </Button>

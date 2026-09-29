@@ -29,6 +29,7 @@ function EditorHeader({ title, onBack }: { title: string; onBack: () => void }) 
         type="button"
         onClick={onBack}
         aria-label="Back to filter list"
+        title="Back to filter list"
         className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
       >
         <ChevronLeftIcon className="size-4" />
@@ -263,11 +264,11 @@ function GridButton({ selected, onClick, children }: { selected: boolean; onClic
 function PagerHeader({ label, onPrev, onNext }: { label: string; onPrev: () => void; onNext: () => void }) {
   return (
     <div className="flex items-center justify-between">
-      <button type="button" onClick={onPrev} aria-label="Previous" className="rounded-md p-1 hover:bg-muted">
+      <button type="button" onClick={onPrev} aria-label="Previous" title="Previous" className="rounded-md p-1 hover:bg-muted">
         <ChevronLeftIcon className="size-4" />
       </button>
       <span className="text-sm font-medium">{label}</span>
-      <button type="button" onClick={onNext} aria-label="Next" className="rounded-md p-1 hover:bg-muted">
+      <button type="button" onClick={onNext} aria-label="Next" title="Next" className="rounded-md p-1 hover:bg-muted">
         <ChevronRightIcon className="size-4" />
       </button>
     </div>

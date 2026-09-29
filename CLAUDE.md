@@ -53,6 +53,9 @@ hand actually touches them rather than on every request:
   structure.
 - `amount-color-conventions` — the income/expense color rule for raw
   amounts, distinct from Budget's planned-vs-actual variance colors.
+- `button-hover-names` — every button whose name isn't visible as text
+  (icon-only, symbol-only) must show its name on hover via `title`, with a
+  matching `aria-label`.
 - `transaction-description-rules` — the mandatory lowercase-description
   rule and the difference between the two bulk-categorization actions in
   `src/app/descriptions/actions.ts`.

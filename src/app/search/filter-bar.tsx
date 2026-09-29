@@ -443,6 +443,7 @@ export function SearchFilterBar({
                 apply(withoutField(filters, field));
               }}
               aria-label={`Remove ${FIELD_LABELS[field]} filter`}
+              title={`Remove ${FIELD_LABELS[field]} filter`}
               className="rounded-md px-1.5 py-1 text-muted-foreground hover:text-foreground"
             >
               <XIcon className="size-3" />

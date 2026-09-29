@@ -193,7 +193,8 @@ list page instead of inventing a fresh layout.
   Icon-only toolbar buttons need `aria-label` *and* `title` set to the
   plain action word ("Columns", "Sync", "Apply rules") for the same reason
   "Add" buttons do (see below) — `ColumnsMenu`'s trigger needs this pair
-  too, it's easy to forget since it has no visible label either.
+  too, it's easy to forget since it has no visible label either. (This is
+  one case of the app-wide `button-hover-names` rule.)
   **The left toolbar group (and thus "+") must render even when the row
   list is empty** — the empty-state message (`"No categories yet."` etc.)
   replaces only the `<Table>` markup via a ternary, never the surrounding

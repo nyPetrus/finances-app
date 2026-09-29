@@ -44,6 +44,7 @@ export default async function Home({
             variant="outline"
             size="sm"
             aria-label={`Previous year (${year - 1})`}
+            title={`Previous year (${year - 1})`}
             render={<Link href={`/?year=${year - 1}`} />}
           >
             &lt;
@@ -53,6 +54,7 @@ export default async function Home({
             variant="outline"
             size="sm"
             aria-label={`Next year (${year + 1})`}
+            title={`Next year (${year + 1})`}
             render={<Link href={`/?year=${year + 1}`} />}
           >
             &gt;
