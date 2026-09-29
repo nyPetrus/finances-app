@@ -147,9 +147,9 @@ table is meant if it's ever unclear again.
   in `@/lib/classification.ts`, shared app-wide — `▢` for Baixa, `△` for
   Alta; see the "Gordura shows as a symbol" note there) are
   enough on their own; the label `<span>` in `TreeRows` only renders when
-  `hasIcon` (`!!row.icon || !!row.symbol`) is false, or at the Class level
-  (`isClassLevel`), since Class rows never carry an icon and would
-  otherwise go blank. The "Uncategorized" Type row has neither an icon nor
+  `hasIcon` (`!!row.icon || !!row.symbol`) is false. Class rows carry
+  `row.icon` (`classes.icon`) too now, so they're icon-only like Category
+  rows (per explicit user request). The "Uncategorized" Type row has neither an icon nor
   a symbol, so it falls into that same `!hasIcon` fallback and keeps its
   text label — don't treat that as an inconsistency to "fix" by giving it
   a synthetic icon. The full name is still available as a native `title`

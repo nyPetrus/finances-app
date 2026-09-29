@@ -48,10 +48,9 @@ list page instead of inventing a fresh layout.
   a `nowrap` child is again its full content width, the same underlying
   problem one level down.
   Currently applied: Transactions' `description` (`max-w-64`), `account`
-  and `class` (`max-w-40` each, wrapped in a `Badge`); Categories' `name`
+  (`max-w-40`, wrapped in a `Badge`); Categories' `name`
   (`max-w-72` on the cell, `min-w-0 truncate` on the inner span next to the
-  `CategoryIcon`); Descriptions' `description` (`max-w-64`) and `class`
-  (`max-w-40`); Accounts' `account` (`max-w-40`), `name` (`max-w-56`), and
+  `CategoryIcon`); Descriptions' `description` (`max-w-64`); Accounts' `account` (`max-w-40`), `name` (`max-w-56`), and
   `source` (`max-w-32`, also `Badge`-wrapped) — see
   `accounts-column-formatting`. Classes' `name` column doesn't use
   `truncate` at all (no `cellClassName` beyond `font-medium`) and is
@@ -405,17 +404,13 @@ list page instead of inventing a fresh layout.
   | Category | its icon (`CategoryIcon`) | `categories.icon` | Categories (`categories-table.tsx`: icon **and** name) |
   | Type (income/expense/transfer) | `➔` rotated up / down / right (same glyph, so identical weight — `↑`/`↓` render thinner) | `TRANSACTION_TYPE_SYMBOLS` + `TRANSACTION_TYPE_SYMBOL_ROTATION` (wrapper must be inline-block/flex), `@/lib/transaction-type.ts` | none |
   | Gordura (low/high) | `▢` `△` | `GORDURA_SYMBOLS`, `@/lib/classification.ts` | none |
+  | Class | its icon (`CategoryIcon`) | `classes.icon` (migration `0021_classes_icon.sql`, same `CATEGORY_ICON_MAP` palette, `DEFAULT_CLASS_ICON = "tag"`, DB default via `0022_entity_icon_defaults.sql`, picked via `IconSwatchPicker` in `class-form-fields.tsx`) | Classes (`classes-table.tsx`: icon **and** name) |
   Accounts and Descriptions have no symbols, so they always show their
-  names. **Classes now have an icon too** (`classes.icon`, migration
-  `0021_classes_icon.sql`, same `CATEGORY_ICON_MAP` palette, default
-  `DEFAULT_CLASS_ICON = "tag"` (the Classes entity icon; DB default via `0022_entity_icon_defaults.sql`), picked via `IconSwatchPicker` in
-  `class-form-fields.tsx`, shown next to the name in `classes-table.tsx`) —
-  but the Class column elsewhere (Search, Dashboard, Descriptions) still
-  shows the name as a `Badge`; switching those to icon-only under this
-  rule hasn't been asked for yet, so check with the user before doing it. A value with no symbol of its own (e.g. the "Uncategorized"
+  names. A value with no symbol of its own (e.g. the "Uncategorized"
   / "Unclassed" pseudo-values) keeps its text. Where it's applied today:
-  every table's Category column (see the next bullet); the Dashboard
-  dynamic table's Type/Category/Gordura rows (`dashboard-monthly-table`);
+  every table's Category and Class columns (see the next bullet); the
+  Dashboard dynamic table's Type/Category/Class/Gordura rows
+  (`dashboard-monthly-table`);
   the Categories table's **Type** column (`TRANSACTION_TYPE_SYMBOLS`,
   `text-base font-bold text-muted-foreground`, same as the dynamic table's
   Type symbol); the Classes table's Gordura column; and the Search filter
@@ -461,10 +456,16 @@ list page instead of inventing a fresh layout.
   (`yearly-grid.tsx`, `monthly-execution.tsx`), which still show the icon
   *next to* the visible name (no `Badge` there either, but the name stays
   on the page) — Categories because it's the original table, Budget as a
-  confirmed exception to the symbol-display rule (see the previous bullet). Transactions' Account and Class columns (which have no
-  icon of their own) instead use a `Badge` (`variant="secondary"
-  className="max-w-full gap-1 truncate"`, no leading icon) — see
-  `transactions-column-formatting`.
+  confirmed exception to the symbol-display rule (see the previous bullet).
+  **Class-as-foreign-column is rendered exactly the same way** (Search,
+  the Dashboard's embedded table, Descriptions): `<span
+  title={class.name} className="inline-flex"><CategoryIcon
+  icon={class.icon} className="size-4" /></span>`, `align: "center",
+  cellClassName: "text-center"` — per explicit user request ("the name of
+  the class only needs to be shown in the class table"). Transactions'
+  Account column (no icon of its own) instead uses a `Badge`
+  (`variant="secondary" className="max-w-full gap-1 truncate"`, no
+  leading icon) — see `transactions-column-formatting`.
   **Why there's no fill-color version any more:** the Dashboard used to
   have three category-breakdown bar charts that needed a real fill color
   per bar instead of an icon — `sequentialColor()`,

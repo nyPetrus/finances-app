@@ -96,7 +96,14 @@ const COLUMNS: {
     headerIcon: BoxIcon,
     headerIconOnly: true,
   },
-  { key: "class", label: "Class", cellClassName: "max-w-40 truncate", headerIcon: TagIcon, headerIconOnly: true },
+  {
+    key: "class",
+    label: "Class",
+    align: "center",
+    cellClassName: "text-center",
+    headerIcon: TagIcon,
+    headerIconOnly: true,
+  },
   { key: "amount", label: "Amount", cellClassName: "text-right", headerIcon: BanknoteIcon, headerIconOnly: true },
 ];
 
@@ -218,9 +225,9 @@ export function DashboardTransactionsTable({
       case "class": {
         const transactionClass = transaction.class_id ? classesById.get(transaction.class_id) : null;
         return transactionClass ? (
-          <Badge variant="secondary" className="max-w-full gap-1 truncate">
-            {transactionClass.name}
-          </Badge>
+          <span title={transactionClass.name} className="inline-flex">
+            <CategoryIcon icon={transactionClass.icon} className="size-4" />
+          </span>
         ) : (
           <span className="text-sm text-muted-foreground">—</span>
         );

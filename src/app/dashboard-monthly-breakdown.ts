@@ -124,6 +124,7 @@ function bucketBy(level: ClassificationLevel, transactions: Transaction[], categ
       if (!classItem) continue;
       id = classItem.id;
       label = classItem.name;
+      icon = classItem.icon;
       selection = { classId: classItem.id };
     }
 

@@ -133,8 +133,8 @@ function TreeRows({
                       name (per explicit user request) — but a row with
                       neither (e.g. Uncategorized, or a Gordura row) still
                       needs its label so it isn't left blank. Class rows
-                      never have an icon, so they always keep their label. */}
-                  {(!hasIcon || isClassLevel) && (
+                      follow the same rule now that classes have icons. */}
+                  {!hasIcon && (
                     <span className={cn("min-w-0 truncate", depth === 0 && "font-medium")} title={row.label}>
                       {row.label}
                     </span>

@@ -38,23 +38,21 @@ shared with the other list pages.
   let it break across lines in a narrow column.
   **Why:** `dd mmm` is by explicit user request (2026-09-29), replacing
   the earlier `DD mmm YY` — don't add the year back unless asked.
-- **Account and Class render as a `Badge` chip**
+- **Account renders as a `Badge` chip**
   (`variant="secondary" className="max-w-full gap-1 truncate"`), instead
-  of plain text. Unlike Category (which is icon-only, no `Badge` — see
-  `table-page-conventions`'s "Category-as-foreign-column" bullet), neither
-  has a leading `CategoryIcon`. `Account` has no `icon` field at all;
-  `Class` does now (`classes.icon`), but switching the Class column to
-  icon-only here hasn't been asked for yet — see `table-page-conventions`'s
-  symbol-display rule before changing it.
-- **Description, Account, and Class also need a `max-w-*` on the cell
-  alongside `truncate`** (`max-w-64`, `max-w-40`, `max-w-40` respectively
+  of plain text, with no leading icon (`Account` has no `icon` field).
+  **Class is icon-only, like Category** (`CategoryIcon` of `classes.icon`,
+  name as `title` tooltip, centered, no `Badge`) — see
+  `table-page-conventions`'s "Category-as-foreign-column" bullet.
+- **Description and Account also need a `max-w-*` on the cell
+  alongside `truncate`** (`max-w-64`, `max-w-40` respectively
   in `COLUMNS`' `cellClassName`) — see `table-page-conventions`'s
   "A column's `cellClassName: truncate`..." bullet for why the `truncate`
   on the `Badge` itself isn't enough on its own.
 - **Account, Category, and Class headers are icon-only** (`LandmarkIcon`,
   `BoxIcon`, `TagIcon` respectively — see `table-page-conventions`'s
-  "Column header icons" bullet), even though only Category's *cell* is
-  icon-only — Account and Class still render their cell as a `Badge` chip
-  per the bullet above. The header icon and the cell rendering are
+  "Column header icons" bullet). Category's and Class's *cells* are
+  icon-only too, but Account still renders its cell as a `Badge` chip per
+  the bullet above. The header icon and the cell rendering are
   independent choices; don't assume a column's header icon implies its
   cell dropped the `Badge`.

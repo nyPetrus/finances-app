@@ -134,7 +134,7 @@ export function SearchFilterBar({
       ],
       class: [
         { value: UNCLASSED_VALUE, label: "Unclassed" },
-        ...classes.map((classItem) => ({ value: classItem.id, label: classItem.name })),
+        ...classes.map((classItem) => ({ value: classItem.id, label: classItem.name, icon: classItem.icon })),
       ],
       gordura: GORDURA_VALUES.map((value) => ({
         value,

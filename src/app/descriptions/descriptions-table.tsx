@@ -72,7 +72,14 @@ const COLUMNS: {
     headerIcon: BoxIcon,
     headerIconOnly: true,
   },
-  { key: "class", label: "Class", cellClassName: "max-w-40 truncate", headerIcon: TagIcon, headerIconOnly: true },
+  {
+    key: "class",
+    label: "Class",
+    align: "center",
+    cellClassName: "text-center",
+    headerIcon: TagIcon,
+    headerIconOnly: true,
+  },
 ];
 
 const DEFAULT_COLUMN_ORDER = COLUMNS.map((column) => column.key);
@@ -129,7 +136,13 @@ export function DescriptionsTable({
       }
       case "class": {
         const classItem = mapping.class_id ? classesById.get(mapping.class_id) : null;
-        return classItem?.name ?? <span className="text-sm text-muted-foreground">—</span>;
+        return classItem ? (
+          <span title={classItem.name} className="inline-flex">
+            <CategoryIcon icon={classItem.icon} className="size-4" />
+          </span>
+        ) : (
+          <span className="text-sm text-muted-foreground">—</span>
+        );
       }
     }
   }
