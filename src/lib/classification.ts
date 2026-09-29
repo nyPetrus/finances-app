@@ -12,16 +12,14 @@ export const AUTONOMY_LABELS: Record<Autonomy, string> = {
 // symbol + name (AutonomyOptionLabel) so the choice stays unambiguous.
 // Padlocks per explicit user request (were ▢ / △): Baixa = locked in,
 // Alta = free. Render via AutonomyIcon (src/components/autonomy-icon.tsx).
-// Alta's icon, drawn here in lucide's style (24x24, stroke-only) per explicit
-// user request, from a reference screenshot: the shackle lifted and swung
-// open to the left (right leg still in the body, left leg hanging free
-// outside it) and a keyhole on the body. Lucide's own lock-open swings
-// right and has no keyhole.
+// Alta's icon, per explicit user request: the idea (from a reference
+// screenshot) is the shackle lifted and swung open to the left — right leg
+// still in the body, left leg hanging free just outside it — but drawn in
+// exactly the same style as lucide's lock / lock-open used for Baixa and the
+// Autonomy header: same 18x11 body, same radius-5 shackle, no keyhole.
 const LockOpenLeftIcon = createLucideIcon("lock-open-left", [
-  ["rect", { width: "15", height: "11", x: "6", y: "11", rx: "2", key: "lock-open-left-body" }],
-  ["path", { d: "M12 11V7a4 4 0 0 0-8 0v2", key: "lock-open-left-shackle" }],
-  ["circle", { cx: "13.5", cy: "15.5", r: "1.5", key: "lock-open-left-keyhole" }],
-  ["path", { d: "M13.5 17v2", key: "lock-open-left-keyhole-slot" }],
+  ["rect", { width: "18", height: "11", x: "3", y: "11", rx: "2", ry: "2", key: "lock-open-left-body" }],
+  ["path", { d: "M12 11V7a5 5 0 0 0-10 0v1", key: "lock-open-left-shackle" }],
 ]);
 
 export const AUTONOMY_ICONS: Record<Autonomy, LucideIcon> = {
