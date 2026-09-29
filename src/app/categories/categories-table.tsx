@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ArchiveIcon, ArchiveRestoreIcon, TagIcon, Trash2Icon, type LucideIcon } from "lucide-react";
+import { ArchiveIcon, ArchiveRestoreIcon, BoxIcon, Trash2Icon, type LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -58,7 +58,7 @@ const COLUMNS: {
   headerIcon?: LucideIcon;
   headerIconOnly?: boolean;
 }[] = [
-  { key: "name", label: "Name", cellClassName: "max-w-72 font-medium", headerIcon: TagIcon },
+  { key: "name", label: "Name", cellClassName: "max-w-72 font-medium", headerIcon: BoxIcon },
   { key: "type", label: "Type", cellClassName: "text-center" },
 ];
 

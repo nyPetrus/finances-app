@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ArchiveIcon, ArchiveRestoreIcon, TagIcon, TagsIcon, Trash2Icon, type LucideIcon } from "lucide-react";
+import { ArchiveIcon, ArchiveRestoreIcon, BoxIcon, TagIcon, Trash2Icon, type LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -43,13 +43,13 @@ const COLUMNS: {
   headerIcon?: LucideIcon;
   headerIconOnly?: boolean;
 }[] = [
-  { key: "name", label: "Name", cellClassName: "font-medium", headerIcon: TagsIcon },
+  { key: "name", label: "Name", cellClassName: "font-medium", headerIcon: TagIcon },
   {
     key: "category",
     label: "Categories",
     align: "center",
     cellClassName: "text-center",
-    headerIcon: TagIcon,
+    headerIcon: BoxIcon,
     headerIconOnly: true,
   },
   { key: "gordura", label: "Default gordura", align: "center", cellClassName: "text-center" },

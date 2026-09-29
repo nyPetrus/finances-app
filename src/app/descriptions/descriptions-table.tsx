@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { TagIcon, TagsIcon, Trash2Icon, type LucideIcon } from "lucide-react";
+import { BoxIcon, TagIcon, Trash2Icon, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -69,10 +69,10 @@ const COLUMNS: {
     label: "Category",
     align: "center",
     cellClassName: "text-center",
-    headerIcon: TagIcon,
+    headerIcon: BoxIcon,
     headerIconOnly: true,
   },
-  { key: "class", label: "Class", cellClassName: "max-w-40 truncate", headerIcon: TagsIcon, headerIconOnly: true },
+  { key: "class", label: "Class", cellClassName: "max-w-40 truncate", headerIcon: TagIcon, headerIconOnly: true },
 ];
 
 const DEFAULT_COLUMN_ORDER = COLUMNS.map((column) => column.key);

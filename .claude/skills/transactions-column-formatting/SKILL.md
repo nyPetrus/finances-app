@@ -51,7 +51,7 @@ shared with the other list pages.
   "A column's `cellClassName: truncate`..." bullet for why the `truncate`
   on the `Badge` itself isn't enough on its own.
 - **Account, Category, and Class headers are icon-only** (`LandmarkIcon`,
-  `TagIcon`, `TagsIcon` respectively — see `table-page-conventions`'s
+  `BoxIcon`, `TagIcon` respectively — see `table-page-conventions`'s
   "Column header icons" bullet), even though only Category's *cell* is
   icon-only — Account and Class still render their cell as a `Badge` chip
   per the bullet above. The header icon and the cell rendering are

@@ -271,7 +271,7 @@ list page instead of inventing a fresh layout.
   reference to another entity (Category, Class, Account) sets `headerIcon`
   to that entity's icon and `headerIconOnly: true` — reuse the same icon
   already assigned to that entity in `sidebar-nav.tsx` (Category =
-  `TagIcon`, Class = `TagsIcon`, Account = `LandmarkIcon`). The transaction
+  `BoxIcon`, Class = `TagIcon`, Account = `LandmarkIcon` — Category was `TagIcon` and Class `TagsIcon` until changed per explicit user request). The transaction
   tables' **Amount** column is also icon-only, `BanknoteIcon` — per
   explicit user request ("a symbol that represents money"; a banknote, not
   `$`, since the app is in BRL). Their **Date** column is likewise
@@ -383,7 +383,7 @@ list page instead of inventing a fresh layout.
   (text) stores a key into `CATEGORY_ICON_MAP`
   (`src/lib/category-icons.ts`), a curated set of `lucide-react` icons picked
   to fit common finance categories (groceries, transport, salary, etc.),
-  with `"tag"` as both the last palette entry and the fallback for an
+  with `"box"` (`DEFAULT_CATEGORY_ICON`, the Categories entity icon) as the fallback for an
   unrecognized/missing key. Nothing should reintroduce per-category color.
   Render the icon with the shared
   `<CategoryIcon icon={category.icon} className="..." />`
@@ -408,7 +408,7 @@ list page instead of inventing a fresh layout.
   Accounts and Descriptions have no symbols, so they always show their
   names. **Classes now have an icon too** (`classes.icon`, migration
   `0021_classes_icon.sql`, same `CATEGORY_ICON_MAP` palette, default
-  `DEFAULT_CLASS_ICON = "tags"`, picked via `IconSwatchPicker` in
+  `DEFAULT_CLASS_ICON = "tag"` (the Classes entity icon; DB default via `0022_entity_icon_defaults.sql`), picked via `IconSwatchPicker` in
   `class-form-fields.tsx`, shown next to the name in `classes-table.tsx`) —
   but the Class column elsewhere (Search, Dashboard, Descriptions) still
   shows the name as a `Badge`; switching those to icon-only under this
@@ -453,7 +453,7 @@ list page instead of inventing a fresh layout.
   center` positions, while the icon lays out fine inside as a flex item.
   Don't drop that wrapper or swap it for a plain `<span>` when touching
   this cell. (The column's *header*, above this cell, is a separate
-  icon-only `TagIcon` via `headerIcon`/`ColumnHeaderIcon` — see the
+  icon-only `BoxIcon` via `headerIcon`/`ColumnHeaderIcon` — see the
   "Column header icons" bullet above; don't conflate the two, the header
   icon is generic/per-column and the cell icon is per-row/per-category.)
   This is different from the

@@ -7,10 +7,10 @@ import {
   ArchiveIcon,
   ArchiveRestoreIcon,
   BanknoteIcon,
+  BoxIcon,
   CalendarIcon,
   LandmarkIcon,
   TagIcon,
-  TagsIcon,
   type LucideIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -93,10 +93,10 @@ const COLUMNS: {
     label: "Category",
     align: "center",
     cellClassName: "text-center",
-    headerIcon: TagIcon,
+    headerIcon: BoxIcon,
     headerIconOnly: true,
   },
-  { key: "class", label: "Class", cellClassName: "max-w-40 truncate", headerIcon: TagsIcon, headerIconOnly: true },
+  { key: "class", label: "Class", cellClassName: "max-w-40 truncate", headerIcon: TagIcon, headerIconOnly: true },
   { key: "amount", label: "Amount", cellClassName: "text-right", headerIcon: BanknoteIcon, headerIconOnly: true },
 ];
 

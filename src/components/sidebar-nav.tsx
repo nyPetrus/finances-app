@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BoxIcon,
   FileTextIcon,
   LandmarkIcon,
   LayoutDashboardIcon,
@@ -11,7 +12,6 @@ import {
   MenuIcon,
   SearchIcon,
   TagIcon,
-  TagsIcon,
   WalletIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,8 +22,8 @@ const links = [
   { href: "/", label: "Dashboard", icon: LayoutDashboardIcon },
   { href: "/budget", label: "Budget", icon: WalletIcon },
   { href: "/search", label: "Search", icon: SearchIcon },
-  { href: "/categories", label: "Categories", icon: TagIcon },
-  { href: "/classes", label: "Classes", icon: TagsIcon },
+  { href: "/categories", label: "Categories", icon: BoxIcon },
+  { href: "/classes", label: "Classes", icon: TagIcon },
   { href: "/descriptions", label: "Descriptions", icon: FileTextIcon },
   { href: "/accounts", label: "Accounts", icon: LandmarkIcon },
 ];

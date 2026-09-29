@@ -5,6 +5,7 @@ import {
   BanknoteArrowUpIcon,
   BathIcon,
   BedIcon,
+  BoxIcon,
   BeerIcon,
   BriefcaseIcon,
   Building2Icon,
@@ -73,7 +74,7 @@ const TollIcon = createLucideIcon("toll", [
 
 // Predefined palette for category and class icons — matches the icons already used by
 // the default-seeded categories (see supabase/migrations/0015_categories_icon.sql).
-// Keys are what's stored in categories.icon; "tag" is also the fallback for
+// Keys are what's stored in categories.icon; "box" (the Categories entity icon) is the fallback for
 // an unrecognized/missing key (see CategoryIcon).
 export const CATEGORY_ICON_MAP: Record<string, LucideIcon> = {
   "shopping-cart": ShoppingCartIcon,
@@ -134,13 +135,14 @@ export const CATEGORY_ICON_MAP: Record<string, LucideIcon> = {
   wifi: WifiIcon,
   toll: TollIcon,
   tags: TagsIcon,
+  box: BoxIcon,
   tag: TagIcon,
 };
 
 export const CATEGORY_ICONS = Object.keys(CATEGORY_ICON_MAP);
 
-export const DEFAULT_CATEGORY_ICON = "tag";
+export const DEFAULT_CATEGORY_ICON = "box";
 
-// Classes share the same icon palette; a new class starts on "tags" (the
+// Classes share the same icon palette; a new class starts on "tag" (the
 // Classes entity icon in sidebar-nav.tsx), matching the DB column default.
-export const DEFAULT_CLASS_ICON = "tags";
+export const DEFAULT_CLASS_ICON = "tag";
