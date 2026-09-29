@@ -11,13 +11,13 @@ export type Category = {
 
 // How long a financial commitment lasts: "high" = finite (ends on its own,
 // e.g. a loan installment), "low" = recurs indefinitely (rent, insurance).
-export type Gordura = "high" | "low";
+export type Autonomy = "high" | "low";
 
 export type Class = {
   id: string;
   user_id: string;
   name: string;
-  default_gordura: Gordura | null;
+  autonomy: Autonomy | null;
   icon: string;
   is_active: boolean;
   created_at: string;
@@ -65,8 +65,8 @@ export type Transaction = {
   import_hash: string | null;
   // Bank-reported end-of-day balance from an imported statement; null otherwise.
   balance: number | null;
-  // Manual override only; see effectiveGordura for the value to display.
-  gordura: Gordura | null;
+  // Manual override only; see effectiveAutonomy for the value to display.
+  autonomy: Autonomy | null;
   is_hidden: boolean;
   created_at: string;
 };

@@ -7,7 +7,7 @@ import { SearchFilterBar } from "./filter-bar";
 import { SearchTable } from "./search-table";
 import {
   dateRangeFor,
-  effectiveGorduraValue,
+  effectiveAutonomyValue,
   EMPTY_FILTERS,
   hasAnyFilter,
   parseFilters,
@@ -161,18 +161,18 @@ export default async function SearchPage({
   const categoriesById = new Map(allCategories.map((c) => [c.id, c]));
   const classesById = new Map(allClasses.map((c) => [c.id, c]));
 
-  // Gordura can't be pushed into the Supabase query — it's a transaction's
-  // *effective* gordura (its own override, else its class's default), which
+  // Autonomy can't be pushed into the Supabase query — it's a transaction's
+  // *effective* autonomy (its own override, else its class's default), which
   // needs the class join, not a plain column comparison. `runSearch` already
   // paged through every row matching the other filters, so filtering the
   // full result set here in JS is still correct (no silent 1000-row
   // truncation, see PITFALLS.md), just not pushed down to Postgres.
-  const gorduraFiltered =
-    filters.gorduras.length > 0
-      ? results.filter((t) => filters.gorduras.includes(effectiveGorduraValue(t, classesById)))
+  const autonomyFiltered =
+    filters.autonomies.length > 0
+      ? results.filter((t) => filters.autonomies.includes(effectiveAutonomyValue(t, classesById)))
       : results;
 
-  const sortedResults = [...gorduraFiltered].sort((a, b) => {
+  const sortedResults = [...autonomyFiltered].sort((a, b) => {
     let cmp = 0;
     switch (sortKey) {
       case "date":

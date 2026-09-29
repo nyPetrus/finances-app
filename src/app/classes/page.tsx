@@ -39,8 +39,8 @@ export default async function ClassesPage({
       case "category":
         cmp = categoryNames(a).localeCompare(categoryNames(b)) || a.name.localeCompare(b.name);
         break;
-      case "gordura":
-        cmp = (a.default_gordura ?? "").localeCompare(b.default_gordura ?? "") || a.name.localeCompare(b.name);
+      case "autonomy":
+        cmp = (a.autonomy ?? "").localeCompare(b.autonomy ?? "") || a.name.localeCompare(b.name);
         break;
     }
     return sortDir === "asc" ? cmp : -cmp;

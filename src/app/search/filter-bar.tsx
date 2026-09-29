@@ -5,15 +5,15 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2Icon, SearchIcon, XIcon } from "lucide-react";
 import type { Account, Category, Class } from "@/lib/supabase/types";
 import { CategoryIcon } from "@/components/category-icon";
-import { GORDURA_SYMBOLS, gorduraOptionLabel } from "@/lib/classification";
+import { AUTONOMY_SYMBOLS, autonomyOptionLabel } from "@/lib/classification";
 import { cn } from "@/lib/utils";
 import {
   EMPTY_FILTERS,
   filtersToSearchParams,
   formatDateValue,
-  GORDURA_VALUES,
+  AUTONOMY_VALUES,
   hasAnyFilter,
-  isGorduraValue,
+  isAutonomyValue,
   UNCATEGORIZED_VALUE,
   UNCLASSED_VALUE,
   type AmountOp,
@@ -22,21 +22,21 @@ import {
 } from "./filters";
 import { CheckboxEditor, DateEditor, OperatorEditor, type Option } from "./filter-editors";
 
-type Field = "account" | "category" | "class" | "gordura" | "description" | "date" | "amount";
-type CheckboxField = "account" | "category" | "class" | "gordura";
+type Field = "account" | "category" | "class" | "autonomy" | "description" | "date" | "amount";
+type CheckboxField = "account" | "category" | "class" | "autonomy";
 
 // Also the chip order in the bar.
 const FIELDS: { field: Field; label: string }[] = [
   { field: "account", label: "Account" },
   { field: "category", label: "Category" },
   { field: "class", label: "Class" },
-  { field: "gordura", label: "Gordura" },
+  { field: "autonomy", label: "Autonomy" },
   { field: "description", label: "Description" },
   { field: "date", label: "Date" },
   { field: "amount", label: "Amount" },
 ];
 const FIELD_LABELS = Object.fromEntries(FIELDS.map((f) => [f.field, f.label])) as Record<Field, string>;
-const CHECKBOX_FIELDS: CheckboxField[] = ["account", "category", "class", "gordura"];
+const CHECKBOX_FIELDS: CheckboxField[] = ["account", "category", "class", "autonomy"];
 
 const DESCRIPTION_OPS: { value: DescriptionOp; label: string; chip: string }[] = [
   { value: "contains", label: "Contains", chip: "contains" },
@@ -62,14 +62,14 @@ function checkboxValues(filters: ParsedFilters, field: CheckboxField): string[] 
   if (field === "account") return filters.accounts;
   if (field === "category") return filters.categories;
   if (field === "class") return filters.classes;
-  return filters.gorduras;
+  return filters.autonomies;
 }
 
 function withCheckboxValues(filters: ParsedFilters, field: CheckboxField, values: string[]): ParsedFilters {
   if (field === "account") return { ...filters, accounts: values };
   if (field === "category") return { ...filters, categories: values };
   if (field === "class") return { ...filters, classes: values };
-  return { ...filters, gorduras: values.filter(isGorduraValue) };
+  return { ...filters, autonomies: values.filter(isAutonomyValue) };
 }
 
 function withoutField(filters: ParsedFilters, field: Field): ParsedFilters {
@@ -136,10 +136,10 @@ export function SearchFilterBar({
         { value: UNCLASSED_VALUE, label: "Unclassed" },
         ...classes.map((classItem) => ({ value: classItem.id, label: classItem.name, icon: classItem.icon })),
       ],
-      gordura: GORDURA_VALUES.map((value) => ({
+      autonomy: AUTONOMY_VALUES.map((value) => ({
         value,
-        label: gorduraOptionLabel(value),
-        chip: GORDURA_SYMBOLS[value],
+        label: autonomyOptionLabel(value),
+        chip: AUTONOMY_SYMBOLS[value],
       })),
     }),
     [accounts, categories, classes],
@@ -194,7 +194,7 @@ export function SearchFilterBar({
     inputRef.current?.focus();
   }
 
-  // Values with a symbol (category icon, gordura symbol) show just that,
+  // Values with a symbol (category icon, autonomy symbol) show just that,
   // name as tooltip; the rest show their name. All-symbol lists are compact
   // enough to show 5 before "+N"; lists with names show 2.
   function labelsFor(field: CheckboxField, values: string[]): ReactNode {

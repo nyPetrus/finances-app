@@ -40,14 +40,14 @@ const TYPE_ROW_BG: Record<string, string | undefined> = {
 
 const SELECTED_CELL = "ring-2 ring-inset ring-primary";
 
-// True only when `selected` pins down this exact row (its type/gordura/
+// True only when `selected` pins down this exact row (its type/autonomy/
 // category/class), regardless of which month (or the whole year) is selected within
 // it — used to tell a row-level click (whole year for that row) apart from
 // a single month cell within it.
 function rowMatchesSelection(row: MonthlyRow, selected: MonthlySelection | undefined) {
   if (!selected || selected.kind === undefined) return false;
   if (selected.kind !== row.kind) return false;
-  if ((selected.gordura ?? undefined) !== (row.gordura ?? undefined)) return false;
+  if ((selected.autonomy ?? undefined) !== (row.autonomy ?? undefined)) return false;
   if ((selected.categoryId ?? undefined) !== (row.categoryId ?? undefined)) return false;
   if ((selected.classId ?? undefined) !== (row.classId ?? undefined)) return false;
   return true;
@@ -80,7 +80,7 @@ function TreeRows({
         // Depth 0 is always Type; which classification each deeper depth
         // represents depends on the user's configured level order, so style
         // off the row's own `level` field instead of a fixed depth number.
-        const isGorduraLevel = row.level === "gordura";
+        const isAutonomyLevel = row.level === "autonomy";
         const isClassLevel = row.level === "class";
         const hasIcon = !!row.icon || !!row.symbol;
 
@@ -88,7 +88,7 @@ function TreeRows({
         const wholeRowSelected = rowSelected && selected?.month === undefined;
         const rowSelection: MonthlySelection = {
           kind: row.kind,
-          gordura: row.gordura,
+          autonomy: row.autonomy,
           categoryId: row.categoryId,
           classId: row.classId,
         };
@@ -98,7 +98,7 @@ function TreeRows({
             <tr
               className={cn(
                 isClassLevel ? "border-0" : "border-b last:border-0",
-                isGorduraLevel && "border-t",
+                isAutonomyLevel && "border-t",
               )}
             >
               <td
@@ -131,7 +131,7 @@ function TreeRows({
                   )}
                   {/* Type/Category rows show only their icon/symbol, not the
                       name (per explicit user request) — but a row with
-                      neither (e.g. Uncategorized, or a Gordura row) still
+                      neither (e.g. Uncategorized, or a Autonomy row) still
                       needs its label so it isn't left blank. Class rows
                       follow the same rule now that classes have icons. */}
                   {!hasIcon && (
@@ -157,7 +157,7 @@ function TreeRows({
                       rowColor,
                       rowBg,
                       rowBg && "font-bold",
-                      isGorduraLevel && "font-semibold",
+                      isAutonomyLevel && "font-semibold",
                       cellSelected && SELECTED_CELL,
                     )}
                   >
@@ -172,7 +172,7 @@ function TreeRows({
                   isClassLevel ? "text-[11px]" : "text-xs",
                   rowColor,
                   rowBg ?? "bg-background",
-                  rowBg ? "font-bold" : isGorduraLevel ? "font-semibold" : "font-medium",
+                  rowBg ? "font-bold" : isAutonomyLevel ? "font-semibold" : "font-medium",
                   wholeRowSelected && SELECTED_CELL,
                 )}
               >

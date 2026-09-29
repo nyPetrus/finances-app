@@ -8,7 +8,7 @@ import {
   buildMonthlyBreakdown,
   CLASSIFICATION_LEVEL_LABELS,
   DEFAULT_CLASSIFICATION_LEVELS,
-  gorduraKey,
+  autonomyKey,
   monthIndex,
   type ClassificationLevel,
   type MonthlySelection,
@@ -22,7 +22,7 @@ const LEVEL_COLUMNS = DEFAULT_CLASSIFICATION_LEVELS.map((key) => ({ key, label: 
 function monthlySelectionsEqual(a: MonthlySelection, b: MonthlySelection) {
   return (
     a.kind === b.kind &&
-    a.gordura === b.gordura &&
+    a.autonomy === b.autonomy &&
     a.categoryId === b.categoryId &&
     a.classId === b.classId &&
     a.month === b.month
@@ -63,14 +63,14 @@ export function DashboardExplorer({
   const filteredTransactions = useMemo(() => {
     if (!selection) return [];
 
-    const { kind, gordura, categoryId, classId, month } = selection;
+    const { kind, autonomy, categoryId, classId, month } = selection;
     return transactions.filter((t) => {
       if (month !== undefined && monthIndex(t.date) !== month) return false;
       if (kind === undefined) return true;
       if (kind === "uncategorized") return !t.category_id;
       const category = t.category_id ? categoriesById.get(t.category_id) : undefined;
       if (!category || category.kind !== kind) return false;
-      if (gordura && gorduraKey(t, classesById) !== gordura) return false;
+      if (autonomy && autonomyKey(t, classesById) !== autonomy) return false;
       if (categoryId && category.id !== categoryId) return false;
       if (classId && t.class_id !== classId) return false;
       return true;

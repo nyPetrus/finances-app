@@ -49,7 +49,7 @@ import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
 import { useInactiveFilter } from "@/hooks/use-inactive-filter";
 import { ClassificationFields } from "@/components/classification-fields";
-import type { Account, Category, Class, Gordura, Transaction } from "@/lib/supabase/types";
+import type { Account, Category, Class, Autonomy, Transaction } from "@/lib/supabase/types";
 import { setTransactionsActive, syncDescriptionsFromTransactions, updateTransaction } from "./transactions/actions";
 import { AddTransactionDialog } from "./transactions/add-transaction-dialog";
 import { AddMappingDialog } from "./descriptions/add-mapping-dialog";
@@ -127,7 +127,7 @@ export function DashboardTransactionsTable({
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [editCategoryId, setEditCategoryId] = useState<string | null>(null);
   const [editClassId, setEditClassId] = useState<string | null>(null);
-  const [editGordura, setEditGordura] = useState<Gordura | null>(null);
+  const [editAutonomy, setEditAutonomy] = useState<Autonomy | null>(null);
   const [mappingPrefill, setMappingPrefill] = useState<string | null>(null);
   const editFormRef = useRef<HTMLFormElement>(null);
   const [sortKey, setSortKey] = useState<SortKey>("date");
@@ -260,7 +260,7 @@ export function DashboardTransactionsTable({
     setActionError(null);
     setEditCategoryId(transaction.category_id);
     setEditClassId(transaction.class_id);
-    setEditGordura(transaction.gordura);
+    setEditAutonomy(transaction.autonomy);
     setEditingTransaction(transaction);
   }
 
@@ -504,8 +504,8 @@ export function DashboardTransactionsTable({
                 classId={editClassId}
                 onCategoryChange={setEditCategoryId}
                 onClassChange={setEditClassId}
-                gordura={editGordura}
-                onGorduraChange={setEditGordura}
+                autonomy={editAutonomy}
+                onAutonomyChange={setEditAutonomy}
               />
               <DialogFooter>
                 <Button

@@ -1,13 +1,13 @@
-import type { Category, Class, Gordura, Transaction } from "@/lib/supabase/types";
-import { effectiveGordura, GORDURA_LABELS, GORDURA_SYMBOLS } from "@/lib/classification";
+import type { Category, Class, Autonomy, Transaction } from "@/lib/supabase/types";
+import { effectiveAutonomy, AUTONOMY_LABELS, AUTONOMY_SYMBOLS } from "@/lib/classification";
 import { TRANSACTION_TYPE_SYMBOLS } from "@/lib/transaction-type";
 
 // Thin alias kept for callers in this file and dashboard-explorer.tsx —
-// effectiveGordura() is always a concrete Gordura now (never "unset"), so
-// there's no longer a "none"/"Sem gordura" bucket to map onto.
-export const gorduraKey = effectiveGordura;
+// effectiveAutonomy() is always a concrete Autonomy now (never "unset"), so
+// there's no longer a "none"/"unset" bucket to map onto.
+export const autonomyKey = effectiveAutonomy;
 
-const GORDURA_ORDER: Gordura[] = ["low", "high"];
+const AUTONOMY_ORDER: Autonomy[] = ["low", "high"];
 
 
 // The three optional breakdown levels below the always-present Type level.
@@ -15,15 +15,15 @@ const GORDURA_ORDER: Gordura[] = ["low", "high"];
 // include/exclude and reorder these freely, backed by the same
 // useColumnPreferences hook the rest of the app uses for table columns.
 // Type itself is never one of these — it's always level 1, static.
-export type ClassificationLevel = "gordura" | "category" | "class";
+export type ClassificationLevel = "autonomy" | "category" | "class";
 
 export const CLASSIFICATION_LEVEL_LABELS: Record<ClassificationLevel, string> = {
-  gordura: "Gordura",
+  autonomy: "Autonomy",
   category: "Category",
   class: "Class",
 };
 
-export const DEFAULT_CLASSIFICATION_LEVELS: ClassificationLevel[] = ["gordura", "category", "class"];
+export const DEFAULT_CLASSIFICATION_LEVELS: ClassificationLevel[] = ["autonomy", "category", "class"];
 
 // Feeds MonthlyBreakdownTable (dashboard-monthly-table.tsx): a Type + however
 // many of the configured levels tree, one row per node, each carrying its own
@@ -39,7 +39,7 @@ export type MonthlyRow = {
   symbol?: string;
   level: "type" | ClassificationLevel;
   kind: Category["kind"] | "uncategorized";
-  gordura?: Gordura;
+  autonomy?: Autonomy;
   categoryId?: string;
   classId?: string;
   months: number[];
@@ -53,7 +53,7 @@ export type MonthlyRow = {
 // year, no restriction at all" (a Total-column click).
 export type MonthlySelection = {
   kind?: Category["kind"] | "uncategorized";
-  gordura?: Gordura;
+  autonomy?: Autonomy;
   categoryId?: string;
   classId?: string;
   month?: number;
@@ -84,7 +84,7 @@ export function monthIndex(date: string) {
 // which would otherwise put the smallest expense on top.
 const byMagnitude = (a: MonthlyRow, b: MonthlyRow) => Math.abs(b.total) - Math.abs(a.total);
 
-type LevelSelection = Pick<MonthlySelection, "gordura" | "categoryId" | "classId">;
+type LevelSelection = Pick<MonthlySelection, "autonomy" | "categoryId" | "classId">;
 
 // Buckets `transactions` by one level. A transaction with no value for this
 // level (e.g. no class_id when level is "class") is left out of every
@@ -106,12 +106,12 @@ function bucketBy(level: ClassificationLevel, transactions: Transaction[], categ
     let symbol: string | undefined;
     let selection: LevelSelection;
 
-    if (level === "gordura") {
-      const gordura = gorduraKey(transaction, classesById);
-      id = gordura;
-      label = GORDURA_LABELS[gordura];
-      symbol = GORDURA_SYMBOLS[gordura];
-      selection = { gordura };
+    if (level === "autonomy") {
+      const autonomy = autonomyKey(transaction, classesById);
+      id = autonomy;
+      label = AUTONOMY_LABELS[autonomy];
+      symbol = AUTONOMY_SYMBOLS[autonomy];
+      selection = { autonomy };
     } else if (level === "category") {
       const category = transaction.category_id ? categoriesById.get(transaction.category_id) : undefined;
       if (!category) continue;
@@ -179,8 +179,8 @@ function buildLevelRows(
     };
   });
 
-  if (level === "gordura") {
-    rows.sort((a, b) => GORDURA_ORDER.indexOf(a.gordura!) - GORDURA_ORDER.indexOf(b.gordura!));
+  if (level === "autonomy") {
+    rows.sort((a, b) => AUTONOMY_ORDER.indexOf(a.autonomy!) - AUTONOMY_ORDER.indexOf(b.autonomy!));
   } else {
     rows.sort(byMagnitude);
   }

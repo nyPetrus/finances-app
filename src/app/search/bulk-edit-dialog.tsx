@@ -18,19 +18,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { gorduraOptionLabel, pickableCategories, pickableClasses } from "@/lib/classification";
-import type { Category, Class, Gordura } from "@/lib/supabase/types";
+import { autonomyOptionLabel, pickableCategories, pickableClasses } from "@/lib/classification";
+import type { Category, Class, Autonomy } from "@/lib/supabase/types";
 import { bulkUpdateClassification } from "../transactions/actions";
 
-// Sentinels distinct from any real id/Gordura value — see their use below.
+// Sentinels distinct from any real id/Autonomy value — see their use below.
 const NO_CHANGE = "__no_change__";
 const CLEAR = "__clear__";
 
-// Batch-edits Category/Class/Gordura across every selected transaction —
+// Batch-edits Category/Class/Autonomy across every selected transaction —
 // the Search page's selection toolbar "Edit" button. Each field defaults to
 // "No change" (the field is left out of the update entirely, per
 // bulkUpdateClassification's presence-based semantics) so the user can
-// touch just one field (say, only Gordura) without being forced to also
+// touch just one field (say, only Autonomy) without being forced to also
 // commit a Category/Class for every selected row.
 export function BulkEditDialog({
   open,
@@ -49,7 +49,7 @@ export function BulkEditDialog({
 }) {
   const [categoryValue, setCategoryValue] = useState(NO_CHANGE);
   const [classValue, setClassValue] = useState(NO_CHANGE);
-  const [gorduraValue, setGorduraValue] = useState(NO_CHANGE);
+  const [autonomyValue, setAutonomyValue] = useState(NO_CHANGE);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, startSave] = useTransition();
 
@@ -66,7 +66,7 @@ export function BulkEditDialog({
   function reset() {
     setCategoryValue(NO_CHANGE);
     setClassValue(NO_CHANGE);
-    setGorduraValue(NO_CHANGE);
+    setAutonomyValue(NO_CHANGE);
     setError(null);
   }
 
@@ -81,10 +81,10 @@ export function BulkEditDialog({
   }
 
   function handleSave() {
-    const updates: { category_id?: string | null; class_id?: string | null; gordura?: Gordura | null } = {};
+    const updates: { category_id?: string | null; class_id?: string | null; autonomy?: Autonomy | null } = {};
     if (categoryValue !== NO_CHANGE) updates.category_id = categoryValue === CLEAR ? null : categoryValue;
     if (classValue !== NO_CHANGE) updates.class_id = classValue === CLEAR ? null : classValue;
-    if (gorduraValue !== NO_CHANGE) updates.gordura = gorduraValue === CLEAR ? null : (gorduraValue as Gordura);
+    if (autonomyValue !== NO_CHANGE) updates.autonomy = autonomyValue === CLEAR ? null : (autonomyValue as Autonomy);
 
     if (Object.keys(updates).length === 0) {
       setError("Choose at least one field to change.");
@@ -163,16 +163,16 @@ export function BulkEditDialog({
             </Select>
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="bulk-gordura">Gordura</Label>
-            <Select value={gorduraValue} onValueChange={(value) => setGorduraValue(value ?? NO_CHANGE)}>
-              <SelectTrigger id="bulk-gordura" className="w-full">
+            <Label htmlFor="bulk-autonomy">Autonomy</Label>
+            <Select value={autonomyValue} onValueChange={(value) => setAutonomyValue(value ?? NO_CHANGE)}>
+              <SelectTrigger id="bulk-autonomy" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={NO_CHANGE}>No change</SelectItem>
                 <SelectItem value={CLEAR}>Class default</SelectItem>
-                <SelectItem value="high">{gorduraOptionLabel("high")}</SelectItem>
-                <SelectItem value="low">{gorduraOptionLabel("low")}</SelectItem>
+                <SelectItem value="high">{autonomyOptionLabel("high")}</SelectItem>
+                <SelectItem value="low">{autonomyOptionLabel("low")}</SelectItem>
               </SelectContent>
             </Select>
           </div>

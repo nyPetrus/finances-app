@@ -1,7 +1,15 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ArchiveIcon, ArchiveRestoreIcon, BoxIcon, TagIcon, Trash2Icon, type LucideIcon } from "lucide-react";
+import {
+  ArchiveIcon,
+  ArchiveRestoreIcon,
+  BoxIcon,
+  HandFistIcon,
+  TagIcon,
+  Trash2Icon,
+  type LucideIcon,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -28,7 +36,7 @@ import { CategoryIcon } from "@/components/category-icon";
 import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
 import { useInactiveFilter } from "@/hooks/use-inactive-filter";
-import { GORDURA_LABELS, GORDURA_SYMBOLS } from "@/lib/classification";
+import { AUTONOMY_LABELS, AUTONOMY_SYMBOLS } from "@/lib/classification";
 import type { Category, Class } from "@/lib/supabase/types";
 import { deleteClasses, setClassesActive, updateClass } from "./actions";
 import { AddClassDialog } from "./add-class-dialog";
@@ -52,7 +60,14 @@ const COLUMNS: {
     headerIcon: BoxIcon,
     headerIconOnly: true,
   },
-  { key: "gordura", label: "Default gordura", align: "center", cellClassName: "text-center" },
+  {
+    key: "autonomy",
+    label: "Autonomy",
+    align: "center",
+    cellClassName: "text-center",
+    headerIcon: HandFistIcon,
+    headerIconOnly: true,
+  },
 ];
 
 const DEFAULT_COLUMN_ORDER = COLUMNS.map((column) => column.key);
@@ -117,9 +132,9 @@ export function ClassesTable({
           <span className="text-sm text-muted-foreground">—</span>
         );
       }
-      case "gordura":
-        return classItem.default_gordura ? (
-          <span title={GORDURA_LABELS[classItem.default_gordura]}>{GORDURA_SYMBOLS[classItem.default_gordura]}</span>
+      case "autonomy":
+        return classItem.autonomy ? (
+          <span title={AUTONOMY_LABELS[classItem.autonomy]}>{AUTONOMY_SYMBOLS[classItem.autonomy]}</span>
         ) : (
           <span className="text-sm text-muted-foreground">—</span>
         );

@@ -1,46 +1,46 @@
-import type { Category, Class, Gordura, Transaction } from "@/lib/supabase/types";
+import type { Category, Class, Autonomy, Transaction } from "@/lib/supabase/types";
 
-export const GORDURA_LABELS: Record<Gordura, string> = {
+export const AUTONOMY_LABELS: Record<Autonomy, string> = {
   high: "Alta",
   low: "Baixa",
 };
 
-// Per explicit user request, gordura *displays* show just the symbol (name
+// Per explicit user request, autonomy *displays* show just the symbol (name
 // as a hover tooltip): the Dashboard dynamic table, the Classes table, the
 // Search filter chip. Pickers (dropdowns, checkbox lists) use
-// gorduraOptionLabel — symbol + name — so the choice stays unambiguous.
-export const GORDURA_SYMBOLS: Record<Gordura, string> = {
+// autonomyOptionLabel — symbol + name — so the choice stays unambiguous.
+export const AUTONOMY_SYMBOLS: Record<Autonomy, string> = {
   low: "▢",
   high: "△",
 };
 
-export function gorduraOptionLabel(gordura: Gordura): string {
-  return `${GORDURA_SYMBOLS[gordura]} ${GORDURA_LABELS[gordura]}`;
+export function autonomyOptionLabel(autonomy: Autonomy): string {
+  return `${AUTONOMY_SYMBOLS[autonomy]} ${AUTONOMY_LABELS[autonomy]}`;
 }
 
 // The ultimate fallback when neither the transaction nor its class specifies
 // one — per explicit user request. Before this, a transaction with no
 // override and a class with no default (or no class at all) showed as
-// "unset"/"Sem gordura"; now it resolves to Alta, same as any other
-// still-uncategorized-for-gordura transaction would going forward. See
+// "unset"/"unset"; now it resolves to Alta, same as any other
+// still-uncategorized-for-autonomy transaction would going forward. See
 // classes/actions.ts's updateClass for how a class's own default changing
 // still doesn't retroactively change an already-existing transaction.
-export const DEFAULT_GORDURA: Gordura = "high";
+export const DEFAULT_AUTONOMY: Autonomy = "high";
 
-export function isGordura(value: unknown): value is Gordura {
+export function isAutonomy(value: unknown): value is Autonomy {
   return value === "high" || value === "low";
 }
 
-// A transaction's effective gordura: its own override, else its class's
-// default, else DEFAULT_GORDURA — always a concrete value, never "unset"
+// A transaction's effective autonomy: its own override, else its class's
+// default, else DEFAULT_AUTONOMY — always a concrete value, never "unset"
 // (see migration 0018 for the override column).
-export function effectiveGordura(
-  transaction: Pick<Transaction, "gordura" | "class_id">,
+export function effectiveAutonomy(
+  transaction: Pick<Transaction, "autonomy" | "class_id">,
   classesById: Map<string, Class>,
-): Gordura {
-  if (transaction.gordura) return transaction.gordura;
-  const classDefault = transaction.class_id ? classesById.get(transaction.class_id)?.default_gordura : null;
-  return classDefault ?? DEFAULT_GORDURA;
+): Autonomy {
+  if (transaction.autonomy) return transaction.autonomy;
+  const classDefault = transaction.class_id ? classesById.get(transaction.class_id)?.autonomy : null;
+  return classDefault ?? DEFAULT_AUTONOMY;
 }
 
 // Categories to offer in a picker: active ones, plus the currently selected

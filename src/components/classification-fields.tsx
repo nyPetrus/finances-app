@@ -8,12 +8,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DEFAULT_GORDURA, gorduraOptionLabel, pickableCategories, pickableClasses } from "@/lib/classification";
-import type { Category, Class, Gordura } from "@/lib/supabase/types";
+import { DEFAULT_AUTONOMY, autonomyOptionLabel, pickableCategories, pickableClasses } from "@/lib/classification";
+import type { Category, Class, Autonomy } from "@/lib/supabase/types";
 
-// The Category + Class (+ optional Gordura override) pickers shared by every
+// The Category + Class (+ optional Autonomy override) pickers shared by every
 // transaction and description-mapping dialog. Posts `category_id`,
-// `class_id` and — when `gordura` is passed — `gordura` ("default" | "high"
+// `class_id` and — when `autonomy` is passed — `autonomy` ("default" | "high"
 // | "low"; "default" means no override).
 export function ClassificationFields({
   categories,
@@ -22,8 +22,8 @@ export function ClassificationFields({
   classId,
   onCategoryChange,
   onClassChange,
-  gordura,
-  onGorduraChange,
+  autonomy,
+  onAutonomyChange,
 }: {
   categories: Category[];
   classes: Class[];
@@ -31,13 +31,13 @@ export function ClassificationFields({
   classId: string | null;
   onCategoryChange: (value: string | null) => void;
   onClassChange: (value: string | null) => void;
-  gordura?: Gordura | null;
-  onGorduraChange?: (value: Gordura | null) => void;
+  autonomy?: Autonomy | null;
+  onAutonomyChange?: (value: Autonomy | null) => void;
 }) {
   const categoryOptions = pickableCategories(categories, categoryId);
   const classOptions = pickableClasses(classes, categoryId, classId);
   const selectedClass = classId ? classes.find((c) => c.id === classId) : undefined;
-  const classDefault = selectedClass?.default_gordura;
+  const classDefault = selectedClass?.autonomy;
 
   return (
     <>
@@ -87,23 +87,23 @@ export function ClassificationFields({
           </Select>
         </div>
       </div>
-      {onGorduraChange && (
+      {onAutonomyChange && (
         <div className="flex flex-col gap-2">
-          <Label htmlFor="gordura">Gordura</Label>
+          <Label htmlFor="autonomy">Autonomy</Label>
           <Select
-            name="gordura"
-            value={gordura ?? "default"}
-            onValueChange={(value) => onGorduraChange(value === "high" || value === "low" ? value : null)}
+            name="autonomy"
+            value={autonomy ?? "default"}
+            onValueChange={(value) => onAutonomyChange(value === "high" || value === "low" ? value : null)}
           >
-            <SelectTrigger id="gordura">
+            <SelectTrigger id="autonomy">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="default">
-                Class default ({gorduraOptionLabel(classDefault ?? DEFAULT_GORDURA)})
+                Class default ({autonomyOptionLabel(classDefault ?? DEFAULT_AUTONOMY)})
               </SelectItem>
-              <SelectItem value="high">{gorduraOptionLabel("high")}</SelectItem>
-              <SelectItem value="low">{gorduraOptionLabel("low")}</SelectItem>
+              <SelectItem value="high">{autonomyOptionLabel("high")}</SelectItem>
+              <SelectItem value="low">{autonomyOptionLabel("low")}</SelectItem>
             </SelectContent>
           </Select>
         </div>

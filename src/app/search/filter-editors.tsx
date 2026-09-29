@@ -14,7 +14,7 @@ import { MONTH_LABELS, type DateGranularity, type DateOp } from "./filters";
 
 // The bar's chip shows a value's symbol instead of its name when it has one
 // (see the symbol-display rule in table-page-conventions): `icon` is a
-// category icon key, `chip` a text symbol (gordura). `label` is what the
+// category icon key, `chip` a text symbol (autonomy). `label` is what the
 // pickers show.
 export type Option = { value: string; label: string; chip?: string; icon?: string | null };
 
@@ -76,7 +76,7 @@ function EditorFooter({ children }: { children: ReactNode }) {
   return <div className="flex items-center justify-end gap-2 border-t pt-2">{children}</div>;
 }
 
-// ── Account / Category / Class / Gordura ─────────────────────────────────
+// ── Account / Category / Class / Autonomy ─────────────────────────────────
 
 export function CheckboxEditor({
   title,

@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ClassificationFields } from "@/components/classification-fields";
-import type { Account, Category, Class, Gordura } from "@/lib/supabase/types";
+import type { Account, Category, Class, Autonomy } from "@/lib/supabase/types";
 import { addTransaction } from "./actions";
 
 function todayISO() {
@@ -44,7 +44,7 @@ export function AddTransactionDialog({
   const [open, setOpen] = useState(false);
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [classId, setClassId] = useState<string | null>(null);
-  const [gordura, setGordura] = useState<Gordura | null>(null);
+  const [autonomy, setAutonomy] = useState<Autonomy | null>(null);
 
   return (
     <Dialog
@@ -54,7 +54,7 @@ export function AddTransactionDialog({
         if (next) {
           setCategoryId(null);
           setClassId(null);
-          setGordura(null);
+          setAutonomy(null);
         }
       }}
     >
@@ -123,8 +123,8 @@ export function AddTransactionDialog({
             classId={classId}
             onCategoryChange={setCategoryId}
             onClassChange={setClassId}
-            gordura={gordura}
-            onGorduraChange={setGordura}
+            autonomy={autonomy}
+            onAutonomyChange={setAutonomy}
           />
           <DialogFooter>
             <Button type="submit" form="add-transaction-form">

@@ -4,9 +4,9 @@ import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { deleteIfUnused, type DeleteResult } from "@/lib/supabase/delete-if-unused";
-import { DEFAULT_GORDURA, isGordura } from "@/lib/classification";
+import { DEFAULT_AUTONOMY, isAutonomy } from "@/lib/classification";
 import { CATEGORY_ICONS, DEFAULT_CLASS_ICON } from "@/lib/category-icons";
-import type { Gordura } from "@/lib/supabase/types";
+import type { Autonomy } from "@/lib/supabase/types";
 
 // Errors are returned as values rather than thrown: Next.js hides thrown
 // server-action messages in production.
@@ -25,12 +25,12 @@ function revalidateClassPages() {
 }
 
 function parseClassForm(formData: FormData) {
-  const defaultGordura = formData.get("default_gordura");
+  const defaultAutonomy = formData.get("autonomy");
   const icon = formData.get("icon");
   return {
     name: ((formData.get("name") as string) ?? "").trim(),
     categoryIds: [...new Set(formData.getAll("category_ids").map(String).filter(Boolean))],
-    defaultGordura: isGordura(defaultGordura) ? defaultGordura : null,
+    defaultAutonomy: isAutonomy(defaultAutonomy) ? defaultAutonomy : null,
     icon: typeof icon === "string" && CATEGORY_ICONS.includes(icon) ? icon : DEFAULT_CLASS_ICON,
   };
 }
@@ -50,13 +50,13 @@ export async function addClass(formData: FormData): Promise<ClassActionResult> {
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
 
-  const { name, categoryIds, defaultGordura, icon } = parseClassForm(formData);
+  const { name, categoryIds, defaultAutonomy, icon } = parseClassForm(formData);
   if (!name) return { error: "Name is required." };
   if (categoryIds.length === 0) return { error: "Pick at least one category." };
 
   const { data, error } = await supabase
     .from("classes")
-    .insert({ user_id: user.id, name, default_gordura: defaultGordura, icon })
+    .insert({ user_id: user.id, name, autonomy: defaultAutonomy, icon })
     .select("id")
     .single();
 
@@ -76,46 +76,46 @@ export async function updateClass(formData: FormData): Promise<ClassActionResult
   if (!user) throw new Error("Unauthorized");
 
   const id = formData.get("id") as string;
-  const { name, categoryIds, defaultGordura, icon } = parseClassForm(formData);
+  const { name, categoryIds, defaultAutonomy, icon } = parseClassForm(formData);
   if (!name) return { error: "Name is required." };
 
   const { data: existing, error: existingError } = await supabase
     .from("classes")
-    .select("default_gordura")
+    .select("autonomy")
     .eq("id", id)
     .eq("user_id", user.id)
     .single();
   if (existingError) return { error: existingError.message };
-  const previousGordura = existing.default_gordura as Gordura | null;
+  const previousAutonomy = existing.autonomy as Autonomy | null;
 
   const { error } = await supabase
     .from("classes")
-    .update({ name, default_gordura: defaultGordura, icon })
+    .update({ name, autonomy: defaultAutonomy, icon })
     .eq("id", id)
     .eq("user_id", user.id);
 
   if (error) return { error: friendlyError(error.message, error.code) };
 
-  // Changing a class's default gordura must not retroactively change what
-  // an already-existing transaction shows (see effectiveGordura, which
-  // falls back to this default — or DEFAULT_GORDURA when the class has no
-  // default of its own — only when the transaction has no gordura of its
+  // Changing a class's default autonomy must not retroactively change what
+  // an already-existing transaction shows (see effectiveAutonomy, which
+  // falls back to this default — or DEFAULT_AUTONOMY when the class has no
+  // default of its own — only when the transaction has no autonomy of its
   // own) — only a transaction assigned to this class from now on should
   // pick up the new default. Freeze every transaction currently relying on
   // the *old* effective default by writing it directly onto their own
-  // `gordura` column before it stops being current. Both sides fall back to
-  // DEFAULT_GORDURA (never null), so a class going from "no default" to an
+  // `autonomy` column before it stops being current. Both sides fall back to
+  // DEFAULT_AUTONOMY (never null), so a class going from "no default" to an
   // explicit one freezes correctly too — there's no longer an unrepresentable
   // "unset" state to worry about.
-  const previousEffective = previousGordura ?? DEFAULT_GORDURA;
-  const newEffective = defaultGordura ?? DEFAULT_GORDURA;
+  const previousEffective = previousAutonomy ?? DEFAULT_AUTONOMY;
+  const newEffective = defaultAutonomy ?? DEFAULT_AUTONOMY;
   if (previousEffective !== newEffective) {
     const { error: freezeError } = await supabase
       .from("transactions")
-      .update({ gordura: previousEffective })
+      .update({ autonomy: previousEffective })
       .eq("class_id", id)
       .eq("user_id", user.id)
-      .is("gordura", null);
+      .is("autonomy", null);
     if (freezeError) return { error: freezeError.message };
   }
 

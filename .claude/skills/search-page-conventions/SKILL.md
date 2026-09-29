@@ -1,6 +1,6 @@
 ---
 name: search-page-conventions
-description: Use when touching the Search page (src/app/search/ — page.tsx, filter-bar.tsx, filter-editors.tsx, search-table.tsx, filters.ts, sort.ts, bulk-edit-dialog.tsx) — its Supabase-style single-line filter bar (chips + typed suggestions) over 7 optional filters (Account/Category/Class/Gordura as checkbox multi-selects, Description/Amount as operator+value, Date as operator + Year/Month/Day picker), how filter state round-trips through the URL, the Supabase query-building/paging behind it, the count+total results-summary block, its results table (the app's main transaction table, incl. the Sync descriptions button), the current-month default, the /transactions redirect, or the Search-only batch Category/Class/Gordura editor on selected rows. Not part of the shared table-page-conventions architecture (this page doesn't own/create rows the way a canonical list page does), though its results table borrows heavily from it.
+description: Use when touching the Search page (src/app/search/ — page.tsx, filter-bar.tsx, filter-editors.tsx, search-table.tsx, filters.ts, sort.ts, bulk-edit-dialog.tsx) — its Supabase-style single-line filter bar (chips + typed suggestions) over 7 optional filters (Account/Category/Class/Autonomy as checkbox multi-selects, Description/Amount as operator+value, Date as operator + Year/Month/Day picker), how filter state round-trips through the URL, the Supabase query-building/paging behind it, the count+total results-summary block, its results table (the app's main transaction table, incl. the Sync descriptions button), the current-month default, the /transactions redirect, or the Search-only batch Category/Class/Autonomy editor on selected rows. Not part of the shared table-page-conventions architecture (this page doesn't own/create rows the way a canonical list page does), though its results table borrows heavily from it.
 ---
 
 # Search page conventions
@@ -8,7 +8,7 @@ description: Use when touching the Search page (src/app/search/ — page.tsx, fi
 `/search` is the app's transactions page (the old `/transactions` page
 was folded into it — see below). It opens on the current month but can
 query transactions across all time by combining up to 7 independent, optional
-filters — Account, Category, Class, Gordura, Description, Date, Amount.
+filters — Account, Category, Class, Autonomy, Description, Date, Amount.
 Added per explicit user request.
 
 - **Every filter is optional and AND-combined; there is no default,
@@ -30,7 +30,7 @@ Added per explicit user request.
   - **Chips** follow the app-wide symbol-display rule
     (`table-page-conventions`): values with a symbol show only it, name as
     tooltip — `Category: 🛒 🚌` (category icons via `Option.icon`),
-    `Gordura: △` (`Option.chip`), up to 5 symbols before `+N`; values
+    `Autonomy: △` (`Option.chip`), up to 5 symbols before `+N`; values
     without one show names — `Account: Nubank, XP` (3+ values: `Nubank, XP +1`),
     `Description contains "uber"`, `Amount > -50`, `Date: Sep 2026` /
     `Date before Sep 2026` — field name muted, value bold; a colon only
@@ -41,7 +41,7 @@ Added per explicit user request.
     `containerRef.contains`). Empty input → the 7 fields (active ones show
     their current value). Typing → ready-made suggestions: `Amount =
     <n>` (only when numeric), `Description contains "<text>"`, and up to 6
-    matching Account/Category/Class/Gordura option names (added to that
+    matching Account/Category/Class/Autonomy option names (added to that
     field's set); when the text is the start of a field name ("cat") the
     field rows come first instead. Arrow keys move the highlight, Enter
     picks it (so plain typing + Enter = Description contains), Backspace on
@@ -70,13 +70,13 @@ Added per explicit user request.
 - **Filter → URL param mapping** (`filters.ts` is the single source of
   truth for all of these — `page.tsx`, `filter-bar.tsx` and
   `filter-editors.tsx` import from it, never redefine locally):
-  - **Account, Category, Class, Gordura are checkbox multi-selects, not
+  - **Account, Category, Class, Autonomy are checkbox multi-selects, not
     operator+value controls.** Each is edited in `CheckboxEditor` and
     round-trips as a **repeated** query param —
     `?account=id1&account=id2`, parsed by `filters.ts`'s `many()` helper —
     with OR semantics (match any checked value) and an **empty array
     meaning "no filter"**, not "match nothing." `ParsedFilters.accounts` /
-    `.categories` / `.classes` / `.gorduras` are plain `string[]` (no `op`
+    `.categories` / `.classes` / `.autonomies` are plain `string[]` (no `op`
     field at all — don't reintroduce `EqualityOp`/`is`/`is_not` for these
     four).
     **Why:** replaces an earlier `is`/`is not` single-value design, per
@@ -88,26 +88,26 @@ Added per explicit user request.
       `"uncategorized"` — `UNCATEGORIZED_VALUE` — for "no category").
     - **Class**: same shape, with `"unclassed"` (`UNCLASSED_VALUE`) as its
       pseudo-value.
-    - **Gordura**: `gordura` (`"high"` | `"low"` — `Gordura`,
-      `GORDURA_VALUES` for the fixed Baixa/Alta order; the checkbox list
-      shows `gorduraOptionLabel()` — "▢ Baixa"/"△ Alta" — while the chip
+    - **Autonomy**: `autonomy` (`"high"` | `"low"` — `Autonomy`,
+      `AUTONOMY_VALUES` for the fixed Baixa/Alta order; the checkbox list
+      shows `autonomyOptionLabel()` — "▢ Baixa"/"△ Alta" — while the chip
       shows just the symbol via the option's `chip` field, e.g.
-      `Gordura: △`, per the app-wide "gordura displays as a symbol" rule in
+      `Autonomy: △`, per the app-wide "autonomy displays as a symbol" rule in
       `@/lib/classification.ts`). Filters on the
-      transaction's **effective** gordura (`effectiveGorduraValue()` in
-      `filters.ts`, a thin alias for `effectiveGordura()` from
+      transaction's **effective** autonomy (`effectiveAutonomyValue()` in
+      `filters.ts`, a thin alias for `effectiveAutonomy()` from
       `@/lib/classification.ts`, same as the Dashboard monthly table's
-      `gorduraKey()`), not just its own override column — always a concrete
-      Alta/Baixa, never "unset" (`effectiveGordura` falls back to
-      `DEFAULT_GORDURA`, "Alta", when there's no override and no class
+      `autonomyKey()`), not just its own override column — always a concrete
+      Alta/Baixa, never "unset" (`effectiveAutonomy` falls back to
+      `DEFAULT_AUTONOMY`, "Alta", when there's no override and no class
       default). Because "effective" needs the class join, this is the one
       filter `buildQuery()` (`page.tsx`) **can't** push into the Supabase
       query — it's applied in JS *after* `runSearch()` has already paged
       through everything matching the other filters (still correct per
       `PITFALLS.md`, since the Postgres query itself isn't what's
-      narrowing on gordura, so it can't silently truncate).
-      **Why only two values:** there used to be a third "Sem gordura"/
-      `"none"` option here, removed once `effectiveGordura`'s fallback
+      narrowing on autonomy, so it can't silently truncate).
+      **Why only two values:** there used to be a third "unset"/
+      `"none"` option here, removed once `effectiveAutonomy`'s fallback
       stopped ever being null — don't reintroduce it without a fresh ask.
     - `buildQuery()`'s `applyCheckboxFilter()` handles Account/Category/
       Class: plain `.in(column, ids)` when no pseudo-value is checked,
@@ -210,7 +210,7 @@ Added per explicit user request.
   feature is added here, check whether it belongs in the Dashboard's
   copy too, same as the
   Dashboard's copy.
-- **Batch-editing selected transactions' Category/Class/Gordura is a
+- **Batch-editing selected transactions' Category/Class/Autonomy is a
   Search-only feature** — not added to the
   Dashboard's embedded table, unlike most of this table's other
   functionality (see the previous bullet). The "Edit selected"
@@ -222,7 +222,7 @@ Added per explicit user request.
   leaving a `Select` untouched) — `bulkUpdateClassification(ids, updates)`
   only writes a field when its key is present in `updates` at all (`"key"
   in updates`, the same presence-check `updateTransaction` already uses for
-  `gordura`), so choosing only Gordura doesn't force a Category/Class onto
+  `autonomy`), so choosing only Autonomy doesn't force a Category/Class onto
   every selected row. "No change" is therefore distinct from a `CLEAR`
   sentinel (`"Uncategorized"` / `"No class"` / `"Class default"`), which
   *does* get sent — as an explicit `null` — to blank out that field on

@@ -14,12 +14,12 @@ import {
 import { CategoryIcon } from "@/components/category-icon";
 import { IconSwatchPicker } from "@/components/icon-swatch-picker";
 import { DEFAULT_CLASS_ICON } from "@/lib/category-icons";
-import { gorduraOptionLabel } from "@/lib/classification";
+import { autonomyOptionLabel } from "@/lib/classification";
 import type { Category, Class } from "@/lib/supabase/types";
 
-// Name, icon, linked categories and default gordura — shared by the Add and Edit
+// Name, icon, linked categories and default autonomy — shared by the Add and Edit
 // class dialogs. Posts `name`, `icon`, one `category_ids` per checked category, and
-// `default_gordura` ("none" | "high" | "low").
+// `autonomy` ("none" | "high" | "low").
 export function ClassFormFields({
   categories,
   classItem,
@@ -71,15 +71,15 @@ export function ClassFormFields({
         ))}
       </div>
       <div className="flex flex-col gap-2">
-        <Label htmlFor="default_gordura">Default gordura</Label>
-        <Select name="default_gordura" defaultValue={classItem?.default_gordura ?? "none"}>
-          <SelectTrigger id="default_gordura">
+        <Label htmlFor="autonomy">Default autonomy</Label>
+        <Select name="autonomy" defaultValue={classItem?.autonomy ?? "none"}>
+          <SelectTrigger id="autonomy">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="none">None (defaults to {gorduraOptionLabel("high")})</SelectItem>
-            <SelectItem value="high">{gorduraOptionLabel("high")}</SelectItem>
-            <SelectItem value="low">{gorduraOptionLabel("low")}</SelectItem>
+            <SelectItem value="none">None (defaults to {autonomyOptionLabel("high")})</SelectItem>
+            <SelectItem value="high">{autonomyOptionLabel("high")}</SelectItem>
+            <SelectItem value="low">{autonomyOptionLabel("low")}</SelectItem>
           </SelectContent>
         </Select>
       </div>

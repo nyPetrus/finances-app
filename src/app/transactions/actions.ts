@@ -3,17 +3,17 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { syncMappedDescriptions } from "@/app/descriptions/actions";
-import { isGordura } from "@/lib/classification";
-import type { Gordura } from "@/lib/supabase/types";
+import { isAutonomy } from "@/lib/classification";
+import type { Autonomy } from "@/lib/supabase/types";
 
 function combineDateAndTime(dateInput: string, timeInput: string) {
   return `${dateInput}T${timeInput || "00:00"}:00`;
 }
 
 // "default" (or anything else) clears the override so the class default applies.
-function parseGordura(formData: FormData) {
-  const value = formData.get("gordura");
-  return isGordura(value) ? value : null;
+function parseAutonomy(formData: FormData) {
+  const value = formData.get("autonomy");
+  return isAutonomy(value) ? value : null;
 }
 
 export async function addTransaction(formData: FormData) {
@@ -40,7 +40,7 @@ export async function addTransaction(formData: FormData) {
     account_id,
     category_id,
     class_id,
-    gordura: parseGordura(formData),
+    autonomy: parseAutonomy(formData),
     date,
     description,
     amount,
@@ -81,7 +81,7 @@ export async function updateTransaction(formData: FormData) {
       date,
       description,
       amount,
-      ...(formData.has("gordura") && { gordura: parseGordura(formData) }),
+      ...(formData.has("autonomy") && { autonomy: parseAutonomy(formData) }),
     })
     .eq("id", id)
     .eq("user_id", user.id);
@@ -131,19 +131,19 @@ export async function syncDescriptionsFromTransactions(transactionIds: string[])
   return syncMappedDescriptions();
 }
 
-// Batch-edits category/class/gordura across many transactions at once — the
+// Batch-edits category/class/autonomy across many transactions at once — the
 // Search page's selection toolbar ("Edit" button). Each field is applied
 // only when the caller includes its key at all: an omitted key leaves every
 // selected transaction's existing value alone, while an included key
-// (even `null`, for "clear category"/"clear class"/"clear gordura
+// (even `null`, for "clear category"/"clear class"/"clear autonomy
 // override") overwrites it on every one of them. This mirrors
-// updateTransaction's own `formData.has("gordura")` presence check for the
+// updateTransaction's own `formData.has("autonomy")` presence check for the
 // same "did the user actually touch this field" distinction, just across
 // three fields and many rows instead of one.
 export type BulkClassificationUpdate = {
   category_id?: string | null;
   class_id?: string | null;
-  gordura?: Gordura | null;
+  autonomy?: Autonomy | null;
 };
 
 export async function bulkUpdateClassification(ids: string[], updates: BulkClassificationUpdate) {
@@ -155,10 +155,10 @@ export async function bulkUpdateClassification(ids: string[], updates: BulkClass
 
   if (ids.length === 0) return;
 
-  const patch: Partial<Record<"category_id" | "class_id" | "gordura", string | null>> = {};
+  const patch: Partial<Record<"category_id" | "class_id" | "autonomy", string | null>> = {};
   if ("category_id" in updates) patch.category_id = updates.category_id ?? null;
   if ("class_id" in updates) patch.class_id = updates.class_id ?? null;
-  if ("gordura" in updates) patch.gordura = updates.gordura ?? null;
+  if ("autonomy" in updates) patch.autonomy = updates.autonomy ?? null;
 
   if (Object.keys(patch).length === 0) return;
 

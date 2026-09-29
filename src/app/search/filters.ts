@@ -2,8 +2,8 @@
 // (initializing its fields from the current URL) — no Supabase import here
 // so it stays safe to import from a "use client" file.
 
-import { effectiveGordura } from "@/lib/classification";
-import type { Gordura } from "@/lib/supabase/types";
+import { effectiveAutonomy } from "@/lib/classification";
+import type { Autonomy } from "@/lib/supabase/types";
 
 export const DESCRIPTION_OPS = ["equal_to", "starts_with", "contains"] as const;
 export type DescriptionOp = (typeof DESCRIPTION_OPS)[number];
@@ -38,17 +38,17 @@ function isDateOp(value: string | undefined): value is DateOp {
 export const UNCATEGORIZED_VALUE = "uncategorized";
 export const UNCLASSED_VALUE = "unclassed";
 
-// A transaction's effective gordura is always a concrete value now (its own
-// override, else its class's default, else DEFAULT_GORDURA — see
-// effectiveGordura), so this filter only ever offers/matches Alta/Baixa —
-// no "Sem gordura"/unset option any more.
-export const GORDURA_VALUES: Gordura[] = ["low", "high"];
+// A transaction's effective autonomy is always a concrete value now (its own
+// override, else its class's default, else DEFAULT_AUTONOMY — see
+// effectiveAutonomy), so this filter only ever offers/matches Alta/Baixa —
+// no "unset"/unset option any more.
+export const AUTONOMY_VALUES: Autonomy[] = ["low", "high"];
 
-export function isGorduraValue(value: string): value is Gordura {
+export function isAutonomyValue(value: string): value is Autonomy {
   return value === "high" || value === "low";
 }
 
-export const effectiveGorduraValue = effectiveGordura;
+export const effectiveAutonomyValue = effectiveAutonomy;
 
 export type SearchParams = { [key: string]: string | string[] | undefined };
 
@@ -58,7 +58,7 @@ function one(searchParams: SearchParams, key: string): string | undefined {
 }
 
 // Every occurrence of `key` — checkbox filters (account/category/class/
-// gordura) can appear more than once in the URL, one per checked value.
+// autonomy) can appear more than once in the URL, one per checked value.
 function many(searchParams: SearchParams, key: string): string[] {
   const value = searchParams[key];
   if (Array.isArray(value)) return value;
@@ -71,7 +71,7 @@ export type ParsedFilters = {
   accounts: string[];
   categories: string[];
   classes: string[];
-  gorduras: Gordura[];
+  autonomies: Autonomy[];
   description: { op: DescriptionOp; value: string } | null;
   date: { granularity: DateGranularity; op: DateOp; value: string } | null;
   // Compared against the signed amount (expenses are negative), same as
@@ -91,7 +91,7 @@ export function parseFilters(searchParams: SearchParams): ParsedFilters {
     accounts: many(searchParams, "account"),
     categories: many(searchParams, "category"),
     classes: many(searchParams, "class"),
-    gorduras: many(searchParams, "gordura").filter(isGorduraValue),
+    autonomies: many(searchParams, "autonomy").filter(isAutonomyValue),
     description: descriptionValue
       ? { op: isDescriptionOp(one(searchParams, "descriptionOp")) ? (one(searchParams, "descriptionOp") as DescriptionOp) : "contains", value: descriptionValue }
       : null,
@@ -111,7 +111,7 @@ export function hasAnyFilter(filters: ParsedFilters): boolean {
     filters.accounts.length > 0 ||
     filters.categories.length > 0 ||
     filters.classes.length > 0 ||
-    filters.gorduras.length > 0 ||
+    filters.autonomies.length > 0 ||
     filters.description ||
     filters.date ||
     filters.amount
@@ -122,7 +122,7 @@ export const EMPTY_FILTERS: ParsedFilters = {
   accounts: [],
   categories: [],
   classes: [],
-  gorduras: [],
+  autonomies: [],
   description: null,
   date: null,
   amount: null,
@@ -134,7 +134,7 @@ export function filtersToSearchParams(filters: ParsedFilters): URLSearchParams {
   for (const value of filters.accounts) params.append("account", value);
   for (const value of filters.categories) params.append("category", value);
   for (const value of filters.classes) params.append("class", value);
-  for (const value of filters.gorduras) params.append("gordura", value);
+  for (const value of filters.autonomies) params.append("autonomy", value);
   if (filters.description) {
     params.set("description", filters.description.value);
     params.set("descriptionOp", filters.description.op);

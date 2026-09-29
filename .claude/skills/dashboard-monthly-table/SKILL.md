@@ -1,6 +1,6 @@
 ---
 name: dashboard-monthly-table
-description: Use when touching the Dashboard's monthly breakdown tree table (dashboard-monthly-breakdown.ts + dashboard-monthly-table.tsx) — what the user calls "the dynamic table," since its rows dynamically expand/collapse (not the embedded click-to-filter transactions table, which only appears/disappears wholesale — see dashboard-conventions for that one). Covers the Type level (static) plus the configurable Gordura/Category/Class levels (the "Levels" menu — include/exclude and reorder), the footer Total row, column auto-sizing, decimal rounding, zero-value empty cells, row color, the click-the-label expand/collapse (no separate toggle button/icon, and the label no longer drives click-to-filter — only the month/Total cells do), and the sticky/frozen header row, footer row, label column, and Total column.
+description: Use when touching the Dashboard's monthly breakdown tree table (dashboard-monthly-breakdown.ts + dashboard-monthly-table.tsx) — what the user calls "the dynamic table," since its rows dynamically expand/collapse (not the embedded click-to-filter transactions table, which only appears/disappears wholesale — see dashboard-conventions for that one). Covers the Type level (static) plus the configurable Autonomy/Category/Class levels (the "Levels" menu — include/exclude and reorder), the footer Total row, column auto-sizing, decimal rounding, zero-value empty cells, row color, the click-the-label expand/collapse (no separate toggle button/icon, and the label no longer drives click-to-filter — only the month/Total cells do), and the sticky/frozen header row, footer row, label column, and Total column.
 ---
 
 # Dashboard monthly table ("the dynamic table")
@@ -30,22 +30,22 @@ table is meant if it's ever unclear again.
   `useColumnPreferences` — the same show/hide + up/down-reorder control
   the rest of the app uses for table columns, storage key
   `dashboard-monthly-table-levels`) lets the user include/exclude and
-  reorder `ClassificationLevel`s (`"gordura" | "category" | "class"`)
+  reorder `ClassificationLevel`s (`"autonomy" | "category" | "class"`)
   freely. **Type is never one of these** — it's hardcoded as the
   always-present root level (Income/Expenses/Transfers, plus Uncategorized
   when applicable) and isn't listed in the menu.
   `buildMonthlyBreakdown(transactions, categories, classes, levels)` takes
   the resulting ordered subset (default `DEFAULT_CLASSIFICATION_LEVELS =
-  ["gordura", "category", "class"]`, the original fixed order) and
+  ["autonomy", "category", "class"]`, the original fixed order) and
   recurses through it via `buildLevelRows` — moving Class above Category
-  (or excluding Category/Gordura entirely) is just a different `levels`
+  (or excluding Category/Autonomy entirely) is just a different `levels`
   array, not a special case in the tree-building code. Because the level
   config is a per-browser preference, `buildMonthlyBreakdown` runs
   **client-side inside `dashboard-explorer.tsx`** (not server-side in
   `page.tsx` — `page.tsx` just passes raw `transactions`/`categories`/
   `classes` through). Every `MonthlyRow` carries a `level: "type" |
   ClassificationLevel` field set at build time; `dashboard-monthly-table.tsx`
-  uses that (not a hardcoded depth number) to decide Gordura/Class-specific
+  uses that (not a hardcoded depth number) to decide Autonomy/Class-specific
   styling, since which depth holds which classification now depends on the
   configured order.
   **Why:** added per explicit user request.
@@ -54,14 +54,14 @@ table is meant if it's ever unclear again.
   always shown, plus Uncategorized only when at least one transaction
   actually has no category — Uncategorized has no children) is the static
   root, then zero to three more levels per the user's "Levels" menu
-  selection/order — **Gordura** (Baixa / Alta, always in that order
+  selection/order — **Autonomy** (Baixa / Alta, always in that order
   regardless of where the level sits), **Category** (only categories of
   that `kind` with at least one transaction this year under whatever
   ancestor levels are above it), and **Class** (only classes with at least
   one transaction this year), each only appearing when it actually has
-  matching transactions. Gordura is the transaction's *effective* gordura
-  (`effectiveGordura` in `@/lib/classification.ts`: its own override, else
-  its class's `default_gordura`, else `DEFAULT_GORDURA` — "Alta" — so it's
+  matching transactions. Autonomy is the transaction's *effective* autonomy
+  (`effectiveAutonomy` in `@/lib/classification.ts`: its own override, else
+  its class's `autonomy`, else `DEFAULT_AUTONOMY` — "Alta" — so it's
   always a concrete Alta/Baixa, never "unset") — this is the one level
   that never folds a transaction into its parent without a row of its
   own; Category and Class do fold a transaction in when it has none
@@ -84,16 +84,16 @@ table is meant if it's ever unclear again.
   don't produce a child row at the next level, so a node's total can
   legitimately exceed the sum of its visible children; this is
   intentional, not a bug to "fix" by adding a synthetic "none" row for
-  every level (only Gordura gets one). **Every kind, including Transfer,
+  every level (only Autonomy gets one). **Every kind, including Transfer,
   sums the signed `amount` as-is** — a 150 transfer out and a 150 transfer
   in nets to 0 here.
-  **Why:** Baixa-before-Alta ordering, the Gordura level's fixed "always a
+  **Why:** Baixa-before-Alta ordering, the Autonomy level's fixed "always a
   row of its own" behavior, and the signed (not `Math.abs`) Transfer sum
   are all per explicit user request. There used to be a third "Sem
-  gordura"/`"none"` bucket for a transaction with neither an override nor
-  a class default — removed once `effectiveGordura` stopped ever
-  returning null; `gorduraKey()` in `dashboard-monthly-breakdown.ts` is now
-  just a thin alias for `effectiveGordura`, kept only so this file and
+  autonomy"/`"none"` bucket for a transaction with neither an override nor
+  a class default — removed once `effectiveAutonomy` stopped ever
+  returning null; `autonomyKey()` in `dashboard-monthly-breakdown.ts` is now
+  just a thin alias for `effectiveAutonomy`, kept only so this file and
   `dashboard-explorer.tsx` didn't need an import-name churn. Don't
   reintroduce a "none" bucket without a fresh ask. The now-removed
   Transfers stat card used to sum `Math.abs(amount)` — magnitude, not net
@@ -139,13 +139,13 @@ table is meant if it's ever unclear again.
   (`monthTotals[i] === 0` / `grandTotal === 0`).
   **Why:** per explicit user request.
 
-- **Type, Category, and Gordura rows show only their icon/symbol, not
+- **Type, Category, and Autonomy rows show only their icon/symbol, not
   their text name.** A Type row's `row.symbol` (the arrow from
   `TRANSACTION_TYPE_SYMBOLS` — `➔` rotated up/down/right via `TRANSACTION_TYPE_SYMBOL_ROTATION` for income/expense/transfer — one glyph so all three share the same heavy weight), a
   Category row's `row.icon` (`category.icon`, rendered via
-  `CategoryIcon`), and a Gordura row's `row.symbol` (from `GORDURA_SYMBOLS`
+  `CategoryIcon`), and a Autonomy row's `row.symbol` (from `AUTONOMY_SYMBOLS`
   in `@/lib/classification.ts`, shared app-wide — `▢` for Baixa, `△` for
-  Alta; see the "Gordura shows as a symbol" note there) are
+  Alta; see the "Autonomy shows as a symbol" note there) are
   enough on their own; the label `<span>` in `TreeRows` only renders when
   `hasIcon` (`!!row.icon || !!row.symbol`) is false. Class rows carry
   `row.icon` (`classes.icon`) too now, so they're icon-only like Category
@@ -155,10 +155,10 @@ table is meant if it's ever unclear again.
   a synthetic icon. The full name is still available as a native `title`
   tooltip on the row's icon-containing wrapper `<div>` so it isn't lost
   entirely, just hidden from the default view.
-  **Why:** per explicit user request. Gordura rows used to have neither an
+  **Why:** per explicit user request. Autonomy rows used to have neither an
   icon nor a symbol (so they kept their "Alta"/"Baixa" text label through
-  this same fallback) until `GORDURA_SYMBOLS` was added — same mechanism,
-  just a later addition; don't assume Gordura is still a text-only level
+  this same fallback) until `AUTONOMY_SYMBOLS` was added — same mechanism,
+  just a later addition; don't assume Autonomy is still a text-only level
   if this comes up again.
 
   **The Type symbol is rendered larger and bolder than the rest of the
@@ -166,7 +166,7 @@ table is meant if it's ever unclear again.
   `text-muted-foreground`, not colored to match the row's own
   income/expense color, to stay in this table's otherwise subdued style
   rather than adding more color weight. This sizing bump is Type-symbol-
-  only — the Category icon (`CategoryIcon`, `size-3.5`) and the Gordura
+  only — the Category icon (`CategoryIcon`, `size-3.5`) and the Autonomy
   symbol (plain text, no size override, so it renders at the row's default
   `text-sm`/`text-xs`) are both unaffected.
   **Why:** per explicit user request, to make the arrow read as a clear
@@ -205,7 +205,7 @@ table is meant if it's ever unclear again.
   "Levels" menu order. `TreeRows` styles off each row's own `row.level`
   field, not a fixed depth number — depth 0 is always Type, but which
   classification sits at depth 1/2/3 depends on the configured order, so
-  Gordura rows always get `border-t font-semibold` and Class rows always
+  Autonomy rows always get `border-t font-semibold` and Class rows always
   get `text-[11px]` regardless of where in the tree they land.
   **Why:** "I can see at maximum at class level" was the original explicit
   requirement, back when the level order was fixed and Class was always
@@ -299,7 +299,7 @@ table is meant if it's ever unclear again.
   its own.** `dashboard-explorer.tsx` holds a single `selection:
   MonthlySelection | undefined`, passed to this table as `selected` and
   updated via its `onSelect` prop. Every `MonthlyRow` carries its own
-  `kind`/`gordura`/`categoryId`/`classId` (not just its display `key`) so
+  `kind`/`autonomy`/`categoryId`/`classId` (not just its display `key`) so
   a click handler doesn't need to re-derive them. **Clicking a row's Total
   cell filters to that row's whole year; clicking one of its month cells
   scopes it to that month too — the row's label cell is not part of this
