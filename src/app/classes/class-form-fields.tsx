@@ -23,14 +23,17 @@ import type { Category, Class } from "@/lib/supabase/types";
 export function ClassFormFields({
   categories,
   classItem,
+  defaultCategoryIds,
   autoFocus,
 }: {
   categories: Category[];
   classItem?: Class;
+  // New classes only: categories checked up front.
+  defaultCategoryIds?: string[];
   autoFocus?: boolean;
 }) {
   const [icon, setIcon] = useState(classItem?.icon ?? DEFAULT_CLASS_ICON);
-  const [categoryIds, setCategoryIds] = useState<Set<string>>(new Set(classItem?.category_ids ?? []));
+  const [categoryIds, setCategoryIds] = useState<Set<string>>(new Set(classItem?.category_ids ?? defaultCategoryIds ?? []));
 
   // Inactive categories aren't offered for new links, but ones already linked
   // stay visible so they can be unlinked.

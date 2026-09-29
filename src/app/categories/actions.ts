@@ -70,7 +70,6 @@ export async function deleteCategories(ids: string[]): Promise<DeleteResult> {
   const result = await deleteIfUnused(supabase, "categories", user.id, ids);
 
   revalidatePath("/categories");
-  revalidatePath("/classes");
   revalidatePath("/search");
 
   return result;
@@ -96,7 +95,6 @@ export async function setCategoriesActive(ids: string[], isActive: boolean) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/categories");
-  revalidatePath("/classes");
   revalidatePath("/search");
   revalidatePath("/descriptions");
 }

@@ -13,6 +13,23 @@ sorts the rows, handing them to a client `<X>Table` component
 column preferences, and all row interaction. Match this when adding a new
 list page instead of inventing a fresh layout.
 
+- **Categories and Classes share one page: a tree table at `/categories`**
+  (`categories/categories-table.tsx`, "Categories & Classes"; `/classes`
+  only redirects there). Built per explicit user request, as a trial —
+  it's one self-contained commit so it can be reverted cleanly. Category
+  rows expand/collapse by clicking the name (like the Dashboard dynamic
+  table, no chevron; start collapsed, "Expand all" in the right toolbar
+  group). A class row is one `category_classes` link, so a shared class
+  shows under each category (keyed `cls:<categoryId>:<classId>`) with an
+  "also in" icon list; classes with no link sit under a trailing
+  "(No category)" group. `page.tsx` builds `CategoryGroup[]` and sorts
+  each level by the sort key that applies to it. The "+" is a menu
+  (Category / Class). "⋮" adds `extraActions`: on one category, "Add
+  class" (preselects it) and "Link existing class"; on class rows only,
+  "Remove from category" (`unlinkClassesFromCategories`). Delete only for
+  a single-kind selection; Activate/Deactivate works on mixed selections.
+  Everything below that says "Categories" or "Classes" table refers to
+  this page's category rows / class rows.
 - **Markup**: shadcn's `Table`/`TableHeader`/`TableBody`/`TableRow`/`TableCell`
   from `@/components/ui/table`, in **auto layout — no `table-fixed` or
   `<colgroup>`** (columns can be hidden/reordered at runtime, so fixed

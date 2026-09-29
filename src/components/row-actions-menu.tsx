@@ -8,6 +8,7 @@ import {
   PencilIcon,
   Trash2Icon,
   UploadIcon,
+  type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,6 +29,7 @@ import {
 // caller still confirms before deleting.
 export function RowActionsMenu({
   onEdit,
+  extraActions = [],
   onCreateRule,
   onImport,
   onDeactivate,
@@ -36,6 +38,9 @@ export function RowActionsMenu({
   disabled,
 }: {
   onEdit?: () => void;
+  // Page-specific items listed right after Edit (e.g. Categories & Classes'
+  // "Add class" / "Remove from category").
+  extraActions?: { label: string; icon: LucideIcon; onClick: () => void }[];
   // Transactions only: save this row's category/class as a description rule.
   onCreateRule?: () => void;
   onImport?: () => void;
@@ -66,6 +71,12 @@ export function RowActionsMenu({
             Edit
           </DropdownMenuItem>
         )}
+        {extraActions.map(({ label, icon: Icon, onClick }) => (
+          <DropdownMenuItem key={label} onClick={onClick}>
+            <Icon />
+            {label}
+          </DropdownMenuItem>
+        ))}
         {onCreateRule && (
           <DropdownMenuItem onClick={onCreateRule}>
             <ListPlusIcon />
@@ -92,7 +103,7 @@ export function RowActionsMenu({
         )}
         {onDelete && (
           <>
-            {(onEdit || onCreateRule || onImport || onDeactivate || onActivate) && <DropdownMenuSeparator />}
+            {(onEdit || extraActions.length > 0 || onCreateRule || onImport || onDeactivate || onActivate) && <DropdownMenuSeparator />}
             <DropdownMenuItem variant="destructive" onClick={onDelete}>
               <Trash2Icon />
               Delete

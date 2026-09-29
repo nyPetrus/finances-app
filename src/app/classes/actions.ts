@@ -18,7 +18,7 @@ function friendlyError(message: string, code?: string) {
 }
 
 function revalidateClassPages() {
-  revalidatePath("/classes");
+  revalidatePath("/categories");
   revalidatePath("/search");
   revalidatePath("/descriptions");
   revalidatePath("/");
@@ -154,6 +154,62 @@ export async function updateClass(formData: FormData): Promise<ClassActionResult
       unlinkError.code === "23503"
         ? `Couldn't unlink "${categoryName}": transactions or description rules still use it with this class.`
         : unlinkError.message,
+    );
+  }
+
+  revalidateClassPages();
+  return { error: messages.length > 0 ? messages.join(" ") : null };
+}
+
+// Links an existing class to one more category (the Categories & Classes
+// tree's "Link existing class" item).
+export async function linkClassToCategory(classId: string, categoryId: string): Promise<ClassActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("category_classes")
+    .insert({ user_id: user.id, category_id: categoryId, class_id: classId });
+
+  revalidateClassPages();
+  if (error?.code === "23505") return { error: "This class is already in that category." };
+  return { error: error?.message ?? null };
+}
+
+// Removes (category, class) links without touching the classes themselves.
+// One at a time, like updateClass: the database refuses to remove a pair that
+// transactions or description rules still use, and that shouldn't block the
+// other removals.
+export async function unlinkClassesFromCategories(
+  links: { categoryId: string; classId: string }[],
+): Promise<ClassActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  let blocked = 0;
+  const messages: string[] = [];
+  for (const { categoryId, classId } of links) {
+    const { error } = await supabase
+      .from("category_classes")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("category_id", categoryId)
+      .eq("class_id", classId);
+    if (!error) continue;
+    if (error.code === "23503") blocked++;
+    else messages.push(error.message);
+  }
+  if (blocked > 0) {
+    messages.unshift(
+      blocked === 1
+        ? "Couldn't remove 1 class from its category: transactions or description rules still use that pair."
+        : `Couldn't remove ${blocked} classes from their categories: transactions or description rules still use those pairs.`,
     );
   }
 

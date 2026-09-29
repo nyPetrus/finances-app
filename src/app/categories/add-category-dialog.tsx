@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +10,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -24,8 +22,8 @@ import { IconSwatchPicker } from "@/components/icon-swatch-picker";
 import { CATEGORY_ICONS } from "@/lib/category-icons";
 import { addCategory } from "./actions";
 
-export function AddCategoryDialog() {
-  const [open, setOpen] = useState(false);
+// Opened from the Categories & Classes page's "+" menu, which owns `open`.
+export function AddCategoryDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const [error, setError] = useState<string | null>(null);
   const [icon, setIcon] = useState(CATEGORY_ICONS[0]);
 
@@ -33,16 +31,13 @@ export function AddCategoryDialog() {
     <Dialog
       open={open}
       onOpenChange={(next) => {
-        setOpen(next);
+        onOpenChange(next);
         if (next) {
           setError(null);
           setIcon(CATEGORY_ICONS[0]);
         }
       }}
     >
-      <DialogTrigger render={<Button variant="ghost" size="icon" aria-label="Add category" title="Add category" />}>
-        <PlusIcon />
-      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>New category</DialogTitle>
@@ -52,7 +47,7 @@ export function AddCategoryDialog() {
           action={async (formData) => {
             try {
               await addCategory(formData);
-              setOpen(false);
+              onOpenChange(false);
             } catch (err) {
               setError(err instanceof Error ? err.message : "Failed to create category.");
             }

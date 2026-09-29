@@ -11,7 +11,6 @@ import {
   LogOutIcon,
   MenuIcon,
   SearchIcon,
-  TagIcon,
   WalletIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,8 +21,7 @@ const links = [
   { href: "/", label: "Dashboard", icon: LayoutDashboardIcon },
   { href: "/budget", label: "Budget", icon: WalletIcon },
   { href: "/search", label: "Search", icon: SearchIcon },
-  { href: "/categories", label: "Categories", icon: BoxIcon },
-  { href: "/classes", label: "Classes", icon: TagIcon },
+  { href: "/categories", label: "Categories & Classes", icon: BoxIcon },
   { href: "/descriptions", label: "Descriptions", icon: FileTextIcon },
   { href: "/accounts", label: "Accounts", icon: LandmarkIcon },
 ];

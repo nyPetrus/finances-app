@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -9,27 +8,34 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import type { Category } from "@/lib/supabase/types";
 import { addClass } from "./actions";
 import { ClassFormFields } from "./class-form-fields";
 
-export function AddClassDialog({ categories }: { categories: Category[] }) {
-  const [open, setOpen] = useState(false);
+// Opened from the Categories & Classes page — its "+" menu (no category
+// preselected) or a category row's "Add class" (`defaultCategoryId`).
+export function AddClassDialog({
+  categories,
+  defaultCategoryId,
+  open,
+  onOpenChange,
+}: {
+  categories: Category[];
+  defaultCategoryId?: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const [error, setError] = useState<string | null>(null);
 
   return (
     <Dialog
       open={open}
       onOpenChange={(next) => {
-        setOpen(next);
+        onOpenChange(next);
         if (next) setError(null);
       }}
     >
-      <DialogTrigger render={<Button variant="ghost" size="icon" aria-label="Add class" title="Add class" />}>
-        <PlusIcon />
-      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>New class</DialogTitle>
@@ -40,14 +46,18 @@ export function AddClassDialog({ categories }: { categories: Category[] }) {
             try {
               const result = await addClass(formData);
               if (result.error) setError(result.error);
-              else setOpen(false);
+              else onOpenChange(false);
             } catch (err) {
               setError(err instanceof Error ? err.message : "Failed to create class.");
             }
           }}
           className="flex flex-col gap-4"
         >
-          <ClassFormFields categories={categories} autoFocus />
+          <ClassFormFields
+            categories={categories}
+            defaultCategoryIds={defaultCategoryId ? [defaultCategoryId] : undefined}
+            autoFocus
+          />
           {error && <p className="text-sm text-destructive">{error}</p>}
           <DialogFooter>
             <Button type="submit" form="add-class-form">
