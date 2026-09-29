@@ -39,7 +39,8 @@ import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
 import { useInactiveFilter } from "@/hooks/use-inactive-filter";
 import type { Category } from "@/lib/supabase/types";
-import { TRANSACTION_TYPE_SYMBOLS } from "@/lib/transaction-type";
+import { cn } from "@/lib/utils";
+import { TRANSACTION_TYPE_SYMBOL_ROTATION, TRANSACTION_TYPE_SYMBOLS } from "@/lib/transaction-type";
 import { deleteCategories, setCategoriesActive, updateCategory } from "./actions";
 import { AddCategoryDialog } from "./add-category-dialog";
 import { type SortKey } from "./sort";
@@ -79,7 +80,13 @@ function renderCell(category: Category, key: SortKey) {
       // table-page-conventions). Same size/weight as the Dashboard
       // dynamic table's Type symbol.
       return (
-        <span title={kindLabels[category.kind]} className="text-base font-bold text-muted-foreground">
+        <span
+          title={kindLabels[category.kind]}
+          className={cn(
+            "inline-block text-base font-bold text-muted-foreground",
+            TRANSACTION_TYPE_SYMBOL_ROTATION[category.kind],
+          )}
+        >
           {TRANSACTION_TYPE_SYMBOLS[category.kind]}
         </span>
       );

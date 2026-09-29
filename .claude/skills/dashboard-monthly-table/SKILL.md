@@ -141,7 +141,7 @@ table is meant if it's ever unclear again.
 
 - **Type, Category, and Gordura rows show only their icon/symbol, not
   their text name.** A Type row's `row.symbol` (the arrow from
-  `TRANSACTION_TYPE_SYMBOLS` — `↑`/`↓`/`➔` for income/expense/transfer), a
+  `TRANSACTION_TYPE_SYMBOLS` — `➔` rotated up/down/right via `TRANSACTION_TYPE_SYMBOL_ROTATION` for income/expense/transfer — one glyph so all three share the same heavy weight), a
   Category row's `row.icon` (`category.icon`, rendered via
   `CategoryIcon`), and a Gordura row's `row.symbol` (from `GORDURA_SYMBOLS`
   in `@/lib/classification.ts`, shared app-wide — `▢` for Baixa, `△` for

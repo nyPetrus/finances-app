@@ -403,7 +403,7 @@ list page instead of inventing a fresh layout.
   | Value | Symbol | Defined in | Original table |
   |---|---|---|---|
   | Category | its icon (`CategoryIcon`) | `categories.icon` | Categories (`categories-table.tsx`: icon **and** name) |
-  | Type (income/expense/transfer) | `↑` `↓` `➔` | `TRANSACTION_TYPE_SYMBOLS`, `@/lib/transaction-type.ts` | none |
+  | Type (income/expense/transfer) | `➔` rotated up / down / right (same glyph, so identical weight — `↑`/`↓` render thinner) | `TRANSACTION_TYPE_SYMBOLS` + `TRANSACTION_TYPE_SYMBOL_ROTATION` (wrapper must be inline-block/flex), `@/lib/transaction-type.ts` | none |
   | Gordura (low/high) | `▢` `△` | `GORDURA_SYMBOLS`, `@/lib/classification.ts` | none |
   Accounts, Classes and Descriptions have no symbols, so they always show
   their names. A value with no symbol of its own (e.g. the "Uncategorized"

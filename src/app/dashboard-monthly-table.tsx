@@ -3,6 +3,7 @@
 import { Fragment, useState } from "react";
 import { CategoryIcon } from "@/components/category-icon";
 import { cn } from "@/lib/utils";
+import { TRANSACTION_TYPE_SYMBOL_ROTATION } from "@/lib/transaction-type";
 import type { MonthlyRow, MonthlySelection } from "./dashboard-monthly-breakdown";
 
 const MONTH_LABELS = [
@@ -119,7 +120,10 @@ function TreeRows({
                   )}
                   {row.symbol && (
                     <span
-                      className="inline-flex w-4 shrink-0 justify-center text-base font-bold text-muted-foreground"
+                      className={cn(
+                        "inline-flex w-4 shrink-0 justify-center text-base font-bold text-muted-foreground",
+                        row.level === "type" && row.kind !== "uncategorized" && TRANSACTION_TYPE_SYMBOL_ROTATION[row.kind],
+                      )}
                       aria-hidden="true"
                     >
                       {row.symbol}
