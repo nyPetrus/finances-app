@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useState, useTransition } from "react";
-import { BoxIcon, HandFistIcon, LinkIcon, PlusIcon, TagIcon, UnlinkIcon, type LucideIcon } from "lucide-react";
+import { BoxIcon, LinkIcon, LockOpenIcon, PlusIcon, TagIcon, UnlinkIcon, type LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -88,7 +88,7 @@ const COLUMNS: {
   { key: "name", label: "Name", cellClassName: "max-w-96 font-medium", headerIcon: BoxIcon },
   { key: "type", label: "Type", cellClassName: "text-center" },
   { key: "classes", label: "Classes", cellClassName: "text-center", headerIcon: TagIcon, headerIconOnly: true },
-  { key: "autonomy", label: "Autonomy", cellClassName: "text-center", headerIcon: HandFistIcon, headerIconOnly: true },
+  { key: "autonomy", label: "Autonomy", cellClassName: "text-center", headerIcon: LockOpenIcon, headerIconOnly: true },
 ];
 
 const DEFAULT_COLUMN_ORDER = COLUMNS.map((column) => column.key);

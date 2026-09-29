@@ -244,9 +244,11 @@ list page instead of inventing a fresh layout.
   tables' **Amount** column is also icon-only, `BanknoteIcon` — per
   explicit user request ("a symbol that represents money"; a banknote, not
   `$`, since the app is in BRL). Their **Date** column is likewise
-  icon-only, `CalendarIcon`, per explicit user request. The Classes
-  table's **Autonomy** column is icon-only too, `HandFistIcon` (a closed
-  hand), per explicit user request. These are rendered via the
+  icon-only, `CalendarIcon`, per explicit user request. The Categories &
+  Classes table's **Autonomy** column is icon-only too, `LockOpenIcon`
+  (an open padlock: "free / not locked in"), per explicit user request —
+  it replaced `HandFistIcon` (a closed fist), which read as force rather
+  than freedom. These are rendered via the
   shared `<ColumnHeaderIcon icon={column.headerIcon} label={column.label}
   iconOnly={column.headerIconOnly} />` (`src/components/column-header-icon.tsx`)
   as the header cell's children instead of `column.label` directly. The
