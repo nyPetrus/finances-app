@@ -4,8 +4,6 @@ import { useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
-  ArchiveIcon,
-  ArchiveRestoreIcon,
   BanknoteIcon,
   BoxIcon,
   CalendarIcon,
@@ -326,36 +324,20 @@ export function DashboardTransactionsTable({
               Create an account first
             </Button>
           )}
-          {selectedTransactions.some((transaction) => !transaction.is_hidden) && (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              disabled={isTogglingActive}
-              onClick={() => setActive(Array.from(selected), false)}
-              aria-label="Deactivate"
-              title="Deactivate"
-            >
-              <ArchiveIcon />
-            </Button>
-          )}
-          {selectedTransactions.some((transaction) => transaction.is_hidden) && (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              disabled={isTogglingActive}
-              onClick={() => setActive(Array.from(selected), true)}
-              aria-label="Activate"
-              title="Activate"
-            >
-              <ArchiveRestoreIcon />
-            </Button>
-          )}
-          {soleSelectedRow && (
+          {selected.size > 0 && (
             <RowActionsMenu
-              onEdit={() => openEditDialog(soleSelectedRow)}
-              onSync={soleSelectedRow.category_id ? () => handleSyncRow(soleSelectedRow) : undefined}
-              onToggleActive={() => setActive([soleSelectedRow.id], soleSelectedRow.is_hidden)}
-              isActive={!soleSelectedRow.is_hidden}
+              onEdit={soleSelectedRow ? () => openEditDialog(soleSelectedRow) : undefined}
+              onCreateRule={soleSelectedRow?.category_id ? () => handleSyncRow(soleSelectedRow) : undefined}
+              onDeactivate={
+                selectedTransactions.some((transaction) => !transaction.is_hidden)
+                  ? () => setActive(Array.from(selected), false)
+                  : undefined
+              }
+              onActivate={
+                selectedTransactions.some((transaction) => transaction.is_hidden)
+                  ? () => setActive(Array.from(selected), true)
+                  : undefined
+              }
               disabled={isSyncing || isTogglingActive}
             />
           )}

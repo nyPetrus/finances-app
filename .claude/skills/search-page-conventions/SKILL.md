@@ -203,7 +203,7 @@ Added per explicit user request.
   description" → `AddMappingDialog` handoff, see
   `transaction-description-rules`), same toolbar shape and
   `AddTransactionDialog`/"Create an account first" left-slot swap from
-  `table-page-conventions`, plus the Sync descriptions `SyncButton`
+  `table-page-conventions`, plus the "Apply rules" `SyncButton`
   (`descriptions/sync-button.tsx`) next to Add — moved here from the old
   Transactions page per explicit user request. `sortHref()` preserves
   the full current query string (all filters). When a transaction-table
@@ -213,9 +213,10 @@ Added per explicit user request.
 - **Batch-editing selected transactions' Category/Class/Autonomy is a
   Search-only feature** — not added to the
   Dashboard's embedded table, unlike most of this table's other
-  functionality (see the previous bullet). The "Edit selected"
-  `PencilIcon` button in the toolbar (next to Delete, same
-  `selected.size > 0` visibility) opens `BulkEditDialog`
+  functionality (see the previous bullet). The "⋮" menu's Edit item, when
+  two or more rows are selected (one row opens the full edit dialog
+  instead — see `table-page-conventions`'s `RowActionsMenu` bullet; there
+  is no separate toolbar "Edit selected" button any more), opens `BulkEditDialog`
   (`search/bulk-edit-dialog.tsx`), which posts to `bulkUpdateClassification`
   in `transactions/actions.ts`. **Each of the three fields defaults to "No
   change" and is a real, separately-selectable option** (not implied by

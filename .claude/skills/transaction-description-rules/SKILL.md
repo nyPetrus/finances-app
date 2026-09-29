@@ -19,7 +19,7 @@ description: Use when writing or touching code that inserts/updates a transactio
   `contains`, longest pattern wins within a tier, each transaction claimed
   by at most one mapping). It applies the *existing* `mapped_descriptions`
   rules to every transaction with `category_id is null` — surfaced as the
-  "Sync" button in `DescriptionsTable`'s own toolbar and on Transactions'
+  "Apply rules" button in `DescriptionsTable`'s own toolbar and on Search's
   own toolbar (both reusing the same `SyncButton` component — see
   `table-page-conventions`), plus `AddMappingDialog`'s "Create and sort
   unmapped" and `DescriptionsTable`'s edit dialog's "Sort unmapped" (see

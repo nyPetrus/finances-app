@@ -3,9 +3,10 @@
 import {
   ArchiveIcon,
   ArchiveRestoreIcon,
+  ListPlusIcon,
   MoreVerticalIcon,
   PencilIcon,
-  RefreshCwIcon,
+  Trash2Icon,
   UploadIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,27 +14,34 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-// Rendered in a table's toolbar (not per row) only while exactly one row is
-// checked — every handler acts on that `soleSelectedRow`.
+// The single home for every action on the selected rows (per explicit user
+// request: no toolbar button may duplicate one of these, and Delete /
+// Deactivate live only here). Rendered in a table's toolbar whenever one or
+// more rows are checked; each table passes only the handlers that apply to
+// the current selection (e.g. `onEdit` only for a single row, `onDeactivate`
+// only if some selected row is active), and an omitted handler hides its
+// item. Delete sits last, below a separator, styled destructive — the
+// caller still confirms before deleting.
 export function RowActionsMenu({
   onEdit,
-  onSync,
+  onCreateRule,
   onImport,
-  onToggleActive,
-  isActive,
-  syncLabel = "Sync",
+  onDeactivate,
+  onActivate,
+  onDelete,
   disabled,
 }: {
-  onEdit: () => void;
-  onSync?: () => void;
+  onEdit?: () => void;
+  // Transactions only: save this row's category/class as a description rule.
+  onCreateRule?: () => void;
   onImport?: () => void;
-  // Deactivate/Activate item, for rows that can be hidden instead of deleted.
-  onToggleActive?: () => void;
-  isActive?: boolean;
-  syncLabel?: string;
+  onDeactivate?: () => void;
+  onActivate?: () => void;
+  onDelete?: () => void;
   disabled?: boolean;
 }) {
   return (
@@ -43,7 +51,7 @@ export function RowActionsMenu({
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label="Actions for selected row"
+            aria-label="Actions for selected rows"
             title="Actions"
             disabled={disabled}
           />
@@ -52,14 +60,16 @@ export function RowActionsMenu({
         <MoreVerticalIcon />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
-        <DropdownMenuItem onClick={onEdit}>
-          <PencilIcon />
-          Edit
-        </DropdownMenuItem>
-        {onSync && (
-          <DropdownMenuItem onClick={onSync}>
-            <RefreshCwIcon />
-            {syncLabel}
+        {onEdit && (
+          <DropdownMenuItem onClick={onEdit}>
+            <PencilIcon />
+            Edit
+          </DropdownMenuItem>
+        )}
+        {onCreateRule && (
+          <DropdownMenuItem onClick={onCreateRule}>
+            <ListPlusIcon />
+            Create rule
           </DropdownMenuItem>
         )}
         {onImport && (
@@ -68,11 +78,26 @@ export function RowActionsMenu({
             Import
           </DropdownMenuItem>
         )}
-        {onToggleActive && (
-          <DropdownMenuItem onClick={onToggleActive}>
-            {isActive ? <ArchiveIcon /> : <ArchiveRestoreIcon />}
-            {isActive ? "Deactivate" : "Activate"}
+        {onDeactivate && (
+          <DropdownMenuItem onClick={onDeactivate}>
+            <ArchiveIcon />
+            Deactivate
           </DropdownMenuItem>
+        )}
+        {onActivate && (
+          <DropdownMenuItem onClick={onActivate}>
+            <ArchiveRestoreIcon />
+            Activate
+          </DropdownMenuItem>
+        )}
+        {onDelete && (
+          <>
+            {(onEdit || onCreateRule || onImport || onDeactivate || onActivate) && <DropdownMenuSeparator />}
+            <DropdownMenuItem variant="destructive" onClick={onDelete}>
+              <Trash2Icon />
+              Delete
+            </DropdownMenuItem>
+          </>
         )}
       </DropdownMenuContent>
     </DropdownMenu>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { RefreshCwIcon } from "lucide-react";
+import { WandSparklesIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { syncMappedDescriptions } from "./actions";
 
@@ -23,10 +23,10 @@ export function SyncButton() {
             setMessage(count === 1 ? "1 transaction categorized." : `${count} transactions categorized.`);
           });
         }}
-        aria-label="Sync"
-        title="Sync"
+        aria-label="Apply rules"
+        title="Apply rules"
       >
-        <RefreshCwIcon className={pending ? "animate-spin" : undefined} />
+        <WandSparklesIcon className={pending ? "animate-pulse" : undefined} />
       </Button>
     </div>
   );

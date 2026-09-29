@@ -1,6 +1,6 @@
 ---
 name: table-page-conventions
-description: Use when adding a new list-style page or touching an existing one (Search's results table, Categories, Classes, Descriptions, Accounts) — table markup, row selection, the two-group toolbar (left: Add-or-"N selected" swap, table-specific buttons, "⋮" menu; right: Delete/Deactivate depending on the table, then Columns), the toolbar "⋮" actions menu for the single checked row (Edit/Sync/Toggle active — no Delete; no per-row ⋮ column), column show/hide & reorder, column header icons, sorting, add/edit dialogs, category/class chip rendering, the app-wide symbol-display rule (a value's name only in its original table, elsewhere just its symbol — category icon, type ↑↓➔, autonomy ▢△), which tables can hard-delete a row at all (Categories/Classes/Descriptions only — Search's transactions and Accounts are deactivate-only, no delete path at all, per explicit user request for safety), or bulk mutations. Encodes this app's shared list-page architecture so new pages match instead of inventing a fresh layout.
+description: Use when adding a new list-style page or touching an existing one (Search's results table, Categories, Classes, Descriptions, Accounts) — table markup, row selection, the two-group toolbar (left: Add-or-"N selected" swap, page-wide buttons like "Apply rules"/Accounts' Sync, then "⋮"; right: Show inactive, Columns), the toolbar "⋮" menu that holds every action on the selected rows — one or many — (Edit, Create rule, Import, Deactivate/Activate, Delete; no toolbar button may duplicate one, no per-row ⋮ column), column show/hide & reorder, column header icons, sorting, add/edit dialogs, category/class chip rendering, the app-wide symbol-display rule (a value's name only in its original table, elsewhere just its symbol — category icon, type ↑↓➔, autonomy ▢△), which tables can hard-delete a row at all (Categories/Classes/Descriptions only, via "⋮" — Search's transactions and Accounts are deactivate-only, no delete path at all, per explicit user request for safety), or bulk mutations. Encodes this app's shared list-page architecture so new pages match instead of inventing a fresh layout.
 ---
 
 # Table page conventions
@@ -87,168 +87,111 @@ list page instead of inventing a fresh layout.
   **`pointer-coarse:opacity-100` is load-bearing**: phones can't hover, and
   the checkbox is now the only way to reach a row's Edit (see the next
   bullet), so it must always show on touch devices.
-- **Row actions live in a "⋮" menu in the toolbar, acting on the single
-  checked row — there is no per-row "⋮" column any more.** Removed per
-  explicit user request (the per-row column cost a whole column of width
-  on every table). `RowActionsMenu` (`src/components/row-actions-menu.tsx`)
-  is a `DropdownMenu` (Base UI, same primitives `ColumnsMenu` uses) whose
+- **Every action on the selected rows lives in one "⋮" menu in the
+  toolbar; no toolbar button may duplicate it.** Set per explicit user
+  request ("on each page, no buttons with the same function"; "all recycle
+  bins and deactivate buttons must be in the three dots button").
+  **The rule: the toolbar holds page-wide actions, "⋮" holds selection
+  actions.** There is no per-row "⋮" column either (removed earlier, per
+  explicit user request, since it cost a whole column of width).
+  `RowActionsMenu` (`src/components/row-actions-menu.tsx`) is a
+  `DropdownMenu` (Base UI, same primitives `ColumnsMenu` uses) whose
   trigger is `<Button variant="ghost" size="icon-sm" aria-label="Actions
-  for selected row" title="Actions"><MoreVerticalIcon /></Button>`. Each
-  table renders `{soleSelectedRow && <RowActionsMenu onEdit={...}
-  onSync={...} disabled={isSyncing || isDeleting} />}` in the toolbar's
-  left group, **last in that group** — so it only exists while exactly one
-  row is checked (with 2+ checked, only the bulk buttons show), and every
-  handler closes over `soleSelectedRow`:
-  - `onEdit` sets an `editing<X>: <Row> | null` state (e.g.
-    `editingAccount`) from `soleSelectedRow`; the dialog keys off that
-    state (see below), so it survives the selection changing underneath.
-  - **`RowActionsMenu` has no `onDelete` prop and no Delete item at all —
-    on the tables that can hard-delete a row at all (Categories/Classes/
-    Descriptions), the *only* way to do it is the toolbar's bulk Delete
-    button (below), which always requires an explicit selection first,
-    rather than a single accidental click in an actions menu.** Don't
-    reintroduce a menu delete path without a fresh ask; route any future
-    single-row delete through the existing bulk action with a one-element
-    array instead, called from the Delete button, not from the actions
-    menu.
-    **Why:** removed per explicit user request, for security. Every
-    table's own `handleDeleteRow(row)` (which used to confirm + call the
-    delete action with a one-element array, e.g.
-    `deleteAccounts([account.id])`) was deleted along with its wiring.
-    **Search's transactions and Accounts went further and lost the bulk
-    Delete button too — they have no delete path at all any more, only
-    `onToggleActive`/`isActive`** (same as Categories/Classes always had),
-    backed by `setTransactionsActive`/`setAccountsActive` in
-    `transactions/actions.ts`/`accounts/actions.ts` (Accounts needed a new
-    `accounts.is_active` column for this, migration
-    `0020_accounts_is_active.sql`; Search's transactions already had an
-    unused `is_hidden` column that this repurposed — presented in the UI
-    with the same "Deactivate"/"Activate" vocabulary as everywhere else,
-    even though the underlying column is named `is_hidden` not
-    `is_active`). `deleteAccounts`/`deleteTransactions` were deleted
-    entirely, not just unwired — don't reintroduce either without a fresh
-    ask.
-  - `onSync` is only passed on tables that have a sync concept at all
-    (Accounts, Search's transaction table — and its Dashboard-embedded
-    copy, `dashboard-transactions-table.tsx`, see `dashboard-conventions`)
-    and only when the selected row is eligible (Accounts:
-    `is_automatic && pluggy_item_id`; transactions: `category_id`) —
-    passing `undefined` omits the Sync item from the menu entirely. It calls
-    the existing single-item sync path (`syncPluggyItem`/
-    `syncDescriptionsFromTransactions` scoped to that one id), inside the
-    existing `startSync` transition.
-  Menu item order is Edit, Sync (if present), Import (if present,
-  Accounts only), Toggle active (if present) — no trailing separator, since
-  there's no destructive item after it any more. Items carry their own icon
-  + visible text label, so they don't need `title`.
+  for selected rows" title="Actions"><MoreVerticalIcon /></Button>`. Each
+  table renders `{selected.size > 0 && <RowActionsMenu ... />}` **last in
+  the toolbar's left group** — so it exists whenever one *or more* rows
+  are checked. Every prop is an optional handler, and an omitted handler
+  hides its item, so the caller passes only what applies to the current
+  selection:
+  - `onEdit` — single row only (`soleSelectedRow ? ... : undefined`),
+    sets an `editing<X>: <Row> | null` state from `soleSelectedRow`.
+    **Exception: Search** passes `onEdit` for any selection — one row opens
+    the full edit dialog, several open the batch Category/Class/Autonomy
+    editor (`bulk-edit-dialog.tsx`, `setBulkEditOpen(true)`). There used to
+    be a separate toolbar "Edit selected" pencil for that; it was folded in
+    here so there's one Edit.
+  - `onCreateRule` — transaction tables only (Search and its Dashboard
+    copy), single row with a `category_id`. Calls
+    `syncDescriptionsFromTransactions` scoped to that row: it *creates or
+    updates* a `mapped_descriptions` rule from the row's category/class,
+    then applies the rule set. Labelled "Create rule" (`ListPlusIcon`) — it
+    used to be a second "Sync" item, renamed so it can't be mistaken for
+    the toolbar's `SyncButton` (below).
+  - `onImport` — Accounts only, single row.
+  - `onDeactivate` / `onActivate` — any selection size, each passed only
+    if some selected row is currently active / inactive
+    (`selectedRows.some(...)`), calling the table's bulk
+    `set<X>Active(ids, bool)` with `Array.from(selected)`. Search's
+    transactions use `is_hidden` under the hood but the UI still says
+    Deactivate/Activate.
+  - `onDelete` — only on the tables that can hard-delete at all
+    (Categories, Classes, Descriptions); calls the table's existing
+    `handleDelete`, which confirms via `window.confirm(...)` with the count
+    before calling the bulk delete action. Rendered **last, below a
+    `DropdownMenuSeparator`, as `variant="destructive"`** (red) — that
+    styling plus the confirm is what keeps accidental deletes unlikely now
+    that there's no separate recycle-bin button.
+    **History:** Delete used to be *kept out* of this menu, as a toolbar
+    recycle bin, for safety — per an earlier user request. The user later
+    asked for every recycle bin to move into "⋮", which replaced that rule.
+    **Search's transactions and Accounts still have no delete path at
+    all** — deactivate-only (`accounts.is_active`, migration
+    `0020_accounts_is_active.sql`; transactions reuse `is_hidden`).
+    `deleteAccounts`/`deleteTransactions` were deleted entirely — don't
+    reintroduce either without a fresh ask.
+  Menu item order: Edit, Create rule, Import, Deactivate, Activate,
+  separator, Delete. Items carry their own icon + visible text label, so
+  they don't need `title`.
   **The edit dialog is keyed off that `editing<X>` state, not
-  `soleSelectedRow` directly** — `soleSelectedRow` only decides whether the
-  menu exists and which row `onEdit` copies into `editing<X>`. The dialog's
-  `open` is `editing<X> !== null`, `onOpenChange` and a successful save both
-  `setEditing<X>(null)`; guard its render on `{editing<X> && <Dialog ...>}`
-  so it has data to prefill from and unmounts cleanly once closed.
+  `soleSelectedRow` directly** — `soleSelectedRow` only decides whether
+  `onEdit` is offered and which row it copies into `editing<X>`. The
+  dialog's `open` is `editing<X> !== null`, `onOpenChange` and a successful
+  save both `setEditing<X>(null)`; guard its render on `{editing<X> &&
+  <Dialog ...>}` so it has data to prefill from and unmounts cleanly once
+  closed.
 - **The toolbar above the table has two button groups, left and right,
   spread apart by an outer `<div className="flex items-center
-  justify-between">`.** The **right** group is its own `<div
-  className="flex items-center gap-2">`, in this order: the "Show/Hide
-  inactive" toggle (every table has one now — Categories/Classes/Accounts/
-  Search's transactions all support deactivating a row, so all four render
-  it whenever `inactiveCount > 0`; Descriptions doesn't, since mappings
-  have no active/inactive concept), then **Delete** (the recycle bin, see
-  item 3 below) **only on the tables that can hard-delete at all —
-  Categories, Classes, Descriptions — never on Search's transactions or
-  Accounts**, then `ColumnsMenu` last, at the far right — the outer
-  `justify-between` is what pushes the group right while keeping it
-  vertically aligned with the left group on the same row. **Delete moved
-  here from the end of the left group per explicit user request** ("put
-  the recycle bin at the right side above the table") — don't move it back
-  left, on the tables that still have it. Everything else lives
-  in the **left** group (`<div className="flex items-center gap-2">`,
-  always rendered — this is what keeps "+" reachable even when the row
-  list is empty, see below), in this order:
+  justify-between">`.** The **right** group (`<div className="flex
+  items-center gap-2">`) holds only the "Show/Hide inactive" toggle
+  (every table except Descriptions, rendered whenever `inactiveCount > 0`)
+  and then `ColumnsMenu`, at the far right. **No Delete or
+  Deactivate/Activate button lives in either group any more** — those are
+  "⋮" items (see above). The **left** group (`<div className="flex
+  items-center gap-2">`, always rendered — this is what keeps "+"
+  reachable even when the row list is empty, see below) holds, in order:
   1. **Either the page's "Add" dialog trigger, or a `"{selected.size}
      selected"` label in that exact same slot** — `{selected.size > 0 ? (
      <span className="text-sm text-muted-foreground">{selected.size}
      selected</span> ) : ( <Add*Dialog /> )}`. Selecting a row swaps "+" out
      for the count, in place, rather than showing both side by side.
-     Transactions nests one more level here: when nothing's selected it's
-     still choosing between `AddTransactionDialog` and the "Create an
-     account first" link button depending on `accounts.length`, exactly as
-     before — that inner choice is unrelated to the selection swap, it only
-     applies to the "nothing selected" branch.
-  2. **Any table-specific buttons**, unaffected by selection — currently
-     Accounts' own bulk "Sync" (icon-only `RefreshCwIcon`,
-     `variant="outline"` `size="icon-sm"`, spinning via
-     `className={isSyncing ? "animate-spin" : undefined}` while pending,
-     driven by `selected`/`selectedRows` — Pluggy bank sync is genuinely a
-     multi-account bulk operation; **only mounted while the selection
-     includes at least one bank-connected account** (`is_automatic &&
-     pluggy_item_id`), for one row or many — not rendered-but-disabled —
-     per explicit user request), and Descriptions' own `SyncButton`
-     (applies existing `mapped_descriptions` rules to every uncategorized
-     transaction, see `transaction-description-rules`), reused verbatim on
-     Transactions too, right after the "+"/count slot — see below for how
-     this coexists with the per-row Sync that was already there.
-     **Why no separate "Connect bank" button here:** it used to be a
-     separate toolbar button but is now reachable only via the "+" menu,
-     see the "Accounts' '+' is a menu" bullet below. The `SyncButton` reuse
-     on Transactions was per explicit user request.
-  3. **"Delete" — rendered in the *right* group (just before
-     `ColumnsMenu`, see above), not here, and only on Categories/Classes/
-     Descriptions — and only rendered at all when `selected.size > 0`.**
-     `{selected.size > 0 && <Button ...>Trash2Icon</Button>}`. Not just
-     disabled while nothing's selected, the button doesn't exist in the
-     DOM until there's a selection, so there's nothing to accidentally
-     click. Stays `Trash2Icon`, `variant="ghost"` `size="icon-sm"`, no red
-     fill/destructive styling; `disabled` guards the in-flight-mutation
-     case (`isDeleting`, plus whatever other transition that table's
-     toolbar already tracks) since the `selected.size === 0` guard is
-     redundant once the button only mounts when there's a selection.
-     Confirms via `window.confirm(...)` before calling the bulk delete
-     action, same as always. **Search's transactions and Accounts have no
-     Delete button at all** — their right group has only the "Show
-     inactive" toggle and `ColumnsMenu`; their left group has Deactivate/
-     Activate bulk buttons instead (`ArchiveIcon`/`ArchiveRestoreIcon`,
-     same as Categories/Classes' left-group toggle buttons), shown
-     conditionally on `selectedRows.some((row) => row.is_active)` /
-     `.some((row) => !row.is_active)` exactly like Categories/Classes
-     already did. **Exception: Accounts has no toolbar Deactivate button**
-     (removed per explicit user request) — deactivating an account is only
-     via the "⋮" menu's toggle-active item, one row at a time; its bulk
-     Activate button is still there.
-     **Why:** per explicit user request, for security — the actions
-     menu's own Delete item was removed for exactly this reason, see the
-     `RowActionsMenu` bullet above, and Search's transactions/Accounts
-     went one step further and dropped the toolbar Delete too.
-  The "⋮" `RowActionsMenu` (only while exactly one row is checked) sits
-  last in the left group, after the table-specific buttons. The
-  Dashboard's embedded table (`dashboard-transactions-table.tsx`, a
-  different toolbar shape: Columns/Add/⋮ on the left, "N selected" on the
-  right) has no Delete either now — its right group has the "Show
-  inactive" toggle, and its left group has the same Deactivate/Activate
-  buttons as `search-table.tsx`.
-  **The transaction tables have two different "Sync" affordances now, doing two
-  different things — don't conflate them.** The `RowActionsMenu`'s
-  `onSync` item (on both `search/search-table.tsx` and its
-  Dashboard-embedded copy) still calls `syncDescriptionsFromTransactions`
-  scoped to the one selected row — it *creates/updates* a `mapped_descriptions`
-  rule from that row's own (already-set) category/class, then applies the
-  full rule set to matching uncategorized transactions; it needs a
-  category already on that row to have anything to save. The toolbar's
-  `SyncButton` (see above) instead just *applies the existing rule set* —
-  `syncMappedDescriptions()`, no new rule created — to every uncategorized
-  transaction in the whole account, not scoped to the visible month or any
-  selection. Don't merge the two or remove either without checking first;
-  they're both still doing distinct, real work.
-  **Why both exist:** this is the same button/behavior Descriptions' own
-  page already has, reused here per explicit user request after a stretch
-  of this toolbar deliberately *not* having a bulk Sync (the removal
-  reasoning — "inherently per-transaction, the per-row menu already covers
-  it" — no longer holds now that there's a genuinely bulk, no-selection-
-  needed sync operation to expose).
-  There is no standalone "Edit" button in the toolbar
-  anywhere — Edit lives in the "⋮" actions menu. Icon-only toolbar buttons need `aria-label` *and* `title` set to
-  the plain action word ("Columns", "Sync", "Delete") for the same reason
+     Transactions nests one more level here: when nothing's selected it
+     chooses between `AddTransactionDialog` and the "Create an account
+     first" link button depending on `accounts.length`.
+  2. **Page-wide buttons** —
+     - `SyncButton` (`src/app/descriptions/sync-button.tsx`) on
+       Descriptions and Search: **"Apply rules"** (`WandSparklesIcon`,
+       pulses while pending — renamed from "Sync"/`RefreshCwIcon`),
+       `syncMappedDescriptions()`, applies the existing rule set to every
+       uncategorized transaction in the account, not scoped to any
+       selection. Don't merge it with the "⋮" "Create rule" item — they do
+       different work (one applies rules, the other creates one).
+     - **Accounts' bulk "Sync"** (icon-only `RefreshCwIcon`,
+       `variant="outline"` `size="icon-sm"`, spinning while pending) — the
+       one deliberate exception to "selection actions live in ⋮": per
+       explicit user request it stays a visible toolbar button, **mounted
+       only while the selection includes at least one bank-connected
+       account** (`is_automatic && pluggy_item_id`), one row or many, and
+       syncs each distinct Pluggy item among them. Because of that, Accounts'
+       "⋮" deliberately has *no* Sync item.
+     **Why no separate "Connect bank" button:** reachable only via the
+     Accounts "+" menu, see the "Accounts' '+' is a menu" bullet below.
+  3. **The "⋮" `RowActionsMenu`**, last, whenever `selected.size > 0`.
+  The Dashboard's embedded table (`dashboard-transactions-table.tsx`) has
+  a different toolbar shape — Columns/Add/⋮ on the left, "N selected" and
+  "Show inactive" on the right — but the same "⋮" contents as
+  `search-table.tsx` minus batch edit (its Edit is single-row only).
+  Icon-only toolbar buttons need `aria-label` *and* `title` set to the
+  plain action word ("Columns", "Sync", "Apply rules") for the same reason
   "Add" buttons do (see below) — `ColumnsMenu`'s trigger needs this pair
   too, it's easy to forget since it has no visible label either.
   **The left toolbar group (and thus "+") must render even when the row

@@ -5,13 +5,10 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
-  ArchiveIcon,
-  ArchiveRestoreIcon,
   BanknoteIcon,
   BoxIcon,
   CalendarIcon,
   LandmarkIcon,
-  PencilIcon,
   TagIcon,
   type LucideIcon,
 } from "lucide-react";
@@ -306,46 +303,21 @@ export function SearchTable({
           )}
           <SyncButton />
           {selected.size > 0 && (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => setBulkEditOpen(true)}
-              aria-label="Edit selected"
-              title="Edit selected"
-            >
-              <PencilIcon />
-            </Button>
-          )}
-          {selectedTransactions.some((transaction) => !transaction.is_hidden) && (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              disabled={isTogglingActive}
-              onClick={() => setActive(Array.from(selected), false)}
-              aria-label="Deactivate"
-              title="Deactivate"
-            >
-              <ArchiveIcon />
-            </Button>
-          )}
-          {selectedTransactions.some((transaction) => transaction.is_hidden) && (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              disabled={isTogglingActive}
-              onClick={() => setActive(Array.from(selected), true)}
-              aria-label="Activate"
-              title="Activate"
-            >
-              <ArchiveRestoreIcon />
-            </Button>
-          )}
-          {soleSelectedRow && (
             <RowActionsMenu
-              onEdit={() => openEditDialog(soleSelectedRow)}
-              onSync={soleSelectedRow.category_id ? () => handleSyncRow(soleSelectedRow) : undefined}
-              onToggleActive={() => setActive([soleSelectedRow.id], soleSelectedRow.is_hidden)}
-              isActive={!soleSelectedRow.is_hidden}
+              // One row opens the full edit dialog; several open the batch
+              // Category/Class/Autonomy editor — one Edit either way.
+              onEdit={soleSelectedRow ? () => openEditDialog(soleSelectedRow) : () => setBulkEditOpen(true)}
+              onCreateRule={soleSelectedRow?.category_id ? () => handleSyncRow(soleSelectedRow) : undefined}
+              onDeactivate={
+                selectedTransactions.some((transaction) => !transaction.is_hidden)
+                  ? () => setActive(Array.from(selected), false)
+                  : undefined
+              }
+              onActivate={
+                selectedTransactions.some((transaction) => transaction.is_hidden)
+                  ? () => setActive(Array.from(selected), true)
+                  : undefined
+              }
               disabled={isSyncing || isTogglingActive}
             />
           )}

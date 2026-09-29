@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { BoxIcon, TagIcon, Trash2Icon, type LucideIcon } from "lucide-react";
+import { BoxIcon, TagIcon, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -215,26 +215,15 @@ export function DescriptionsTable({
             <AddMappingDialog categories={categories} classes={classes} />
           )}
           <SyncButton />
-          {soleSelectedRow && (
+          {selected.size > 0 && (
             <RowActionsMenu
-              onEdit={() => openEditDialog(soleSelectedRow)}
+              onEdit={soleSelectedRow ? () => openEditDialog(soleSelectedRow) : undefined}
+              onDelete={handleDelete}
               disabled={isDeleting}
             />
           )}
         </div>
         <div className="flex items-center gap-2">
-          {selected.size > 0 && (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              disabled={isDeleting}
-              onClick={handleDelete}
-              aria-label="Delete"
-              title="Delete"
-            >
-              <Trash2Icon />
-            </Button>
-          )}
           <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />
         </div>
       </div>

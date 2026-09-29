@@ -1,15 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import {
-  ArchiveIcon,
-  ArchiveRestoreIcon,
-  BoxIcon,
-  HandFistIcon,
-  TagIcon,
-  Trash2Icon,
-  type LucideIcon,
-} from "lucide-react";
+import { BoxIcon, HandFistIcon, TagIcon, type LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -203,35 +195,20 @@ export function ClassesTable({
           ) : (
             <AddClassDialog categories={categories} />
           )}
-          {selectedClasses.some((classItem) => classItem.is_active) && (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              disabled={isBusy}
-              onClick={() => setActive(Array.from(selected), false)}
-              aria-label="Deactivate"
-              title="Deactivate"
-            >
-              <ArchiveIcon />
-            </Button>
-          )}
-          {selectedClasses.some((classItem) => !classItem.is_active) && (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              disabled={isBusy}
-              onClick={() => setActive(Array.from(selected), true)}
-              aria-label="Activate"
-              title="Activate"
-            >
-              <ArchiveRestoreIcon />
-            </Button>
-          )}
-          {soleSelectedRow && (
+          {selected.size > 0 && (
             <RowActionsMenu
-              onEdit={() => setEditingClass(soleSelectedRow)}
-              onToggleActive={() => setActive([soleSelectedRow.id], !soleSelectedRow.is_active)}
-              isActive={soleSelectedRow.is_active}
+              onEdit={soleSelectedRow ? () => setEditingClass(soleSelectedRow) : undefined}
+              onDeactivate={
+                selectedClasses.some((classItem) => classItem.is_active)
+                  ? () => setActive(Array.from(selected), false)
+                  : undefined
+              }
+              onActivate={
+                selectedClasses.some((classItem) => !classItem.is_active)
+                  ? () => setActive(Array.from(selected), true)
+                  : undefined
+              }
+              onDelete={handleDelete}
               disabled={isBusy}
             />
           )}
@@ -240,18 +217,6 @@ export function ClassesTable({
           {inactiveCount > 0 && (
             <Button variant="ghost" size="sm" onClick={() => setShowInactive(!showInactive)}>
               {showInactive ? "Hide inactive" : `Show inactive (${inactiveCount})`}
-            </Button>
-          )}
-          {selected.size > 0 && (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              disabled={isBusy}
-              onClick={handleDelete}
-              aria-label="Delete"
-              title="Delete"
-            >
-              <Trash2Icon />
             </Button>
           )}
           <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />

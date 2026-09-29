@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ArchiveRestoreIcon, LandmarkIcon, RefreshCwIcon, type LucideIcon } from "lucide-react";
+import { LandmarkIcon, RefreshCwIcon, type LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -222,19 +222,6 @@ export function AccountsTable({
     });
   }
 
-  function handleSyncRow(account: Account) {
-    if (!account.pluggy_item_id) return;
-    setActionError(null);
-    startSync(async () => {
-      try {
-        await syncPluggyItem(account.pluggy_item_id as string);
-        router.refresh();
-      } catch (err) {
-        setActionError(err instanceof Error ? err.message : "Failed to sync.");
-      }
-    });
-  }
-
   const columnsByKey = new Map(COLUMNS.map((column) => [column.key, column]));
   const visibleColumns = columnOrder
     .map((key) => columnsByKey.get(key)!)
@@ -266,29 +253,22 @@ export function AccountsTable({
               <RefreshCwIcon className={isSyncing ? "animate-spin" : undefined} />
             </Button>
           )}
-          {selectedAccounts.some((account) => !account.is_active) && (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              disabled={isBusy}
-              onClick={() => setActive(Array.from(selected), true)}
-              aria-label="Activate"
-              title="Activate"
-            >
-              <ArchiveRestoreIcon />
-            </Button>
-          )}
-          {soleSelectedRow && (
+          {/* Sync stays in the toolbar above (explicit user request), so
+              it's deliberately not also offered here. */}
+          {selected.size > 0 && (
             <RowActionsMenu
-              onEdit={() => setEditingAccount(soleSelectedRow)}
-              onSync={
-                soleSelectedRow.is_automatic && soleSelectedRow.pluggy_item_id
-                  ? () => handleSyncRow(soleSelectedRow)
+              onEdit={soleSelectedRow ? () => setEditingAccount(soleSelectedRow) : undefined}
+              onImport={soleSelectedRow ? () => setImportingAccount(soleSelectedRow) : undefined}
+              onDeactivate={
+                selectedAccounts.some((account) => account.is_active)
+                  ? () => setActive(Array.from(selected), false)
                   : undefined
               }
-              onImport={() => setImportingAccount(soleSelectedRow)}
-              onToggleActive={() => setActive([soleSelectedRow.id], !soleSelectedRow.is_active)}
-              isActive={soleSelectedRow.is_active}
+              onActivate={
+                selectedAccounts.some((account) => !account.is_active)
+                  ? () => setActive(Array.from(selected), true)
+                  : undefined
+              }
               disabled={isBusy}
             />
           )}
