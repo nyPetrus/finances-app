@@ -186,10 +186,13 @@ list page instead of inventing a fresh layout.
      **Why no separate "Connect bank" button:** reachable only via the
      Accounts "+" menu, see the "Accounts' '+' is a menu" bullet below.
   3. **The "⋮" `RowActionsMenu`**, last, whenever `selected.size > 0`.
-  The Dashboard's embedded table (`dashboard-transactions-table.tsx`) has
-  a different toolbar shape — Columns/Add/⋮ on the left, "N selected" and
-  "Show inactive" on the right — but the same "⋮" contents as
-  `search-table.tsx` minus batch edit (its Edit is single-row only).
+  The Dashboard's embedded table (`dashboard-transactions-table.tsx`)
+  follows this same layout — `ColumnsMenu` at the far right on every
+  table, per explicit user request (it used to sit first on the left there,
+  with "N selected" on the right) — and has the same "⋮" contents as
+  `search-table.tsx` minus batch edit (its Edit is single-row only). The
+  Dashboard's "Levels" menu (`dashboard-explorer.tsx`, a `ColumnsMenu` for
+  the monthly table) is right-aligned too.
   Icon-only toolbar buttons need `aria-label` *and* `title` set to the
   plain action word ("Columns", "Sync", "Apply rules") for the same reason
   "Add" buttons do (see below) — `ColumnsMenu`'s trigger needs this pair

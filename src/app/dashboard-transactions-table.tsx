@@ -316,8 +316,9 @@ export function DashboardTransactionsTable({
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />
-          {accounts.length > 0 ? (
+          {selected.size > 0 ? (
+            <span className="text-sm text-muted-foreground">{selected.size} selected</span>
+          ) : accounts.length > 0 ? (
             <AddTransactionDialog accounts={accounts} categories={categories} classes={classes} />
           ) : (
             <Button size="sm" render={<Link href="/accounts" />}>
@@ -342,15 +343,13 @@ export function DashboardTransactionsTable({
             />
           )}
         </div>
-        <div className="ml-auto flex items-center gap-2">
-          {selected.size > 0 && (
-            <span className="text-sm text-muted-foreground">{selected.size} selected</span>
-          )}
+        <div className="flex items-center gap-2">
           {inactiveCount > 0 && (
             <Button variant="ghost" size="sm" onClick={() => setShowInactive(!showInactive)}>
               {showInactive ? "Hide inactive" : `Show inactive (${inactiveCount})`}
             </Button>
           )}
+          <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />
         </div>
       </div>
       {actionError && <p className="text-sm text-destructive">{actionError}</p>}
