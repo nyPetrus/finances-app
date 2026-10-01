@@ -22,10 +22,11 @@ function formatCurrency(value: number) {
 // unconditionally emerald, Expenses unconditionally destructive (the
 // Dashboard's documented exception to "only positive gets color"),
 // Transfers/Uncategorized stay plain. A Category/Class row inherits its
-// parent Type row's color rather than getting its own rule.
+// parent Type row's color rather than getting its own rule (rows above the
+// Type level have no color). Keyed by the Type row's `kind`.
 const TYPE_COLOR: Record<string, string | undefined> = {
-  "type:income": "text-emerald-600",
-  "type:expense": "text-destructive",
+  income: "text-emerald-600",
+  expense: "text-destructive",
 };
 
 // Type-level row backgrounds (income/expense/transfer only — Uncategorized
@@ -34,20 +35,26 @@ const TYPE_COLOR: Record<string, string | undefined> = {
 // variant of its own — per explicit user request, it matches the month
 // columns exactly.
 const TYPE_ROW_BG: Record<string, string | undefined> = {
-  "type:income": "bg-emerald-50",
-  "type:expense": "bg-red-50",
-  "type:transfer": "bg-gray-100",
+  income: "bg-emerald-50",
+  expense: "bg-red-50",
+  transfer: "bg-gray-100",
 };
 
 const SELECTED_CELL = "ring-2 ring-inset ring-primary";
+
+// A row-scoped selection sets at least one of these; a header/footer
+// (column-wide) one sets none.
+function isRowScoped(selected: MonthlySelection | undefined) {
+  return !!selected && !!(selected.kind || selected.autonomy || selected.categoryId || selected.classId);
+}
 
 // True only when `selected` pins down this exact row (its type/autonomy/
 // category/class), regardless of which month (or the whole year) is selected within
 // it — used to tell a row-level click (whole year for that row) apart from
 // a single month cell within it.
 function rowMatchesSelection(row: MonthlyRow, selected: MonthlySelection | undefined) {
-  if (!selected || selected.kind === undefined) return false;
-  if (selected.kind !== row.kind) return false;
+  if (!selected || !isRowScoped(selected)) return false;
+  if ((selected.kind ?? undefined) !== (row.kind ?? undefined)) return false;
   if ((selected.autonomy ?? undefined) !== (row.autonomy ?? undefined)) return false;
   if ((selected.categoryId ?? undefined) !== (row.categoryId ?? undefined)) return false;
   if ((selected.classId ?? undefined) !== (row.classId ?? undefined)) return false;
@@ -76,11 +83,12 @@ function TreeRows({
       {rows.map((row) => {
         const hasChildren = !!row.children && row.children.length > 0;
         const isExpanded = expanded.has(row.key);
-        const rowColor = depth === 0 ? TYPE_COLOR[row.key] : colorClassName;
-        const rowBg = depth === 0 ? TYPE_ROW_BG[row.key] : undefined;
-        // Depth 0 is always Type; which classification each deeper depth
-        // represents depends on the user's configured level order, so style
-        // off the row's own `level` field instead of a fixed depth number.
+        // Which level each depth represents depends on the user's configured
+        // level order, so style off the row's own `level` field instead of a
+        // fixed depth number.
+        const isTypeLevel = row.level === "type";
+        const rowColor = isTypeLevel && row.kind ? TYPE_COLOR[row.kind] : colorClassName;
+        const rowBg = isTypeLevel && row.kind ? TYPE_ROW_BG[row.kind] : undefined;
         const isAutonomyLevel = row.level === "autonomy";
         const isClassLevel = row.level === "class";
         // Autonomy rows show their padlock (AutonomyIcon, from row.autonomy).
@@ -127,7 +135,7 @@ function TreeRows({
                     <span
                       className={cn(
                         "inline-flex w-4 shrink-0 justify-center text-base font-bold text-muted-foreground",
-                        row.level === "type" && row.kind !== "uncategorized" && TRANSACTION_TYPE_SYMBOL_ROTATION[row.kind],
+                        isTypeLevel && row.kind && row.kind !== "uncategorized" && TRANSACTION_TYPE_SYMBOL_ROTATION[row.kind],
                       )}
                       aria-hidden="true"
                     >
@@ -151,7 +159,7 @@ function TreeRows({
                 // column-wide one (any row, this month, no kind at all —
                 // from the header/footer) both light this cell up.
                 const cellSelected =
-                  selected?.month === i && (rowSelected || selected?.kind === undefined);
+                  selected?.month === i && (rowSelected || !isRowScoped(selected));
                 return (
                   <td
                     key={i}
@@ -206,31 +214,28 @@ function TreeRows({
 // expand/collapse-all button can drive it too.
 export function MonthlyBreakdownTable({
   rows,
+  monthTotals,
   selected,
   onSelect,
   expanded,
   onToggle,
 }: {
   rows: MonthlyRow[];
+  // Computed from all the year's transactions (buildMonthTotals), not from
+  // `rows` — a Category/Class top level drops transactions without one.
+  monthTotals: number[];
   selected: MonthlySelection | undefined;
   onSelect: (selection: MonthlySelection) => void;
   expanded: Set<string>;
   onToggle: (key: string) => void;
 }) {
-  // Column sums across the top-level Type rows only — Category/Class rows
-  // are already folded into their parent Type's months/total, so summing
-  // those too would double-count.
-  const monthTotals = Array(12).fill(0);
-  for (const row of rows) {
-    for (let i = 0; i < 12; i++) monthTotals[i] += row.months[i];
-  }
   const grandTotal = monthTotals.reduce((sum, value) => sum + value, 0);
 
   // A month-header/footer click means "this month, any type" — no kind at
   // all, so it's distinct from a row-scoped cell click even when both
   // happen to point at the same month index.
-  const columnSelectedMonth = selected?.kind === undefined ? selected?.month : undefined;
-  const totalSelected = !!selected && selected.kind === undefined && selected.month === undefined;
+  const columnSelectedMonth = !isRowScoped(selected) ? selected?.month : undefined;
+  const totalSelected = !!selected && !isRowScoped(selected) && selected.month === undefined;
 
   return (
     <div className="max-h-[70vh] overflow-auto rounded-md border">

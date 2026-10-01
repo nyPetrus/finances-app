@@ -6,6 +6,7 @@ import { DashboardTransactionsTable } from "./dashboard-transactions-table";
 import { MonthlyBreakdownTable } from "./dashboard-monthly-table";
 import {
   buildMonthlyBreakdown,
+  buildMonthTotals,
   CLASSIFICATION_LEVEL_LABELS,
   DEFAULT_CLASSIFICATION_LEVELS,
   autonomyKey,
@@ -51,7 +52,7 @@ export function DashboardExplorer({
 }) {
   const [selection, setSelection] = useState<MonthlySelection | undefined>(undefined);
   const { hidden: hiddenLevels, order: levelOrder, toggle: toggleLevel, move: moveLevel } =
-    useColumnPreferences<ClassificationLevel>("dashboard-monthly-table-levels", DEFAULT_CLASSIFICATION_LEVELS);
+    useColumnPreferences<ClassificationLevel>("dashboard-monthly-table-levels-v2", DEFAULT_CLASSIFICATION_LEVELS);
   const levels = useMemo(
     () => levelOrder.filter((level) => !hiddenLevels.has(level)),
     [levelOrder, hiddenLevels],
@@ -64,6 +65,7 @@ export function DashboardExplorer({
     () => buildMonthlyBreakdown(transactions, categories, classes, levels),
     [transactions, categories, classes, levels],
   );
+  const monthTotals = useMemo(() => buildMonthTotals(transactions), [transactions]);
 
   // Starts fully collapsed (only the Type rows); see dashboard-monthly-table.
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -89,12 +91,11 @@ export function DashboardExplorer({
     const { kind, autonomy, categoryId, classId, month } = selection;
     return transactions.filter((t) => {
       if (month !== undefined && monthIndex(t.date) !== month) return false;
-      if (kind === undefined) return true;
-      if (kind === "uncategorized") return !t.category_id;
       const category = t.category_id ? categoriesById.get(t.category_id) : undefined;
-      if (!category || category.kind !== kind) return false;
+      if (kind === "uncategorized" && category) return false;
+      if (kind && kind !== "uncategorized" && category?.kind !== kind) return false;
       if (autonomy && autonomyKey(t, classesById) !== autonomy) return false;
-      if (categoryId && category.id !== categoryId) return false;
+      if (categoryId && category?.id !== categoryId) return false;
       if (classId && t.class_id !== classId) return false;
       return true;
     });
@@ -125,6 +126,7 @@ export function DashboardExplorer({
       </div>
       <MonthlyBreakdownTable
         rows={monthlyBreakdown}
+        monthTotals={monthTotals}
         selected={selection}
         onSelect={handleSelect}
         expanded={expanded}

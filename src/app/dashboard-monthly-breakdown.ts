@@ -10,23 +10,23 @@ export const autonomyKey = effectiveAutonomy;
 const AUTONOMY_ORDER: Autonomy[] = ["low", "high"];
 
 
-// The three optional breakdown levels below the always-present Type level.
-// The Dashboard's "Levels" menu (dashboard-explorer.tsx) lets the user
-// include/exclude and reorder these freely, backed by the same
-// useColumnPreferences hook the rest of the app uses for table columns.
-// Type itself is never one of these — it's always level 1, static.
-export type ClassificationLevel = "autonomy" | "category" | "class";
+// The breakdown levels. The Dashboard's "Levels" menu
+// (dashboard-explorer.tsx) lets the user include/exclude and reorder all of
+// them freely — Type included — backed by the same useColumnPreferences hook
+// the rest of the app uses for table columns.
+export type ClassificationLevel = "type" | "autonomy" | "category" | "class";
 
 export const CLASSIFICATION_LEVEL_LABELS: Record<ClassificationLevel, string> = {
+  type: "Type",
   autonomy: "Autonomy",
   category: "Category",
   class: "Class",
 };
 
-export const DEFAULT_CLASSIFICATION_LEVELS: ClassificationLevel[] = ["autonomy", "category", "class"];
+export const DEFAULT_CLASSIFICATION_LEVELS: ClassificationLevel[] = ["type", "autonomy", "category", "class"];
 
-// Feeds MonthlyBreakdownTable (dashboard-monthly-table.tsx): a Type + however
-// many of the configured levels tree, one row per node, each carrying its own
+// Feeds MonthlyBreakdownTable (dashboard-monthly-table.tsx): a tree of
+// however many of the configured levels, one row per node, each carrying its own
 // 12 monthly sums plus a year total. A node is only included if at least one
 // transaction actually falls under it — an all-zero category (say, a Class
 // whose two transactions happen to net to zero) still gets a row, but a
@@ -37,8 +37,10 @@ export type MonthlyRow = {
   label: string;
   icon?: string;
   symbol?: string;
-  level: "type" | ClassificationLevel;
-  kind: Category["kind"] | "uncategorized";
+  level: ClassificationLevel;
+  // Set on a Type row and everything below it; undefined on rows above
+  // the Type level (or everywhere, when Type is excluded).
+  kind?: Category["kind"] | "uncategorized";
   autonomy?: Autonomy;
   categoryId?: string;
   classId?: string;
@@ -48,9 +50,10 @@ export type MonthlyRow = {
 };
 
 // Identifies what a click on the table (dashboard-monthly-table.tsx) should
-// filter the embedded transactions table down to. `kind: undefined` means
-// "any type" (a month-column click); every field undefined means "the whole
-// year, no restriction at all" (a Total-column click).
+// filter the embedded transactions table down to. Each defined field
+// narrows independently; with none of kind/autonomy/categoryId/classId set
+// it's a column-wide click (header/footer: `month` only, or `{}` for the
+// whole year).
 export type MonthlySelection = {
   kind?: Category["kind"] | "uncategorized";
   autonomy?: Autonomy;
@@ -65,7 +68,7 @@ const TYPE_LABELS: Record<Category["kind"], string> = {
   transfer: "Transfers",
 };
 
-const TYPE_ORDER: Category["kind"][] = ["income", "expense", "transfer"];
+const TYPE_ORDER: (Category["kind"] | "uncategorized")[] = ["income", "expense", "transfer", "uncategorized"];
 
 function emptyMonths(): number[] {
   return Array(12).fill(0);
@@ -84,15 +87,14 @@ export function monthIndex(date: string) {
 // which would otherwise put the smallest expense on top.
 const byMagnitude = (a: MonthlyRow, b: MonthlyRow) => Math.abs(b.total) - Math.abs(a.total);
 
-type LevelSelection = Pick<MonthlySelection, "autonomy" | "categoryId" | "classId">;
+type LevelSelection = Pick<MonthlySelection, "kind" | "autonomy" | "categoryId" | "classId">;
 
 // Buckets `transactions` by one level. A transaction with no value for this
 // level (e.g. no class_id when level is "class") is left out of every
 // bucket — its amount still counts toward the parent node's own months/total
 // (computed independently below, not derived from children), it just gets
-// no child row of its own. Category is the one exception that never drops a
-// transaction: by the time this runs, transactions with no category at all
-// have already been split off into the "Uncategorized" Type row.
+// no child row of its own. Type and Autonomy never drop a transaction: Type
+// puts category-less transactions into its own "Uncategorized" bucket.
 function bucketBy(level: ClassificationLevel, transactions: Transaction[], categoriesById: Map<string, Category>, classesById: Map<string, Class>) {
   const buckets = new Map<
     string,
@@ -106,7 +108,19 @@ function bucketBy(level: ClassificationLevel, transactions: Transaction[], categ
     let symbol: string | undefined;
     let selection: LevelSelection;
 
-    if (level === "autonomy") {
+    if (level === "type") {
+      const category = transaction.category_id ? categoriesById.get(transaction.category_id) : undefined;
+      if (category) {
+        id = category.kind;
+        label = TYPE_LABELS[category.kind];
+        symbol = TRANSACTION_TYPE_SYMBOLS[category.kind];
+        selection = { kind: category.kind };
+      } else {
+        id = "uncategorized";
+        label = "Uncategorized";
+        selection = { kind: "uncategorized" };
+      }
+    } else if (level === "autonomy") {
       const autonomy = autonomyKey(transaction, classesById);
       id = autonomy;
       label = AUTONOMY_LABELS[autonomy];
@@ -138,7 +152,6 @@ function buildLevelRows(
   transactions: Transaction[],
   levels: ClassificationLevel[],
   levelIndex: number,
-  kind: Category["kind"],
   keyPrefix: string,
   selectionSoFar: LevelSelection,
   categoriesById: Map<string, Category>,
@@ -149,20 +162,15 @@ function buildLevelRows(
   const buckets = bucketBy(level, transactions, categoriesById, classesById);
 
   const rows: MonthlyRow[] = buckets.map((bucket) => {
-    const key = `${keyPrefix}:${level}:${bucket.id}`;
+    const key = keyPrefix ? `${keyPrefix}:${level}:${bucket.id}` : `${level}:${bucket.id}`;
     const selection = { ...selectionSoFar, ...bucket.selection };
     const months = emptyMonths();
     for (const t of bucket.transactions) months[monthIndex(t.date)] += t.amount;
-    const children = buildLevelRows(
-      bucket.transactions,
-      levels,
-      levelIndex + 1,
-      kind,
-      key,
-      selection,
-      categoriesById,
-      classesById,
-    );
+    // Uncategorized stays a leaf, wherever the Type level sits.
+    const children =
+      level === "type" && bucket.id === "uncategorized"
+        ? []
+        : buildLevelRows(bucket.transactions, levels, levelIndex + 1, key, selection, categoriesById, classesById);
 
     return {
       key,
@@ -170,7 +178,6 @@ function buildLevelRows(
       icon: bucket.icon,
       symbol: bucket.symbol,
       level,
-      kind,
       ...selection,
       months,
       total: sum(months),
@@ -178,7 +185,9 @@ function buildLevelRows(
     };
   });
 
-  if (level === "autonomy") {
+  if (level === "type") {
+    rows.sort((a, b) => TYPE_ORDER.indexOf(a.kind!) - TYPE_ORDER.indexOf(b.kind!));
+  } else if (level === "autonomy") {
     rows.sort((a, b) => AUTONOMY_ORDER.indexOf(a.autonomy!) - AUTONOMY_ORDER.indexOf(b.autonomy!));
   } else {
     rows.sort(byMagnitude);
@@ -186,6 +195,9 @@ function buildLevelRows(
   return rows;
 }
 
+// Every kind, Transfer included, sums the signed amount as-is: a 150
+// transfer out and a 150 transfer in net to 0 here, per explicit user
+// request.
 export function buildMonthlyBreakdown(
   transactions: Transaction[],
   categories: Category[],
@@ -194,55 +206,14 @@ export function buildMonthlyBreakdown(
 ): MonthlyRow[] {
   const categoriesById = new Map(categories.map((c) => [c.id, c]));
   const classesById = new Map(classes.map((c) => [c.id, c]));
+  return buildLevelRows(transactions, levels, 0, "", {}, categoriesById, classesById);
+}
 
-  const byType = new Map<Category["kind"], Transaction[]>(TYPE_ORDER.map((kind) => [kind, []]));
-  const uncategorized: Transaction[] = [];
-
-  for (const transaction of transactions) {
-    const category = transaction.category_id ? categoriesById.get(transaction.category_id) : undefined;
-    if (!category) {
-      uncategorized.push(transaction);
-      continue;
-    }
-    byType.get(category.kind)!.push(transaction);
-  }
-
-  const rows: MonthlyRow[] = TYPE_ORDER.map((kind) => {
-    const kindTransactions = byType.get(kind)!;
-    const months = emptyMonths();
-    // Unlike the Transfers stat card (which sums magnitude — see
-    // dashboard-conventions — so a transfer's two legs across the user's
-    // own accounts don't net toward zero), this table sums the signed
-    // amount as-is: a 150 transfer out and a 150 transfer in should net to
-    // 0 here, per explicit user request.
-    for (const t of kindTransactions) months[monthIndex(t.date)] += t.amount;
-
-    const children = buildLevelRows(kindTransactions, levels, 0, kind, `type:${kind}`, {}, categoriesById, classesById);
-
-    return {
-      key: `type:${kind}`,
-      label: TYPE_LABELS[kind],
-      symbol: TRANSACTION_TYPE_SYMBOLS[kind],
-      level: "type",
-      kind,
-      months,
-      total: sum(months),
-      children: children.length > 0 ? children : undefined,
-    };
-  });
-
-  if (uncategorized.length > 0) {
-    const months = emptyMonths();
-    for (const t of uncategorized) months[monthIndex(t.date)] += t.amount;
-    rows.push({
-      key: "type:uncategorized",
-      label: "Uncategorized",
-      level: "type",
-      kind: "uncategorized",
-      months,
-      total: sum(months),
-    });
-  }
-
-  return rows;
+// Column sums straight from the transactions, not from the top-level rows —
+// a Category or Class top level drops transactions without one, so summing
+// its rows would understate the footer.
+export function buildMonthTotals(transactions: Transaction[]): number[] {
+  const months = emptyMonths();
+  for (const t of transactions) months[monthIndex(t.date)] += t.amount;
+  return months;
 }

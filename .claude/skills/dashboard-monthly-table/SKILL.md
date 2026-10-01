@@ -1,13 +1,13 @@
 ---
 name: dashboard-monthly-table
-description: Use when touching the Dashboard's monthly breakdown tree table (dashboard-monthly-breakdown.ts + dashboard-monthly-table.tsx) — what the user calls "the dynamic table," since its rows dynamically expand/collapse (not the embedded click-to-filter transactions table, which only appears/disappears wholesale — see dashboard-conventions for that one). Covers the Type level (static) plus the configurable Autonomy/Category/Class levels (the "Levels" menu — include/exclude and reorder), the footer Total row, column auto-sizing, decimal rounding, zero-value empty cells, row color, the click-the-label expand/collapse (no separate toggle button/icon, and the label no longer drives click-to-filter — only the month/Total cells do), and the sticky/frozen header row, footer row, label column, and Total column.
+description: Use when touching the Dashboard's monthly breakdown tree table (dashboard-monthly-breakdown.ts + dashboard-monthly-table.tsx) — what the user calls "the dynamic table," since its rows dynamically expand/collapse (not the embedded click-to-filter transactions table, which only appears/disappears wholesale — see dashboard-conventions for that one). Covers the four configurable levels — Type/Autonomy/Category/Class (the "Levels" menu — include/exclude and reorder all four, Type included), the footer Total row, column auto-sizing, decimal rounding, zero-value empty cells, row color, the click-the-label expand/collapse (no separate toggle button/icon, and the label no longer drives click-to-filter — only the month/Total cells do), and the sticky/frozen header row, footer row, label column, and Total column.
 ---
 
 # Dashboard monthly table ("the dynamic table")
 
 `dashboard-monthly-breakdown.ts` (`buildMonthlyBreakdown()`, a pure
 function, no `"use client"`) + `dashboard-monthly-table.tsx`
-(`MonthlyBreakdownTable`, `"use client"`) together render the Type +
+(`MonthlyBreakdownTable`, `"use client"`) together render the
 configurable-levels monthly breakdown, sitting directly below the page's
 year-nav header and above the click-to-filter embedded table (see
 `dashboard-conventions`).
@@ -25,36 +25,42 @@ which is a different component with its own conventions
 between the two tables because of exactly this ambiguity; confirm which
 table is meant if it's ever unclear again.
 
-- **The levels below Type are configurable.** A "Levels" icon-button menu
-  (top-right of `dashboard-explorer.tsx`, reusing `ColumnsMenu`/
-  `useColumnPreferences` — the same show/hide + up/down-reorder control
-  the rest of the app uses for table columns, storage key
-  `dashboard-monthly-table-levels`) lets the user include/exclude and
-  reorder `ClassificationLevel`s (`"autonomy" | "category" | "class"`)
-  freely. **Type is never one of these** — it's hardcoded as the
-  always-present root level (Income/Expenses/Transfers, plus Uncategorized
-  when applicable) and isn't listed in the menu.
+- **All four levels are configurable — Type included.** A "Levels"
+  icon-button menu (top-right of `dashboard-explorer.tsx`, reusing
+  `ColumnsMenu`/`useColumnPreferences` — the same show/hide +
+  up/down-reorder control the rest of the app uses for table columns,
+  storage key `dashboard-monthly-table-levels-v2`) lets the user
+  include/exclude and reorder `ClassificationLevel`s (`"type" | "autonomy"
+  | "category" | "class"`) freely.
   `buildMonthlyBreakdown(transactions, categories, classes, levels)` takes
   the resulting ordered subset (default `DEFAULT_CLASSIFICATION_LEVELS =
-  ["autonomy", "category", "class"]`, the original fixed order) and
-  recurses through it via `buildLevelRows` — moving Class above Category
-  (or excluding Category/Autonomy entirely) is just a different `levels`
-  array, not a special case in the tree-building code. Because the level
-  config is a per-browser preference, `buildMonthlyBreakdown` runs
-  **client-side inside `dashboard-explorer.tsx`** (not server-side in
-  `page.tsx` — `page.tsx` just passes raw `transactions`/`categories`/
-  `classes` through). Every `MonthlyRow` carries a `level: "type" |
-  ClassificationLevel` field set at build time; `dashboard-monthly-table.tsx`
-  uses that (not a hardcoded depth number) to decide Autonomy/Class-specific
-  styling, since which depth holds which classification now depends on the
-  configured order.
-  **Why:** added per explicit user request.
+  ["type", "autonomy", "category", "class"]`, the original fixed order)
+  and recurses through it via `buildLevelRows` from the root — Type is
+  just one more `bucketBy` case, so putting Autonomy above Type, moving
+  Class above Category, or excluding any level (Type too) is just a
+  different `levels` array, not a special case in the tree-building code.
+  Excluding every level leaves the table with no body rows (the footer
+  still shows the totals). Because the level config is a per-browser
+  preference, `buildMonthlyBreakdown` runs **client-side inside
+  `dashboard-explorer.tsx`** (not server-side in `page.tsx` — `page.tsx`
+  just passes raw `transactions`/`categories`/`classes` through). Every
+  `MonthlyRow` carries a `level: ClassificationLevel` field set at build
+  time; `dashboard-monthly-table.tsx` uses that (not a hardcoded depth
+  number) to decide Type/Autonomy/Class-specific styling, since which
+  depth holds which level depends on the configured order.
+  **Why:** added per explicit user request — first Autonomy/Category/Class
+  only, with Type hardcoded as the static root; Type joined the menu by a
+  later explicit request. The storage key got a `-v2` suffix at that point
+  so a stored pre-Type order didn't get "type" appended *last*
+  (`useColumnPreferences` appends unknown keys at the end).
 
-- **Up-to-4-level expand/collapse tree**: Type (Income/Expenses/Transfers,
-  always shown, plus Uncategorized only when at least one transaction
-  actually has no category — Uncategorized has no children) is the static
-  root, then zero to three more levels per the user's "Levels" menu
-  selection/order — **Autonomy** (Baixa / Alta, always in that order
+- **Up-to-4-level expand/collapse tree**, zero to four levels per the
+  user's "Levels" menu selection/order — **Type** (Income/Expenses/
+  Transfers, always in that order, each only when it has transactions —
+  they used to be always shown back when Type was the static root — plus
+  Uncategorized last only when at least one transaction under that branch
+  has no category —
+  Uncategorized is always a leaf, wherever Type sits), **Autonomy** (Baixa / Alta, always in that order
   regardless of where the level sits), **Category** (only categories of
   that `kind` with at least one transaction this year under whatever
   ancestor levels are above it), and **Class** (only classes with at least
@@ -64,18 +70,19 @@ table is meant if it's ever unclear again.
   its class's `autonomy`, else `DEFAULT_AUTONOMY` — "Alta" — so it's
   always a concrete Alta/Baixa, never "unset") — this is the one level
   that never folds a transaction into its parent without a row of its
-  own; Category and Class do fold a transaction in when it has none
-  (transactions with no category at all never reach a Category level at
-  all, having already been split off into "Uncategorized" at the Type
-  level; a class-less transaction under a "class" level just contributes
+  own, along with Type (whose "Uncategorized" bucket catches category-less
+  transactions); Category and Class do fold a transaction in when it has
+  none (a category-less transaction under a "category" level — possible
+  when Type is below Category or excluded — just contributes to its
+  parent's total; if Type is above Category it was already split off into
+  "Uncategorized"; a class-less transaction under a "class" level just contributes
   to its parent's total with no Class child row). Row keys are built by
   threading `${level}:${bucketId}` onto the parent's own key
   (`buildLevelRows` in `dashboard-monthly-breakdown.ts`) so expand state
   stays distinct per branch regardless of level order — with a month
   column per month plus a trailing Total column (year sum of that row).
-  `buildMonthlyBreakdown()` first splits `yearTransactions` into
-  Type/Uncategorized buckets, then recurses `buildLevelRows` through the
-  configured `levels` array, at each step grouping the transactions handed
+  `buildMonthlyBreakdown()` recurses `buildLevelRows` through the
+  configured `levels` array from the root, at each step grouping the transactions handed
   to it by that one level and recursing into the next — a category or
   class with zero transactions this year gets no row at all, so expanding
   a row never reveals an empty list. **A parent row's months come
@@ -103,13 +110,14 @@ table is meant if it's ever unclear again.
 
 - **A footer `<tfoot>` "Total" row sums straight down each month column,
   plus a grand-total cell in the Total column**, symmetric with each row's
-  own Total *column* (row-wise sum). `MonthlyBreakdownTable` computes this
-  itself from the top-level `rows` prop only (`monthTotals`, one pass
-  summing `row.months[i]` across every Type row; `grandTotal` is
-  `monthTotals`'s own sum) — **not** from `TreeRows`, and **not**
-  including Category/Class rows, since those are already folded into
-  their parent Type row's `months`/`total` and would double-count if
-  summed again. Styled `border-t font-medium` — just a rule, no
+  own Total *column* (row-wise sum). The month sums come from
+  `buildMonthTotals(transactions)` — all the year's transactions directly
+  — computed in `dashboard-explorer.tsx` and passed in as the
+  `monthTotals` prop (`grandTotal` is its own sum). **Not** from the
+  `rows` prop: a Category or Class top level drops transactions without
+  one, so summing the top-level rows would understate the footer (it used
+  to sum the Type rows, back when Type was always the root and partitioned
+  everything). Styled `border-t font-medium` — just a rule, no
   background — to read as a spreadsheet-style footer; the header row is
   the same (`border-b`, no background, no top border, top of the table).
   This total is a plain arithmetic column-sum of signed amounts (Transfers
@@ -134,7 +142,7 @@ table is meant if it's ever unclear again.
   month cells and the trailing Total cell check `value === 0`
   (`row.total === 0` for the Total cell) and render an empty string
   instead of calling `formatCurrency`. This applies uniformly to every row
-  (Type, Category, and Class alike) — don't special-case any one level to
+  (every level alike) — don't special-case any one level to
   still show "0". The footer Total row's own cells follow the same rule
   (`monthTotals[i] === 0` / `grandTotal === 0`).
   **Why:** per explicit user request.
@@ -187,15 +195,17 @@ table is meant if it's ever unclear again.
   `dashboard-transactions-table.tsx` already use for their Date column.
 
 - **Row color is inherited down from the Type ancestor, not computed
-  per-row.** The `TYPE_COLOR` map gives `"type:income"` unconditional
-  `text-emerald-600` and `"type:expense"` unconditional `text-destructive`
-  (Expenses being unconditionally red here is the same documented
-  Dashboard exception to the Transactions-table "only positive gets color"
-  rule, see `amount-color-conventions`); `"type:transfer"`/
-  `"type:uncategorized"` get no color (`undefined`, plain foreground).
-  Every Category/Class row under a Type just inherits that Type's color
-  via a prop threaded through the recursion — don't give Category/Class
-  rows their own color logic.
+  per-row.** The `TYPE_COLOR` map (keyed by the Type row's `kind`) gives
+  `income` unconditional `text-emerald-600` and `expense` unconditional
+  `text-destructive` (Expenses being unconditionally red here is the same
+  documented Dashboard exception to the Transactions-table "only positive
+  gets color" rule, see `amount-color-conventions`); `transfer`/
+  `uncategorized` get no color (`undefined`, plain foreground). Every row
+  below a Type row just inherits that Type's color via a prop threaded
+  through the recursion — don't give other levels their own color logic.
+  Rows *above* the Type level (or every row, when Type is excluded) have
+  no color. `TYPE_ROW_BG` (row background + bold numbers) likewise applies
+  to Type rows at whatever depth they sit, keyed by `kind`.
   **Why:** originally chosen to mirror the now-removed Income/Expenses
   stat cards' own colors, but this table keeps the rule on its own merits
   now that those cards are gone.
@@ -210,13 +220,13 @@ table is meant if it's ever unclear again.
   `expanded`/`onToggle` props — the table has no expand state of its own.
   This is separate from the per-row label click below, which still works.
 - **Expand state defaults to fully collapsed** (`useState<Set<string>>(new
-  Set())` in `DashboardExplorer`) — only the 3-4 Type rows are visible
-  on first render; a row only toggles if it actually has children, which
+  Set())` in `DashboardExplorer`) — only the top-level rows (the 3-4 Type
+  rows in the default order) are visible on first render; a row only toggles if it actually has children, which
   naturally happens to whichever level the user has placed last in the
   "Levels" menu order. `TreeRows` styles off each row's own `row.level`
-  field, not a fixed depth number — depth 0 is always Type, but which
-  classification sits at depth 1/2/3 depends on the configured order, so
-  Autonomy rows always get `border-t font-semibold` and Class rows always
+  field, not a fixed depth number — which level sits at depth 0/1/2/3
+  depends on the configured order, so Type rows always get their
+  `TYPE_ROW_BG`/symbol, Autonomy rows always get `border-t font-semibold` and Class rows always
   get `text-[11px]` regardless of where in the tree they land.
   **Why:** "I can see at maximum at class level" was the original explicit
   requirement, back when the level order was fixed and Class was always
@@ -310,14 +320,18 @@ table is meant if it's ever unclear again.
   its own.** `dashboard-explorer.tsx` holds a single `selection:
   MonthlySelection | undefined`, passed to this table as `selected` and
   updated via its `onSelect` prop. Every `MonthlyRow` carries its own
-  `kind`/`autonomy`/`categoryId`/`classId` (not just its display `key`) so
-  a click handler doesn't need to re-derive them. **Clicking a row's Total
+  `kind`/`autonomy`/`categoryId`/`classId` — whichever its own and its
+  ancestors' levels set (`kind` is undefined above/without the Type level)
+  — so a click handler doesn't need to re-derive them; the filter in
+  `dashboard-explorer.tsx` applies each defined field independently. **Clicking a row's Total
   cell filters to that row's whole year; clicking one of its month cells
   scopes it to that month too — the row's label cell is not part of this
   at all any more** (see the expand/collapse bullet above: the label only
   toggles expand/collapse, it never touches the selection). Clicking a
-  month header/footer cell filters to that month across every type (`kind`
-  left `undefined` in the `MonthlySelection`); clicking the Total
+  month header/footer cell filters to that month across every type (`month`
+  only — none of `kind`/`autonomy`/`categoryId`/`classId` set, which is
+  what `isRowScoped` in `dashboard-monthly-table.tsx` checks to tell a
+  column-wide selection from a row's); clicking the Total
   header/footer cell shows the full year unrestricted — the same
   "everything" case the now-removed "Accounts" stat card used to cover.
   Re-clicking the exact same selection clears it (`monthlySelectionsEqual`
