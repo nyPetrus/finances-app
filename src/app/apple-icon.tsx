@@ -1,15 +1,13 @@
 import { ImageResponse } from "next/og";
 import { APP_ICON_DATA_URI } from "@/lib/app-icon";
 
-// 512px so the same image serves the browser tab (scaled down) and the
-// manifest's home-screen icon (see manifest.ts).
 export const size = {
-  width: 512,
-  height: 512,
+  width: 180,
+  height: 180,
 };
 export const contentType = "image/png";
 
-export default function Icon() {
+export default function AppleIcon() {
   return new ImageResponse(
     // eslint-disable-next-line @next/next/no-img-element
     <img src={APP_ICON_DATA_URI} width={size.width} height={size.height} alt="" />,
