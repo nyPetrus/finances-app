@@ -26,18 +26,22 @@ shared with the other list pages.
   cards specifically, but those were removed (see `dashboard-conventions`'s
   "removed-cards" history) and nothing on the Dashboard shows `R$` any
   more now.
-- **Date is `dd mmm` (no year) and never wraps**: `formatDate` renders
-  e.g. `11 set` via a local `MONTH_ABBREVIATIONS` array (`["jan", "fev",
-  ..., "dez"]`, no periods), reading `getUTCDate()` / `getUTCMonth()` off
-  the transaction's date string. This is the same format on the
-  Dashboard's embedded table (`dashboard-transactions-table.tsx` — a
-  separate copy, kept in sync by hand, see `dashboard-conventions`). The
-  Date column also sets `cellClassName: "whitespace-nowrap"` in `COLUMNS`
-  — needed because the shared `TableCell` wraps by default (see
-  `table-page-conventions`), and `dd mmm` has a space that would otherwise
-  let it break across lines in a narrow column.
-  **Why:** `dd mmm` is by explicit user request (2026-09-29), replacing
-  the earlier `DD mmm YY` — don't add the year back unless asked.
+- **Date is `dd mmm yy` on Search, `dd mmm` (no year) on the Dashboard,
+  and never wraps**: `formatDate` renders e.g. `11 set 26` in
+  `search/search-table.tsx` (`11 set` in `dashboard-transactions-table.tsx`
+  — a separate copy, otherwise kept in sync by hand, see
+  `dashboard-conventions`) via a local `MONTH_ABBREVIATIONS` array
+  (`["jan", "fev", ..., "dez"]`, no periods), reading `getUTCDate()` /
+  `getUTCMonth()` / `getUTCFullYear()` off the transaction's date string.
+  The Date column also sets `cellClassName: "whitespace-nowrap"` in
+  `COLUMNS` — needed because the shared `TableCell` wraps by default (see
+  `table-page-conventions`), and the format has spaces that would
+  otherwise let it break across lines in a narrow column.
+  **Why:** both by explicit user request. Both tables went from `DD mmm
+  YY` to `dd mmm` (2026-09-29); Search alone got the 2-digit year back
+  (2026-10-01), since its filters can span years while the Dashboard's
+  table is always a single year. Don't sync the two formats without
+  asking.
 - **Account renders as a `Badge` chip**
   (`variant="secondary" className="max-w-full gap-1 truncate"`), instead
   of plain text, with no leading icon (`Account` has no `icon` field).
