@@ -1,11 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { ArrowDownIcon, ArrowUpIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CardListHeader } from "@/components/card-list-header";
 import { CategoryIcon } from "@/components/category-icon";
 import type { Account, Category, Class, Transaction } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
@@ -15,9 +13,7 @@ import { cn } from "@/lib/utils";
  * embedded table): one two-line card per transaction — description +
  * amount, then date · category icon · class icon · account. Tapping a card
  * opens it (the caller's edit dialog); the checkbox selects it for the
- * toolbar's "⋮". With no table header, sorting is a column picker plus a
- * direction toggle; each caller decides what a sort change does (URL vs.
- * local state).
+ * toolbar's "⋮". Sorting goes through CardListHeader.
  */
 export function TransactionCardList<K extends string>({
   transactions,
@@ -56,42 +52,18 @@ export function TransactionCardList<K extends string>({
   onSortChange: (key: K, dir: "asc" | "desc") => void;
   className?: string;
 }) {
-  const sortLabel = (key: K) => sortOptions.find((option) => option.key === key)?.label ?? key;
-  const flippedDir = sortDir === "asc" ? "desc" : "asc";
-
   return (
     <div className={cn("flex flex-col gap-2", className)}>
-      <div className="flex items-center gap-3 px-3">
-        <Checkbox
-          checked={allSelected}
-          indeterminate={someSelected}
-          onCheckedChange={onToggleAll}
-          aria-label="Select all transactions"
-        />
-        <div className="ml-auto flex items-center gap-1">
-          <Select value={sortKey} onValueChange={(value) => value && onSortChange(value as K, sortDir)}>
-            <SelectTrigger size="sm" aria-label="Sort by" title="Sort by">
-              <SelectValue>{(value: K) => `Sort: ${sortLabel(value)}`}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {sortOptions.map((option) => (
-                <SelectItem key={option.key} value={option.key}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => onSortChange(sortKey, flippedDir)}
-            aria-label={sortDir === "asc" ? "Sort descending" : "Sort ascending"}
-            title={sortDir === "asc" ? "Sort descending" : "Sort ascending"}
-          >
-            {sortDir === "asc" ? <ArrowUpIcon /> : <ArrowDownIcon />}
-          </Button>
-        </div>
-      </div>
+      <CardListHeader
+        allSelected={allSelected}
+        someSelected={someSelected}
+        onToggleAll={onToggleAll}
+        selectAllLabel="Select all transactions"
+        sortOptions={sortOptions}
+        sortKey={sortKey}
+        sortDir={sortDir}
+        onSortChange={onSortChange}
+      />
       <ul className="flex flex-col divide-y rounded-lg border">
         {transactions.map((transaction) => {
           const account = accountsById.get(transaction.account_id);

@@ -232,10 +232,12 @@ list page instead of inventing a fresh layout.
   `matchMedia`). Below `sm` the hidden set lives under a separate
   `${storageKey}-mobile-hidden-columns` key, so toggling columns on the
   phone never changes the desktop preference (order is shared). Current
-  defaults, per explicit user request: Accounts hides Source/Type/Last
-  sync/Transactions; Descriptions hides Operator/Class; Categories hides
-  Classes/Autonomy. (Search passes none: below `sm` it swaps the table for
-  a card list — see `search-page-conventions`.) Use this rather
+  defaults, per explicit user request: Descriptions hides Operator/Class;
+  Categories hides Classes/Autonomy. (Search and Accounts pass none: below
+  `sm` they swap the table for a card list — see `search-page-conventions`
+  and `accounts-column-formatting`. Card lists share `CardListHeader`,
+  `src/components/card-list-header.tsx`: select-all + sort picker +
+  direction toggle, the card stand-in for clickable column headers.) Use this rather
   than `hidden sm:table-cell` classes, which the Columns menu couldn't
   override. Page wrappers use `p-4 sm:p-6`. Every page's `<h1>` is
   `max-md:sr-only` — below `md` the sidebar's phone top bar already shows

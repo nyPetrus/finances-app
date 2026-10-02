@@ -65,3 +65,14 @@ description: Use when touching how the Accounts table (src/app/accounts/accounts
 - **"Connect bank" and "Sync" live in this table's own toolbar** (right/
   specific zone), not in `accounts/page.tsx` — see `table-page-conventions`'s
   "Connect bank" bullet. `page.tsx` now renders only a plain `<h1>Accounts</h1>`.
+- **On phones (below `sm`) the table becomes a card list** (inline in
+  `accounts-table.tsx`, table and cards both rendered, toggled with
+  `sm:hidden` / `hidden sm:block`). Each card: checkbox, then name (+
+  Inactive badge) over `Type · Source · ↻ last sync` (the sync time only
+  for automatic accounts), with Balance on the right and the transactions
+  total under it, prefixed `Σ` (tooltips don't exist on touch, so the
+  symbol is the label). Same value formatting as the columns. **Tapping a
+  card opens the edit dialog**, the same phone-only exception Search's
+  cards make to "Edit lives only in ⋮". Sorting uses the shared
+  `CardListHeader` (URL-driven, via `sortHref(column, dir)`); `ColumnsMenu`
+  is hidden below `sm`. Per explicit user request.

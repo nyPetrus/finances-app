@@ -34,6 +34,8 @@ import { SortableTableHead } from "@/components/sortable-table-head";
 import { ColumnsMenu } from "@/components/columns-menu";
 import { ColumnHeaderIcon } from "@/components/column-header-icon";
 import { RowActionsMenu } from "@/components/row-actions-menu";
+import { CardListHeader } from "@/components/card-list-header";
+import { cn } from "@/lib/utils";
 import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
 import { useInactiveFilter } from "@/hooks/use-inactive-filter";
@@ -83,8 +85,6 @@ const COLUMNS: {
 ];
 
 const DEFAULT_COLUMN_ORDER = COLUMNS.map((column) => column.key);
-// Hidden by default on phone-width screens (still toggleable via Columns).
-const MOBILE_HIDDEN_COLUMNS: SortKey[] = ["source", "type", "lastSync", "transactions"];
 
 function renderCell(account: Account, key: SortKey, transactionsTotalByAccount: Record<string, number>) {
   switch (key) {
@@ -137,7 +137,7 @@ export function AccountsTable({
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [importingAccount, setImportingAccount] = useState<Account | null>(null);
   const { hidden: hiddenColumns, order: columnOrder, toggle: toggleColumn, move: moveColumn } =
-    useColumnPreferences<SortKey>("accounts-table", DEFAULT_COLUMN_ORDER, MOBILE_HIDDEN_COLUMNS);
+    useColumnPreferences<SortKey>("accounts-table", DEFAULT_COLUMN_ORDER);
   const {
     showInactive,
     setShowInactive,
@@ -145,8 +145,8 @@ export function AccountsTable({
     visibleRows: visibleAccounts,
   } = useInactiveFilter(accounts, (account) => account.is_active);
 
-  function sortHref(column: SortKey) {
-    const nextDir: "asc" | "desc" = sortKey === column && sortDir === "asc" ? "desc" : "asc";
+  function sortHref(column: SortKey, dir?: "asc" | "desc") {
+    const nextDir: "asc" | "desc" = dir ?? (sortKey === column && sortDir === "asc" ? "desc" : "asc");
     return `/accounts?${new URLSearchParams({ sort: column, dir: nextDir }).toString()}`;
   }
 
@@ -233,7 +233,7 @@ export function AccountsTable({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           {selected.size > 0 ? (
             <span className="text-sm text-muted-foreground">{selected.size} selected</span>
@@ -281,7 +281,10 @@ export function AccountsTable({
               {showInactive ? "Hide inactive" : `Show inactive (${inactiveCount})`}
             </Button>
           )}
-          <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />
+          {/* Phones get the card list below, which has no columns to pick. */}
+          <div className="hidden sm:block">
+            <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />
+          </div>
         </div>
       </div>
       {actionError && <p className="text-sm text-destructive">{actionError}</p>}
@@ -291,54 +294,123 @@ export function AccountsTable({
           No accounts yet. Add your first one to start tracking transactions.
         </p>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-0">
-                <Checkbox
-                  checked={allSelected}
-                  indeterminate={someSelected}
-                  onCheckedChange={toggleAll}
-                  aria-label="Select all accounts"
-                />
-              </TableHead>
-              {visibleColumns.map((column) => (
-                <SortableTableHead
-                  key={column.key}
-                  href={sortHref(column.key)}
-                  active={sortKey === column.key}
-                  dir={sortDir}
-                  align={column.align}
-                >
-                  {column.headerIcon ? (
-                    <ColumnHeaderIcon icon={column.headerIcon} label={column.label} iconOnly={column.headerIconOnly} />
-                  ) : (
-                    column.label
+        <>
+          {/* Phone: one card per account — name, then type · source · last
+              sync; balance on the right with the transactions total (Σ)
+              under it. Tapping a card opens its edit dialog. */}
+          <div className="flex flex-col gap-2 sm:hidden">
+            <CardListHeader
+              allSelected={allSelected}
+              someSelected={someSelected}
+              onToggleAll={toggleAll}
+              selectAllLabel="Select all accounts"
+              sortOptions={COLUMNS}
+              sortKey={sortKey}
+              sortDir={sortDir}
+              onSortChange={(key, dir) => router.push(sortHref(key, dir))}
+            />
+            <ul className="flex flex-col divide-y rounded-lg border">
+              {sorted.map((account) => (
+                <li
+                  key={account.id}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2.5",
+                    !account.is_active && "text-muted-foreground",
+                    selected.has(account.id) && "bg-muted",
                   )}
-                </SortableTableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sorted.map((account) => (
-              <TableRow key={account.id} className={account.is_active ? "group" : "group text-muted-foreground"}>
-                <TableCell>
+                >
                   <Checkbox
                     checked={selected.has(account.id)}
                     onCheckedChange={() => toggleOne(account.id)}
                     aria-label={`Select ${account.name}`}
-                    className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[checked]:opacity-100 pointer-coarse:opacity-100"
                   />
-                </TableCell>
-                {visibleColumns.map((column) => (
-                  <TableCell key={column.key} className={column.cellClassName}>
-                    {renderCell(account, column.key, transactionsTotalByAccount)}
-                  </TableCell>
+                  <button
+                    type="button"
+                    onClick={() => setEditingAccount(account)}
+                    className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                  >
+                    <span className="flex min-w-0 flex-1 flex-col gap-1">
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span className="min-w-0 truncate font-medium">{account.name}</span>
+                        {!account.is_active && (
+                          <Badge variant="outline" className="shrink-0">
+                            Inactive
+                          </Badge>
+                        )}
+                      </span>
+                      <span className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+                        <span className="shrink-0">{typeLabels[account.type]}</span>
+                        {account.source && <span className="min-w-0 truncate">{account.source}</span>}
+                        {account.is_automatic && (
+                          <span className="inline-flex shrink-0 items-center gap-1" title="Last sync">
+                            <RefreshCwIcon className="size-3" aria-label="Last sync" />
+                            {formatDateTime(account.updated_at)}
+                          </span>
+                        )}
+                      </span>
+                    </span>
+                    <span className="flex shrink-0 flex-col items-end gap-1">
+                      <span className="font-medium">{formatCurrency(account.current_balance)}</span>
+                      <span className="text-xs text-muted-foreground" title="Transactions total">
+                        Σ {formatCurrency(transactionsTotalByAccount[account.id] ?? 0)}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="hidden sm:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-0">
+                    <Checkbox
+                      checked={allSelected}
+                      indeterminate={someSelected}
+                      onCheckedChange={toggleAll}
+                      aria-label="Select all accounts"
+                    />
+                  </TableHead>
+                  {visibleColumns.map((column) => (
+                    <SortableTableHead
+                      key={column.key}
+                      href={sortHref(column.key)}
+                      active={sortKey === column.key}
+                      dir={sortDir}
+                      align={column.align}
+                    >
+                      {column.headerIcon ? (
+                        <ColumnHeaderIcon icon={column.headerIcon} label={column.label} iconOnly={column.headerIconOnly} />
+                      ) : (
+                        column.label
+                      )}
+                    </SortableTableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sorted.map((account) => (
+                  <TableRow key={account.id} className={account.is_active ? "group" : "group text-muted-foreground"}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selected.has(account.id)}
+                        onCheckedChange={() => toggleOne(account.id)}
+                        aria-label={`Select ${account.name}`}
+                        className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[checked]:opacity-100 pointer-coarse:opacity-100"
+                      />
+                    </TableCell>
+                    {visibleColumns.map((column) => (
+                      <TableCell key={column.key} className={column.cellClassName}>
+                        {renderCell(account, column.key, transactionsTotalByAccount)}
+                      </TableCell>
+                    ))}
+                  </TableRow>
                 ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+              </TableBody>
+            </Table>
+          </div>
+        </>
       )}
 
       {importingAccount && (
