@@ -233,10 +233,18 @@ list page instead of inventing a fresh layout.
   `${storageKey}-mobile-hidden-columns` key, so toggling columns on the
   phone never changes the desktop preference (order is shared). Current
   defaults, per explicit user request: Accounts hides Source/Type/Last
-  sync/Transactions; Search hides Account/Category/Class; Descriptions
-  hides Operator/Class; Categories hides Classes/Autonomy. Use this rather
+  sync/Transactions; Descriptions hides Operator/Class; Categories hides
+  Classes/Autonomy. (Search passes none: below `sm` it swaps the table for
+  a card list — see `search-page-conventions`.) Use this rather
   than `hidden sm:table-cell` classes, which the Columns menu couldn't
   override. Page wrappers use `p-4 sm:p-6`.
+  **Touch sizing lives in the shared `ui/` components, gated on
+  `pointer-coarse:`** (so mouse users see no change): `Button` sizes
+  default/sm/icon/icon-sm grow to h-10/h-9/size-10/size-10, `TableCell`
+  gets `py-3` and `TableHead` `h-12`, `Checkbox` grows to `size-5` with an
+  invisible `after:-inset-2.5` hit area, dropdown/select items get
+  `py-2.5`, `SelectTrigger` grows a step. Don't re-add per-page touch
+  padding on top of these.
   Render the `ColumnsMenu` component (`src/components/columns-menu.tsx`) in
   the toolbar, passing it the page's `COLUMNS` config and the hook's
   `order`/`hidden`/`toggle`/`move`. Each page defines `COLUMNS` as an array

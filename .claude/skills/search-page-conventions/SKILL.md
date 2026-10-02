@@ -210,6 +210,25 @@ Added per explicit user request.
   feature is added here, check whether it belongs in the Dashboard's
   copy too, same as the
   Dashboard's copy.
+- **On phones (below `sm`) the results are a card list, not the table**
+  (`search-table.tsx`, both rendered, toggled with `sm:hidden` /
+  `hidden sm:block` so there's no hydration flash). Each card: checkbox
+  (always visible), then a button with description + Amount on line one
+  and date · category icon · class icon · account name (+ Inactive badge)
+  on line two. **Tapping a card opens its edit dialog directly** — a
+  deliberate phone-only exception to "Edit lives only in ⋮", per explicit
+  user request; ⋮ still works from the checkbox selection. Sorting there is
+  a "Sort: <column>" `Select` plus an asc/desc arrow link (both via
+  `sortHref(column, dir)`), and `ColumnsMenu` is hidden below `sm` since
+  cards ignore columns. Added per explicit user request; the Dashboard's
+  copy doesn't have it (yet).
+- **Filter editors become a bottom sheet on phones**: when `editing` is
+  set, the panel switches to `max-sm:fixed … bottom-0` with a dimmed
+  backdrop (inside `containerRef`, closing via its own `onClick`); the
+  plain suggestion list stays a dropdown under the bar. `layout.tsx`'s
+  `viewport.interactiveWidget: "resizes-content"` keeps the sheet above the
+  Android keyboard. `CheckboxEditor` only autofocuses with a fine pointer,
+  so the keyboard doesn't pop over a tap-to-pick list.
 - **Batch-editing selected transactions' Category/Class/Autonomy is a
   Search-only feature** — not added to the
   Dashboard's embedded table, unlike most of this table's other

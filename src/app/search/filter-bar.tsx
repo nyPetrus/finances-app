@@ -432,7 +432,7 @@ export function SearchFilterBar({
                 event.stopPropagation();
                 openEditor(field);
               }}
-              className="truncate py-1 pl-2"
+              className="truncate py-1 pl-2 pointer-coarse:py-2"
               title={`Edit ${FIELD_LABELS[field]} filter`}
             >
               <span className="text-muted-foreground">
@@ -449,7 +449,7 @@ export function SearchFilterBar({
               }}
               aria-label={`Remove ${FIELD_LABELS[field]} filter`}
               title={`Remove ${FIELD_LABELS[field]} filter`}
-              className="rounded-md px-1.5 py-1 text-muted-foreground hover:text-foreground"
+              className="rounded-md px-1.5 py-1 text-muted-foreground hover:text-foreground pointer-coarse:px-2.5 pointer-coarse:py-2"
             >
               <XIcon className="size-3" />
             </button>
@@ -487,17 +487,29 @@ export function SearchFilterBar({
             }}
             aria-label="Clear all filters"
             title="Clear all filters"
-            className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground pointer-coarse:p-2.5"
           >
             <XIcon className="size-4" />
           </button>
         )}
       </div>
 
+      {open && editing && (
+        // Phone: the editor is a bottom sheet over a dimmed page. The
+        // backdrop sits inside containerRef, so the outside-press listener
+        // ignores it — it closes via its own onClick.
+        <div className="fixed inset-0 z-40 bg-black/40 sm:hidden" onClick={close} aria-hidden />
+      )}
       {open && (
         <div
           id="search-filter-panel"
-          className="absolute top-full left-0 z-50 mt-1 w-full rounded-lg bg-popover p-2 text-sm text-popover-foreground shadow-md ring-1 ring-foreground/10 sm:w-80"
+          className={cn(
+            "absolute top-full left-0 z-50 mt-1 w-full rounded-lg bg-popover p-2 text-sm text-popover-foreground shadow-md ring-1 ring-foreground/10 sm:w-80",
+            // The suggestion list stays a dropdown under the bar (it's tied
+            // to the input and the keyboard); an open editor becomes a sheet.
+            editing &&
+              "max-sm:fixed max-sm:inset-x-0 max-sm:top-auto max-sm:bottom-0 max-sm:mt-0 max-sm:max-h-[85dvh] max-sm:overflow-auto max-sm:rounded-b-none max-sm:rounded-t-xl max-sm:p-4 max-sm:pb-[max(1rem,env(safe-area-inset-bottom))]",
+          )}
         >
           {editing ? (
             renderEditor(editing)
@@ -518,7 +530,7 @@ export function SearchFilterBar({
                   onMouseEnter={() => setHighlight(index)}
                   onClick={() => choose(suggestion)}
                   className={cn(
-                    "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left",
+                    "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left pointer-coarse:py-2.5",
                     index === highlight && "bg-muted",
                   )}
                 >

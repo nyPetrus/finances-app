@@ -30,7 +30,7 @@ function EditorHeader({ title, onBack }: { title: string; onBack: () => void }) 
         onClick={onBack}
         aria-label="Back to filter list"
         title="Back to filter list"
-        className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+        className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground pointer-coarse:p-2"
       >
         <ChevronLeftIcon className="size-4" />
       </button>
@@ -60,7 +60,7 @@ function Segmented<T extends string>({
           aria-checked={value === option.value}
           onClick={() => onChange(option.value)}
           className={cn(
-            "flex-1 rounded px-2 py-1 text-xs transition-colors",
+            "flex-1 rounded px-2 py-1 text-xs transition-colors pointer-coarse:py-2 pointer-coarse:text-sm",
             value === option.value
               ? "bg-background font-medium shadow-sm"
               : "text-muted-foreground hover:text-foreground",
@@ -95,6 +95,9 @@ export function CheckboxEditor({
   const [selected, setSelected] = useState(() => new Set(initial));
   const [query, setQuery] = useState("");
   const showSearch = options.length > 8;
+  // On touch screens, focusing the find box would pop the keyboard over a
+  // list that's usually picked by tapping — only autofocus with a mouse.
+  const [finePointer] = useState(() => window.matchMedia("(pointer: fine)").matches);
   const visible = query
     ? options.filter((option) => option.label.toLowerCase().includes(query.trim().toLowerCase()))
     : options;
@@ -115,7 +118,7 @@ export function CheckboxEditor({
       <EditorHeader title={title} onBack={onBack} />
       {showSearch && (
         <Input
-          autoFocus
+          autoFocus={finePointer}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => {
@@ -125,7 +128,7 @@ export function CheckboxEditor({
           aria-label={`Find ${title.toLowerCase()}`}
         />
       )}
-      <div role="listbox" aria-multiselectable aria-label={title} className="max-h-64 overflow-auto">
+      <div role="listbox" aria-multiselectable aria-label={title} className="max-h-64 overflow-auto max-sm:max-h-[50dvh]">
         {visible.map((option, index) => {
           const checked = selected.has(option.value);
           return (
@@ -134,7 +137,7 @@ export function CheckboxEditor({
               role="option"
               aria-selected={checked}
               tabIndex={0}
-              autoFocus={!showSearch && index === 0}
+              autoFocus={finePointer && !showSearch && index === 0}
               onClick={() => toggle(option.value)}
               onKeyDown={(e) => {
                 if (e.key === " ") {
@@ -144,7 +147,7 @@ export function CheckboxEditor({
                   apply();
                 }
               }}
-              className="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 outline-none hover:bg-muted focus-visible:bg-muted"
+              className="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 outline-none hover:bg-muted focus-visible:bg-muted pointer-coarse:py-2.5"
             >
               <span
                 className={cn(
@@ -253,7 +256,7 @@ function GridButton({ selected, onClick, children }: { selected: boolean; onClic
       onClick={onClick}
       aria-pressed={selected}
       className={cn(
-        "rounded-md px-2 py-1.5 text-sm transition-colors",
+        "rounded-md px-2 py-1.5 text-sm transition-colors pointer-coarse:py-3",
         selected ? "bg-primary text-primary-foreground" : "hover:bg-muted",
       )}
     >
@@ -265,11 +268,11 @@ function GridButton({ selected, onClick, children }: { selected: boolean; onClic
 function PagerHeader({ label, onPrev, onNext }: { label: string; onPrev: () => void; onNext: () => void }) {
   return (
     <div className="flex items-center justify-between">
-      <button type="button" onClick={onPrev} aria-label="Previous" title="Previous" className="rounded-md p-1 hover:bg-muted">
+      <button type="button" onClick={onPrev} aria-label="Previous" title="Previous" className="rounded-md p-1 hover:bg-muted pointer-coarse:p-2">
         <ChevronLeftIcon className="size-4" />
       </button>
       <span className="text-sm font-medium">{label}</span>
-      <button type="button" onClick={onNext} aria-label="Next" title="Next" className="rounded-md p-1 hover:bg-muted">
+      <button type="button" onClick={onNext} aria-label="Next" title="Next" className="rounded-md p-1 hover:bg-muted pointer-coarse:p-2">
         <ChevronRightIcon className="size-4" />
       </button>
     </div>
@@ -327,6 +330,7 @@ export function DateEditor({
             key={shortcut.label}
             variant="outline"
             size="xs"
+            className="pointer-coarse:h-9 pointer-coarse:px-3"
             onClick={() => pick(shortcut.granularity, shortcut.value)}
           >
             {shortcut.label}

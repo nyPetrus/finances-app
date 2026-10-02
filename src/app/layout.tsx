@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Geist_Mono } from "next/font/google";
 import { NavBar } from "@/components/nav-bar";
 import { Toaster } from "@/components/ui/sonner";
@@ -17,6 +17,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Finances",
   description: "Personal finance and budget tracker",
+};
+
+// Android Chrome otherwise overlays the on-screen keyboard on top of the
+// page, hiding bottom-anchored UI like the Search filter sheet.
+export const viewport: Viewport = {
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({

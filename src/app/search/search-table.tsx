@@ -2,9 +2,11 @@
 
 import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
+  ArrowDownIcon,
+  ArrowUpIcon,
   BanknoteIcon,
   BoxIcon,
   CalendarIcon,
@@ -47,6 +49,7 @@ import { CategoryIcon } from "@/components/category-icon";
 import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
 import { useInactiveFilter } from "@/hooks/use-inactive-filter";
+import { cn } from "@/lib/utils";
 import { ClassificationFields } from "@/components/classification-fields";
 import type { Account, Category, Class, Autonomy, Transaction } from "@/lib/supabase/types";
 import {
@@ -114,8 +117,6 @@ const COLUMNS: {
 ];
 
 const DEFAULT_COLUMN_ORDER = COLUMNS.map((column) => column.key);
-// Hidden by default on phone-width screens (still toggleable via Columns).
-const MOBILE_HIDDEN_COLUMNS: SortKey[] = ["account", "category", "class"];
 
 export function SearchTable({
   transactions,
@@ -132,6 +133,7 @@ export function SearchTable({
   sortKey: SortKey;
   sortDir: "asc" | "desc";
 }) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [isSyncing, startSync] = useTransition();
   const [isTogglingActive, startToggleActive] = useTransition();
@@ -145,7 +147,7 @@ export function SearchTable({
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
   const editFormRef = useRef<HTMLFormElement>(null);
   const { hidden: hiddenColumns, order: columnOrder, toggle: toggleColumn, move: moveColumn } =
-    useColumnPreferences<SortKey>("search-table", DEFAULT_COLUMN_ORDER, MOBILE_HIDDEN_COLUMNS);
+    useColumnPreferences<SortKey>("search-table", DEFAULT_COLUMN_ORDER);
   const {
     showInactive,
     setShowInactive,
@@ -159,8 +161,8 @@ export function SearchTable({
 
   // Preserves every active filter param already in the URL — only sort/dir
   // change, so clicking a column header never drops the applied search.
-  function sortHref(column: SortKey) {
-    const nextDir: "asc" | "desc" = sortKey === column && sortDir === "asc" ? "desc" : "asc";
+  function sortHref(column: SortKey, dir?: "asc" | "desc") {
+    const nextDir: "asc" | "desc" = dir ?? (sortKey === column && sortDir === "asc" ? "desc" : "asc");
     const params = new URLSearchParams(searchParams.toString());
     params.set("sort", column);
     params.set("dir", nextDir);
@@ -293,7 +295,7 @@ export function SearchTable({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           {selected.size > 0 ? (
             <span className="text-sm text-muted-foreground">{selected.size} selected</span>
@@ -331,7 +333,10 @@ export function SearchTable({
               {showInactive ? "Hide inactive" : `Show inactive (${inactiveCount})`}
             </Button>
           )}
-          <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />
+          {/* Phones get the card list below, which has no columns to pick. */}
+          <div className="hidden sm:block">
+            <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />
+          </div>
         </div>
       </div>
       {actionError && <p className="text-sm text-destructive">{actionError}</p>}
@@ -339,54 +344,138 @@ export function SearchTable({
       {visibleTransactions.length === 0 ? (
         <p className="text-sm text-muted-foreground">No transactions match these filters.</p>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-0">
-                <Checkbox
-                  checked={allSelected}
-                  indeterminate={someSelected}
-                  onCheckedChange={toggleAll}
-                  aria-label="Select all transactions"
-                />
-              </TableHead>
-              {visibleColumns.map((column) => (
-                <SortableTableHead
-                  key={column.key}
-                  href={sortHref(column.key)}
-                  active={sortKey === column.key}
-                  dir={sortDir}
-                  align={column.align}
+        <>
+          {/* Phone: one two-line card per transaction instead of the table. */}
+          <div className="flex flex-col gap-2 sm:hidden">
+            <div className="flex items-center gap-3 px-3">
+              <Checkbox
+                checked={allSelected}
+                indeterminate={someSelected}
+                onCheckedChange={toggleAll}
+                aria-label="Select all transactions"
+              />
+              <div className="ml-auto flex items-center gap-1">
+                <Select
+                  value={sortKey}
+                  onValueChange={(value) => value && router.push(sortHref(value as SortKey, sortDir))}
                 >
-                  {column.headerIcon ? (
-                    <ColumnHeaderIcon icon={column.headerIcon} label={column.label} iconOnly={column.headerIconOnly} />
-                  ) : (
-                    column.label
-                  )}
-                </SortableTableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {visibleTransactions.map((transaction) => (
-              <TableRow key={transaction.id} className={transaction.is_hidden ? "group text-muted-foreground" : "group"}>
-                <TableCell>
-                  <Checkbox
-                    checked={selected.has(transaction.id)}
-                    onCheckedChange={() => toggleOne(transaction.id)}
-                    aria-label={`Select ${transaction.description}`}
-                    className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[checked]:opacity-100 pointer-coarse:opacity-100"
-                  />
-                </TableCell>
-                {visibleColumns.map((column) => (
-                  <TableCell key={column.key} className={column.cellClassName}>
-                    {renderCell(transaction, column.key)}
-                  </TableCell>
+                  <SelectTrigger size="sm" aria-label="Sort by" title="Sort by">
+                    <SelectValue>{(value: SortKey) => `Sort: ${columnsByKey.get(value)?.label ?? value}`}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {COLUMNS.map((column) => (
+                      <SelectItem key={column.key} value={column.key}>
+                        {column.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  render={<Link href={sortHref(sortKey, sortDir === "asc" ? "desc" : "asc")} />}
+                  aria-label={sortDir === "asc" ? "Sort descending" : "Sort ascending"}
+                  title={sortDir === "asc" ? "Sort descending" : "Sort ascending"}
+                >
+                  {sortDir === "asc" ? <ArrowUpIcon /> : <ArrowDownIcon />}
+                </Button>
+              </div>
+            </div>
+            <ul className="flex flex-col divide-y rounded-lg border">
+              {visibleTransactions.map((transaction) => {
+                const account = accountsById.get(transaction.account_id);
+                return (
+                  <li
+                    key={transaction.id}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2.5",
+                      transaction.is_hidden && "text-muted-foreground",
+                      selected.has(transaction.id) && "bg-muted",
+                    )}
+                  >
+                    <Checkbox
+                      checked={selected.has(transaction.id)}
+                      onCheckedChange={() => toggleOne(transaction.id)}
+                      aria-label={`Select ${transaction.description}`}
+                    />
+                    {/* Tapping the card opens its edit dialog directly. */}
+                    <button
+                      type="button"
+                      onClick={() => openEditDialog(transaction)}
+                      className="flex min-w-0 flex-1 flex-col gap-1 text-left"
+                    >
+                      <span className="flex items-baseline gap-2">
+                        <span className="min-w-0 flex-1 truncate font-medium">{transaction.description}</span>
+                        <span className="shrink-0 font-medium">{renderCell(transaction, "amount")}</span>
+                      </span>
+                      <span className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+                        <span className="shrink-0">{formatDate(transaction.date)}</span>
+                        {transaction.category_id && renderCell(transaction, "category")}
+                        {transaction.class_id && renderCell(transaction, "class")}
+                        {account && <span className="min-w-0 truncate">{account.name}</span>}
+                        {transaction.is_hidden && (
+                          <Badge variant="outline" className="shrink-0">
+                            Inactive
+                          </Badge>
+                        )}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+          <div className="hidden sm:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-0">
+                    <Checkbox
+                      checked={allSelected}
+                      indeterminate={someSelected}
+                      onCheckedChange={toggleAll}
+                      aria-label="Select all transactions"
+                    />
+                  </TableHead>
+                  {visibleColumns.map((column) => (
+                    <SortableTableHead
+                      key={column.key}
+                      href={sortHref(column.key)}
+                      active={sortKey === column.key}
+                      dir={sortDir}
+                      align={column.align}
+                    >
+                      {column.headerIcon ? (
+                        <ColumnHeaderIcon icon={column.headerIcon} label={column.label} iconOnly={column.headerIconOnly} />
+                      ) : (
+                        column.label
+                      )}
+                    </SortableTableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {visibleTransactions.map((transaction) => (
+                  <TableRow key={transaction.id} className={transaction.is_hidden ? "group text-muted-foreground" : "group"}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selected.has(transaction.id)}
+                        onCheckedChange={() => toggleOne(transaction.id)}
+                        aria-label={`Select ${transaction.description}`}
+                        className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[checked]:opacity-100 pointer-coarse:opacity-100"
+                      />
+                    </TableCell>
+                    {visibleColumns.map((column) => (
+                      <TableCell key={column.key} className={column.cellClassName}>
+                        {renderCell(transaction, column.key)}
+                      </TableCell>
+                    ))}
+                  </TableRow>
                 ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+              </TableBody>
+            </Table>
+          </div>
+        </>
       )}
 
       {editingTransaction && (
