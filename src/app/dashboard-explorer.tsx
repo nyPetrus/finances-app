@@ -307,7 +307,10 @@ export function DashboardExplorer({
           nothing. Closing the sheet clears the selection. */}
       {selection && isMobile && (
         <Dialog open onOpenChange={(open) => !open && setSelection(undefined)}>
-          <DialogContent className="top-auto bottom-0 left-0 max-h-[85dvh] max-w-none translate-x-0 translate-y-0 content-start overflow-y-auto rounded-none rounded-t-xl pb-[max(1rem,env(safe-area-inset-bottom))]">
+          {/* grid-cols-[minmax(0,1fr)]: DialogContent is a grid, whose default
+              auto column grows to the cards' full untruncated description and
+              pushes the amount off-screen; this lets descriptions truncate. */}
+          <DialogContent className="top-auto bottom-0 left-0 max-h-[85dvh] max-w-none translate-x-0 translate-y-0 grid-cols-[minmax(0,1fr)] content-start overflow-y-auto rounded-none rounded-t-xl pb-[max(1rem,env(safe-area-inset-bottom))]">
             <DialogHeader className="pr-8">
               <DialogTitle>
                 <SelectionLabel year={year} selection={selection} categoriesById={categoriesById} classesById={classesById} />
