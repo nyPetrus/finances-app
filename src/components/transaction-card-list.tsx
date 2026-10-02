@@ -11,8 +11,9 @@ import { cn } from "@/lib/utils";
 
 /**
  * Phone layout for the transaction tables (Search and the Dashboard's
- * embedded table): one two-line card per transaction — description +
- * amount, then date · category icon · class icon · account. Tapping a card
+ * embedded table): one two-line card per transaction — left, description
+ * over date · category icon · class icon; right, amount over account
+ * (name + type icon). Tapping a card
  * opens it (the caller's edit dialog); the checkbox selects it for the
  * toolbar's "⋮". Sorting goes through CardListHeader.
  */
@@ -87,34 +88,39 @@ export function TransactionCardList<K extends string>({
               <button
                 type="button"
                 onClick={() => onOpen(transaction)}
-                className="flex min-w-0 flex-1 flex-col gap-1 text-left"
+                className="flex min-w-0 flex-1 items-start gap-2 text-left"
               >
-                <span className="flex items-baseline gap-2">
-                  <span className="min-w-0 flex-1 truncate font-medium">{transaction.description}</span>
-                  <span className="shrink-0 font-medium">{renderAmount(transaction)}</span>
+                {/* Left: what and when. Right: how much and from where —
+                    capped so a long account name truncates instead of
+                    squeezing the description. */}
+                <span className="flex min-w-0 flex-1 flex-col gap-1">
+                  <span className="truncate font-medium">{transaction.description}</span>
+                  <span className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+                    <span className="shrink-0">{formatDate(transaction.date)}</span>
+                    {category && (
+                      <span title={category.name} className="inline-flex shrink-0">
+                        <CategoryIcon icon={category.icon} className="size-4" />
+                      </span>
+                    )}
+                    {transactionClass && (
+                      <span title={transactionClass.name} className="inline-flex shrink-0">
+                        <CategoryIcon icon={transactionClass.icon} className="size-4" />
+                      </span>
+                    )}
+                    {transaction.is_hidden && (
+                      <Badge variant="outline" className="shrink-0">
+                        Inactive
+                      </Badge>
+                    )}
+                  </span>
                 </span>
-                <span className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-                  <span className="shrink-0">{formatDate(transaction.date)}</span>
-                  {category && (
-                    <span title={category.name} className="inline-flex shrink-0">
-                      <CategoryIcon icon={category.icon} className="size-4" />
-                    </span>
-                  )}
-                  {transactionClass && (
-                    <span title={transactionClass.name} className="inline-flex shrink-0">
-                      <CategoryIcon icon={transactionClass.icon} className="size-4" />
-                    </span>
-                  )}
+                <span className="flex max-w-[45%] shrink-0 flex-col items-end gap-1">
+                  <span className="font-medium whitespace-nowrap">{renderAmount(transaction)}</span>
                   {account && (
-                    <span className="flex min-w-0 items-center gap-1">
+                    <span className="flex max-w-full min-w-0 items-center gap-1 text-xs text-muted-foreground">
                       <span className="min-w-0 truncate">{account.name}</span>
                       <AccountTypeIcon type={account.type} className="size-3" />
                     </span>
-                  )}
-                  {transaction.is_hidden && (
-                    <Badge variant="outline" className="shrink-0">
-                      Inactive
-                    </Badge>
                   )}
                 </span>
               </button>
