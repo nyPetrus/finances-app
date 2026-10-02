@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { TRANSACTION_TYPE_SYMBOL_ROTATION } from "@/lib/transaction-type";
 import type { MonthlyRow, MonthlySelection } from "./dashboard-monthly-breakdown";
 
-const MONTH_LABELS = [
+export const MONTH_LABELS = [
   "jan", "fev", "mar", "abr", "mai", "jun",
   "jul", "ago", "set", "out", "nov", "dez",
 ];
@@ -65,6 +65,7 @@ function TreeRows({
   rows,
   depth,
   colorClassName,
+  visibleMonths,
   expanded,
   onToggle,
   selected,
@@ -72,6 +73,7 @@ function TreeRows({
 }: {
   rows: MonthlyRow[];
   depth: number;
+  visibleMonths: number[];
   colorClassName?: string;
   expanded: Set<string>;
   onToggle: (key: string) => void;
@@ -154,7 +156,8 @@ function TreeRows({
                   )}
                 </div>
               </td>
-              {row.months.map((value, i) => {
+              {visibleMonths.map((i) => {
+                const value = row.months[i];
                 // A row-scoped cell click (this row, this month) or a
                 // column-wide one (any row, this month, no kind at all —
                 // from the header/footer) both light this cell up.
@@ -197,6 +200,7 @@ function TreeRows({
                 rows={row.children!}
                 depth={depth + 1}
                 colorClassName={rowColor}
+                visibleMonths={visibleMonths}
                 expanded={expanded}
                 onToggle={onToggle}
                 selected={selected}
@@ -215,6 +219,7 @@ function TreeRows({
 export function MonthlyBreakdownTable({
   rows,
   monthTotals,
+  visibleMonths,
   selected,
   onSelect,
   expanded,
@@ -224,6 +229,9 @@ export function MonthlyBreakdownTable({
   // Computed from all the year's transactions (buildMonthTotals), not from
   // `rows` — a Category/Class top level drops transactions without one.
   monthTotals: number[];
+  // Month indexes (0-11) to render as columns, from the Months menu. The
+  // Year column always sums all 12 months regardless.
+  visibleMonths: number[];
   selected: MonthlySelection | undefined;
   onSelect: (selection: MonthlySelection) => void;
   expanded: Set<string>;
@@ -246,16 +254,16 @@ export function MonthlyBreakdownTable({
         <thead>
           <tr className="border-b">
             <th className="sticky top-0 left-0 z-30 border-r bg-background px-2 py-2" />
-            {MONTH_LABELS.map((label, i) => (
+            {visibleMonths.map((i) => (
               <th
-                key={label}
+                key={i}
                 onClick={() => onSelect({ month: i })}
                 className={cn(
                   "sticky top-0 z-20 bg-background px-0.5 py-2 text-center text-xs font-medium capitalize hover:brightness-95",
                   columnSelectedMonth === i && SELECTED_CELL,
                 )}
               >
-                {label}
+                {MONTH_LABELS[i]}
               </th>
             ))}
             <th
@@ -265,19 +273,19 @@ export function MonthlyBreakdownTable({
                 totalSelected && SELECTED_CELL,
               )}
             >
-              Total
+              Year
             </th>
           </tr>
         </thead>
         <tbody>
-          <TreeRows rows={rows} depth={0} expanded={expanded} onToggle={onToggle} selected={selected} onSelect={onSelect} />
+          <TreeRows rows={rows} depth={0} visibleMonths={visibleMonths} expanded={expanded} onToggle={onToggle} selected={selected} onSelect={onSelect} />
         </tbody>
         <tfoot>
           <tr className="border-t">
             <td className="sticky bottom-0 left-0 z-30 border-r bg-background px-2 py-2 text-xs font-medium">
               Total
             </td>
-            {monthTotals.map((value, i) => (
+            {visibleMonths.map((i) => (
               <td
                 key={i}
                 onClick={() => onSelect({ month: i })}
@@ -286,7 +294,7 @@ export function MonthlyBreakdownTable({
                   columnSelectedMonth === i && SELECTED_CELL,
                 )}
               >
-                {value === 0 ? "" : formatCurrency(value)}
+                {monthTotals[i] === 0 ? "" : formatCurrency(monthTotals[i])}
               </td>
             ))}
             <td

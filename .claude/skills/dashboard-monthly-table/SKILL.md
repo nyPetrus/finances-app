@@ -210,6 +210,20 @@ table is meant if it's ever unclear again.
   stat cards' own colors, but this table keeps the rule on its own merits
   now that those cards are gone.
 
+- **Months menu + "Year" column** (per explicit user request): a
+  `CalendarDaysIcon` icon-button (`dashboard-months-menu.tsx`, left of the
+  "Levels" menu) with an "All months" checkbox plus one checkbox per
+  month — no reordering, months stay in calendar order. Hidden months
+  persist per browser via `useColumnPreferences("dashboard-monthly-table-months",
+  ["0".."11"])` (only its `hidden` set is used). `MonthlyBreakdownTable`
+  takes `visibleMonths: number[]` and renders only those month columns
+  (header, body, footer). The trailing column formerly labeled "Total" is
+  now labeled **"Year"**, and **its values always sum all 12 months** —
+  `row.total` and the footer `grandTotal` are never recomputed from the
+  visible months, so hiding a month doesn't change the Year value. (The
+  footer *row* label is still "Total".) Wherever this doc says "Total
+  column/cell", read it as this Year column.
+
 - **Expand/collapse-all button** (per explicit user request): an icon-only
   `variant="outline" size="icon-sm"` button just left of the "Levels" menu
   in `dashboard-explorer.tsx` — `ChevronsUpDownIcon` "Expand all levels"
@@ -280,12 +294,9 @@ table is meant if it's ever unclear again.
   month/Total cells stay `whitespace-nowrap` so their own natural
   (numeric) content width is what auto-layout sizes them to — further
   narrowed whenever a cell is empty (see the zero-value rule above),
-  which is fine and expected. The *column* set here (label + 12 months +
-  Total) is still static and never hidden/reordered by column —
-  `ColumnsMenu`/`useColumnPreferences` is only reused for the separate
-  "Levels" menu (which rows/depth get built, not which columns render);
-  don't conflate the two or assume the month columns became configurable
-  too.
+  which is fine and expected. Month columns can be hidden (see the
+  "Months menu" bullet below) but never reordered; the label and Year
+  columns are always shown.
   **Why:** per explicit user request — the user explicitly accepted that
   columns shift as rows expand/collapse in exchange for numbers/labels
   fitting tightly instead of floating in fixed-width cells.

@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { ChevronsDownUpIcon, ChevronsUpDownIcon, ListTreeIcon } from "lucide-react";
 import { DashboardTransactionsTable } from "./dashboard-transactions-table";
 import { MonthlyBreakdownTable } from "./dashboard-monthly-table";
+import { MonthsMenu } from "./dashboard-months-menu";
 import {
   buildMonthlyBreakdown,
   buildMonthTotals,
@@ -21,6 +22,11 @@ import { useColumnPreferences } from "@/hooks/use-column-preferences";
 import type { Account, Category, Class, Transaction } from "@/lib/supabase/types";
 
 const LEVEL_COLUMNS = DEFAULT_CLASSIFICATION_LEVELS.map((key) => ({ key, label: CLASSIFICATION_LEVEL_LABELS[key] }));
+
+// Month indexes as string keys, so the Months menu can reuse
+// useColumnPreferences' per-browser hidden set (its order is unused —
+// months always stay in calendar order).
+const MONTH_KEYS = Array.from({ length: 12 }, (_, i) => String(i));
 
 // Keys of every row that has children, at any depth — what "expand all" opens.
 function expandableKeys(rows: MonthlyRow[]): string[] {
@@ -57,6 +63,23 @@ export function DashboardExplorer({
     () => levelOrder.filter((level) => !hiddenLevels.has(level)),
     [levelOrder, hiddenLevels],
   );
+
+  const { hidden: hiddenMonthKeys, toggle: toggleMonthKey } = useColumnPreferences(
+    "dashboard-monthly-table-months",
+    MONTH_KEYS,
+  );
+  const hiddenMonths = useMemo(() => new Set(Array.from(hiddenMonthKeys, Number)), [hiddenMonthKeys]);
+  const visibleMonths = useMemo(
+    () => MONTH_KEYS.map(Number).filter((month) => !hiddenMonths.has(month)),
+    [hiddenMonths],
+  );
+
+  function setAllMonths(visible: boolean) {
+    // toggle() uses a functional state update, so toggling several in a row composes.
+    for (const key of MONTH_KEYS) {
+      if (hiddenMonthKeys.has(key) === visible) toggleMonthKey(key);
+    }
+  }
 
   const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
   const classesById = useMemo(() => new Map(classes.map((c) => [c.id, c])), [classes]);
@@ -114,6 +137,7 @@ export function DashboardExplorer({
         >
           {allExpanded ? <ChevronsDownUpIcon /> : <ChevronsUpDownIcon />}
         </Button>
+        <MonthsMenu hidden={hiddenMonths} onToggle={(month) => toggleMonthKey(String(month))}onSetAll={setAllMonths} />
         <ColumnsMenu
           columns={LEVEL_COLUMNS}
           order={levelOrder}
@@ -127,6 +151,7 @@ export function DashboardExplorer({
       <MonthlyBreakdownTable
         rows={monthlyBreakdown}
         monthTotals={monthTotals}
+        visibleMonths={visibleMonths}
         selected={selection}
         onSelect={handleSelect}
         expanded={expanded}
