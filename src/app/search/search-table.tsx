@@ -186,8 +186,8 @@ export function SearchTable({
         const account = accountsById.get(transaction.account_id);
         return account ? (
           <Badge variant="secondary" className="max-w-full gap-1">
-            <AccountTypeIcon type={account.type} className="size-3" />
             <span className="min-w-0 truncate">{account.name}</span>
+            <AccountTypeIcon type={account.type} className="size-3" />
           </Badge>
         ) : (
           <span className="text-sm text-muted-foreground">—</span>

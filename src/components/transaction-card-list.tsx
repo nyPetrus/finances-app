@@ -107,8 +107,8 @@ export function TransactionCardList<K extends string>({
                   )}
                   {account && (
                     <span className="flex min-w-0 items-center gap-1">
-                      <AccountTypeIcon type={account.type} className="size-3" />
                       <span className="min-w-0 truncate">{account.name}</span>
+                      <AccountTypeIcon type={account.type} className="size-3" />
                     </span>
                   )}
                   {transaction.is_hidden && (
