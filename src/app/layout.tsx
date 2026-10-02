@@ -38,9 +38,11 @@ export default function RootLayout({
       <body className="min-h-full">
         <div className="flex min-h-full flex-col md:flex-row">
           <NavBar />
-          <main className="min-w-0 flex-1">{children}</main>
+          {/* Phones: room for the fixed bottom nav bar (sidebar-nav.tsx). */}
+          <main className="min-w-0 flex-1 max-md:pb-[calc(3.5rem+env(safe-area-inset-bottom))]">{children}</main>
         </div>
-        <Toaster />
+        {/* Phones: toasts sit above the bottom nav bar. */}
+        <Toaster mobileOffset={{ bottom: "calc(4.5rem + env(safe-area-inset-bottom))" }} />
       </body>
     </html>
   );

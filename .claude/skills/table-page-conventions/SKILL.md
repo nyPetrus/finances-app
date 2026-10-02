@@ -239,9 +239,13 @@ list page instead of inventing a fresh layout.
   `src/components/card-list-header.tsx`: select-all + sort picker +
   direction toggle, the card stand-in for clickable column headers.) Use this rather
   than `hidden sm:table-cell` classes, which the Columns menu couldn't
-  override. Page wrappers use `p-4 sm:p-6`. Every page's `<h1>` is
-  `max-md:sr-only` — below `md` the sidebar's phone top bar already shows
-  the page name. `useIsMobile()` (`src/hooks/use-is-mobile.ts`) is the
+  override. Page wrappers use `p-4 sm:p-6`. Below `md`, pages that
+  have their own slot in the phone bottom nav bar (Dashboard, Budget,
+  Search, Accounts — see `src/components/sidebar-nav.tsx`) make their
+  `<h1>` `max-md:sr-only`, since the highlighted tab already names the page;
+  pages behind its "More" sheet (Categories & Classes, Descriptions) keep
+  the `<h1>` visible as `max-md:text-lg`, since "More" alone doesn't say
+  which page you're on. `useIsMobile()` (`src/hooks/use-is-mobile.ts`) is the
   shared JS-side phone check (same `sm` breakpoint).
   **Touch sizing lives in the shared `ui/` components, gated on
   `pointer-coarse:`** (so mouse users see no change): `Button` sizes

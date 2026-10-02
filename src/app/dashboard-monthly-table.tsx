@@ -251,7 +251,7 @@ export function MonthlyBreakdownTable({
   return (
     // Phones: nearly full-height, so scrolling the table and scrolling the
     // page fight less.
-    <div className="max-h-[70vh] overflow-auto rounded-md border max-sm:max-h-[calc(100dvh-9rem)]">
+    <div className="max-h-[70vh] overflow-auto rounded-md border max-sm:max-h-[calc(100dvh-9rem-env(safe-area-inset-bottom))]">
       {/* cursor-default: without it the browser shows the text I-beam over
           every number, which reads as an editable cell. select-none: clicks
           filter/expand, so they shouldn't also highlight the text. */}
