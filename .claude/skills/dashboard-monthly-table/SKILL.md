@@ -171,8 +171,9 @@ table is meant if it's ever unclear again.
   just a later addition; don't assume Autonomy is still a text-only level
   if this comes up again.
 
-  **The Type symbol is rendered larger and bolder than the rest of the
-  row** (`text-base font-bold`, vs. the table's base `text-sm`) — still
+  **The Type symbol is rendered larger than the rest of the row**
+  (`text-base`, vs. the table's base `text-sm`; it used to also be
+  `font-bold`, removed per a later explicit request — don't re-add it) — still
   `text-muted-foreground`, not colored to match the row's own
   income/expense color, to stay in this table's otherwise subdued style
   rather than adding more color weight. This sizing bump is Type-symbol-
@@ -286,7 +287,10 @@ table is meant if it's ever unclear again.
   `table-fixed`, no `<colgroup>`)** — columns size to their own content
   instead of a fixed 16%/6%×12/12% split, so a long Category/Class label
   (or a month with an unusually wide number) can make its column wider,
-  shrinking the others in response. The label cell still caps growth at
+  shrinking the others in response. The label column (body, header and
+  footer cells) uses `pl-2 pr-0.5` — tight right padding, per explicit
+  user request, so it doesn't leave a gap before the first month. The
+  label cell still caps growth at
   `max-w-56 truncate` (on the `<td>` itself, not just the inner `span` —
   see `table-page-conventions`'s `truncate`+`max-w-*` rule, which applies
   here too even though this table doesn't use shadcn's `Table`) so one

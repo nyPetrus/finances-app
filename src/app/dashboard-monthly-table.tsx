@@ -116,7 +116,7 @@ function TreeRows({
               <td
                 onClick={hasChildren ? () => onToggle(row.key) : undefined}
                 className={cn(
-                  "sticky left-0 z-10 max-w-56 overflow-hidden border-r px-2 py-2",
+                  "sticky left-0 z-10 max-w-56 overflow-hidden border-r py-2 pr-0.5 pl-2",
                   hasChildren && "hover:brightness-95",
                   rowBg ?? "bg-background",
                   wholeRowSelected && SELECTED_CELL,
@@ -136,7 +136,7 @@ function TreeRows({
                   {row.symbol && (
                     <span
                       className={cn(
-                        "inline-flex w-4 shrink-0 justify-center text-base font-bold text-muted-foreground",
+                        "inline-flex w-4 shrink-0 justify-center text-base text-muted-foreground",
                         isTypeLevel && row.kind && row.kind !== "uncategorized" && TRANSACTION_TYPE_SYMBOL_ROTATION[row.kind],
                       )}
                       aria-hidden="true"
@@ -253,7 +253,7 @@ export function MonthlyBreakdownTable({
       <table className="w-full cursor-default select-none border-collapse text-sm">
         <thead>
           <tr className="border-b">
-            <th className="sticky top-0 left-0 z-30 border-r bg-background px-2 py-2" />
+            <th className="sticky top-0 left-0 z-30 border-r bg-background py-2 pr-0.5 pl-2" />
             {visibleMonths.map((i) => (
               <th
                 key={i}
@@ -282,7 +282,7 @@ export function MonthlyBreakdownTable({
         </tbody>
         <tfoot>
           <tr className="border-t">
-            <td className="sticky bottom-0 left-0 z-30 border-r bg-background px-2 py-2 text-xs font-medium">
+            <td className="sticky bottom-0 left-0 z-30 border-r bg-background py-2 pr-0.5 pl-2 text-xs font-medium">
               Total
             </td>
             {visibleMonths.map((i) => (
