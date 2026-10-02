@@ -36,10 +36,12 @@ export default async function Home({
   const allCategories = (categories ?? []) as Category[];
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-6">
-      <div className="flex items-center justify-between">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-4 sm:p-6">
+      {/* Phones: this row collapses away — the title is screen-reader-only
+          and the year moves into the explorer's combined month/year stepper. */}
+      <div className="flex items-center justify-between max-sm:contents">
         <h1 className="text-2xl font-semibold max-md:sr-only">Dashboard</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 max-sm:hidden">
           <Button
             variant="outline"
             size="sm"
@@ -63,6 +65,7 @@ export default async function Home({
       </div>
 
       <DashboardExplorer
+        year={year}
         transactions={yearTransactions}
         accounts={allAccounts}
         categories={allCategories}

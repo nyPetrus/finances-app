@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -112,11 +113,13 @@ function monthlySelectionsEqual(a: MonthlySelection, b: MonthlySelection) {
 }
 
 export function DashboardExplorer({
+  year,
   transactions,
   accounts,
   categories,
   classes,
 }: {
+  year: number;
   transactions: Transaction[];
   accounts: Account[];
   categories: Category[];
@@ -128,6 +131,29 @@ export function DashboardExplorer({
   // arrows, instead of the Months menu's set. Only read on phones, which
   // never server-render this branch, so the client clock is safe here.
   const [phoneMonth, setPhoneMonth] = useState(() => new Date().getMonth());
+  // The phone stepper walks months across year boundaries (Jan ‹ goes to
+  // the previous year's Dez). Changing year is a navigation, so the target
+  // month waits here until the new year's data arrives, then applies.
+  const router = useRouter();
+  const [pendingStep, setPendingStep] = useState<{ year: number; month: number } | null>(null);
+  if (pendingStep && pendingStep.year === year) {
+    setPhoneMonth(pendingStep.month);
+    setPendingStep(null);
+  }
+
+  function stepPhoneMonth(delta: -1 | 1) {
+    const next = phoneMonth + delta;
+    if (next >= 0 && next <= 11) {
+      setPhoneMonth(next);
+      return;
+    }
+    const target = { year: year + delta, month: next < 0 ? 11 : 0 };
+    setPendingStep(target);
+    router.push(`/?year=${target.year}`);
+  }
+
+  const stepperMonth = pendingStep?.month ?? phoneMonth;
+  const stepperYear = pendingStep?.year ?? year;
   const { hidden: hiddenLevels, order: levelOrder, toggle: toggleLevel, move: moveLevel } =
     useColumnPreferences<ClassificationLevel>("dashboard-monthly-table-levels-v2", DEFAULT_CLASSIFICATION_LEVELS);
   const levels = useMemo(
@@ -213,17 +239,26 @@ export function DashboardExplorer({
             <Button
               variant="outline"
               size="icon-sm"
-              onClick={() => setPhoneMonth((month) => (month + 11) % 12)}
+              onClick={() => stepPhoneMonth(-1)}
+              disabled={pendingStep !== null}
               aria-label="Previous month"
               title="Previous month"
             >
               <ChevronLeftIcon />
             </Button>
-            <span className="w-10 text-center text-sm font-medium capitalize">{MONTH_LABELS[phoneMonth]}</span>
+            <span
+              className={cn(
+                "w-24 text-center text-base font-medium capitalize",
+                pendingStep && "text-muted-foreground",
+              )}
+            >
+              {MONTH_LABELS[stepperMonth]} {stepperYear}
+            </span>
             <Button
               variant="outline"
               size="icon-sm"
-              onClick={() => setPhoneMonth((month) => (month + 1) % 12)}
+              onClick={() => stepPhoneMonth(1)}
+              disabled={pendingStep !== null}
               aria-label="Next month"
               title="Next month"
             >

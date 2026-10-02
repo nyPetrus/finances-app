@@ -17,7 +17,8 @@ year number, per explicit user request (the target year lives in each
 button's `aria-label` instead). Budget's year nav still shows the numbers.
 
 **The page wrapper is `max-w-6xl`** (`mx-auto flex w-full max-w-6xl
-flex-col gap-6 p-6`), one step wider than the `max-w-5xl`
+flex-col gap-6 p-4 sm:p-6`; on phones the year nav lives in the explorer's
+month/year stepper instead — see `dashboard-monthly-table`), one step wider than the `max-w-5xl`
 Transactions/Accounts use. If a future ask needs even more room for one of
 this page's sections specifically without affecting the other, that's a
 bigger change (breaking a section out of this centered container) — don't

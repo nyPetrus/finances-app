@@ -67,7 +67,7 @@ export function SidebarNav() {
           aria-label="Open menu"
           title="Open menu"
         >
-          <MenuIcon />
+          <MenuIcon className="size-6" />
         </Button>
         <span className="truncate font-semibold">{currentLabel ?? "Finances"}</span>
       </header>
