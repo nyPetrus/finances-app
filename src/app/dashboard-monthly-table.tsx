@@ -116,7 +116,7 @@ function TreeRows({
               <td
                 onClick={hasChildren ? () => onToggle(row.key) : undefined}
                 className={cn(
-                  "sticky left-0 z-10 max-w-56 overflow-hidden border-r py-2 pr-0.5 pl-2",
+                  "sticky left-0 z-10 max-w-56 overflow-hidden border-r py-2 pr-0.5 pl-2 max-sm:max-w-36 pointer-coarse:py-3",
                   hasChildren && "hover:brightness-95",
                   rowBg ?? "bg-background",
                   wholeRowSelected && SELECTED_CELL,
@@ -168,7 +168,7 @@ function TreeRows({
                     key={i}
                     onClick={() => onSelect({ ...rowSelection, month: i })}
                     className={cn(
-                      "whitespace-nowrap px-0.5 py-2 text-right hover:brightness-95",
+                      "whitespace-nowrap px-0.5 py-2 text-right hover:brightness-95 max-sm:px-2 pointer-coarse:py-3",
                       isClassLevel ? "text-[11px]" : "text-xs",
                       rowColor,
                       rowBg,
@@ -184,7 +184,7 @@ function TreeRows({
               <td
                 onClick={() => onSelect(rowSelection)}
                 className={cn(
-                  "sticky right-0 z-10 whitespace-nowrap border-l px-2 py-2 text-right hover:brightness-95",
+                  "sticky right-0 z-10 whitespace-nowrap border-l px-2 py-2 text-right hover:brightness-95 pointer-coarse:py-3",
                   isClassLevel ? "text-[11px]" : "text-xs",
                   rowColor,
                   rowBg ?? "bg-background",
@@ -246,7 +246,9 @@ export function MonthlyBreakdownTable({
   const totalSelected = !!selected && !isRowScoped(selected) && selected.month === undefined;
 
   return (
-    <div className="max-h-[70vh] overflow-auto rounded-md border">
+    // Phones: nearly full-height, so scrolling the table and scrolling the
+    // page fight less.
+    <div className="max-h-[70vh] overflow-auto rounded-md border max-sm:max-h-[calc(100dvh-9rem)]">
       {/* cursor-default: without it the browser shows the text I-beam over
           every number, which reads as an editable cell. select-none: clicks
           filter/expand, so they shouldn't also highlight the text. */}

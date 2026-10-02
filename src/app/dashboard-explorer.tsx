@@ -1,9 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronsDownUpIcon, ChevronsUpDownIcon, ListTreeIcon } from "lucide-react";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ChevronsDownUpIcon,
+  ChevronsUpDownIcon,
+  ListTreeIcon,
+} from "lucide-react";
 import { DashboardTransactionsTable } from "./dashboard-transactions-table";
-import { MonthlyBreakdownTable } from "./dashboard-monthly-table";
+import { MONTH_LABELS, MonthlyBreakdownTable } from "./dashboard-monthly-table";
 import { MonthsMenu } from "./dashboard-months-menu";
 import {
   buildMonthlyBreakdown,
@@ -12,14 +18,22 @@ import {
   DEFAULT_CLASSIFICATION_LEVELS,
   autonomyKey,
   monthIndex,
+  TYPE_LABELS,
   type ClassificationLevel,
   type MonthlyRow,
   type MonthlySelection,
 } from "./dashboard-monthly-breakdown";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ColumnsMenu } from "@/components/columns-menu";
+import { AutonomyIcon } from "@/components/autonomy-icon";
+import { CategoryIcon } from "@/components/category-icon";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
+import { useIsMobile } from "@/hooks/use-is-mobile";
+import { AUTONOMY_LABELS } from "@/lib/classification";
+import { TRANSACTION_TYPE_SYMBOL_ROTATION, TRANSACTION_TYPE_SYMBOLS } from "@/lib/transaction-type";
 import type { Account, Category, Class, Transaction } from "@/lib/supabase/types";
+import { cn } from "@/lib/utils";
 
 const LEVEL_COLUMNS = DEFAULT_CLASSIFICATION_LEVELS.map((key) => ({ key, label: CLASSIFICATION_LEVEL_LABELS[key] }));
 
@@ -32,6 +46,58 @@ const MONTH_KEYS = Array.from({ length: 12 }, (_, i) => String(i));
 function expandableKeys(rows: MonthlyRow[]): string[] {
   return rows.flatMap((row) =>
     row.children && row.children.length > 0 ? [row.key, ...expandableKeys(row.children)] : [],
+  );
+}
+
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+}
+
+// What a selection covers, in the dynamic table's own vocabulary: symbols
+// only (type arrow, padlock, category/class icon), names as tooltips, then
+// the month — or "Year" for a whole-year selection.
+function SelectionLabel({
+  selection,
+  categoriesById,
+  classesById,
+}: {
+  selection: MonthlySelection;
+  categoriesById: Map<string, Category>;
+  classesById: Map<string, Class>;
+}) {
+  const category = selection.categoryId ? categoriesById.get(selection.categoryId) : undefined;
+  const selectedClass = selection.classId ? classesById.get(selection.classId) : undefined;
+  return (
+    <span className="flex items-center gap-2">
+      {selection.kind === "uncategorized" && <span>Uncategorized</span>}
+      {selection.kind && selection.kind !== "uncategorized" && (
+        <span
+          title={TYPE_LABELS[selection.kind]}
+          className={cn(
+            "inline-flex w-4 justify-center text-muted-foreground",
+            TRANSACTION_TYPE_SYMBOL_ROTATION[selection.kind],
+          )}
+        >
+          {TRANSACTION_TYPE_SYMBOLS[selection.kind]}
+        </span>
+      )}
+      {selection.autonomy && (
+        <span title={AUTONOMY_LABELS[selection.autonomy]} className="inline-flex">
+          <AutonomyIcon autonomy={selection.autonomy} className="size-4" />
+        </span>
+      )}
+      {category && (
+        <span title={category.name} className="inline-flex">
+          <CategoryIcon icon={category.icon} className="size-4" />
+        </span>
+      )}
+      {selectedClass && (
+        <span title={selectedClass.name} className="inline-flex">
+          <CategoryIcon icon={selectedClass.icon} className="size-4" />
+        </span>
+      )}
+      <span className="capitalize">{selection.month === undefined ? "Year" : MONTH_LABELS[selection.month]}</span>
+    </span>
   );
 }
 
@@ -57,6 +123,11 @@ export function DashboardExplorer({
   classes: Class[];
 }) {
   const [selection, setSelection] = useState<MonthlySelection | undefined>(undefined);
+  const isMobile = useIsMobile();
+  // Phones show one month column at a time (plus Year), stepped with the
+  // arrows, instead of the Months menu's set. Only read on phones, which
+  // never server-render this branch, so the client clock is safe here.
+  const [phoneMonth, setPhoneMonth] = useState(() => new Date().getMonth());
   const { hidden: hiddenLevels, order: levelOrder, toggle: toggleLevel, move: moveLevel } =
     useColumnPreferences<ClassificationLevel>("dashboard-monthly-table-levels-v2", DEFAULT_CLASSIFICATION_LEVELS);
   const levels = useMemo(
@@ -124,9 +195,42 @@ export function DashboardExplorer({
     });
   }, [selection, transactions, categoriesById, classesById]);
 
+  const filteredTotal = filteredTransactions.reduce((sum, t) => sum + t.amount, 0);
+  const transactionsTable = (
+    <DashboardTransactionsTable
+      transactions={filteredTransactions}
+      accounts={accounts}
+      categories={categories}
+      classes={classes}
+    />
+  );
+
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex justify-end gap-2">
+      <div className="flex items-center justify-end gap-2">
+        {isMobile && (
+          <div className="mr-auto flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="icon-sm"
+              onClick={() => setPhoneMonth((month) => (month + 11) % 12)}
+              aria-label="Previous month"
+              title="Previous month"
+            >
+              <ChevronLeftIcon />
+            </Button>
+            <span className="w-10 text-center text-sm font-medium capitalize">{MONTH_LABELS[phoneMonth]}</span>
+            <Button
+              variant="outline"
+              size="icon-sm"
+              onClick={() => setPhoneMonth((month) => (month + 1) % 12)}
+              aria-label="Next month"
+              title="Next month"
+            >
+              <ChevronRightIcon />
+            </Button>
+          </div>
+        )}
         <Button
           variant="outline"
           size="icon-sm"
@@ -137,7 +241,9 @@ export function DashboardExplorer({
         >
           {allExpanded ? <ChevronsDownUpIcon /> : <ChevronsUpDownIcon />}
         </Button>
-        <MonthsMenu hidden={hiddenMonths} onToggle={(month) => toggleMonthKey(String(month))}onSetAll={setAllMonths} />
+        {!isMobile && (
+          <MonthsMenu hidden={hiddenMonths} onToggle={(month) => toggleMonthKey(String(month))} onSetAll={setAllMonths} />
+        )}
         <ColumnsMenu
           columns={LEVEL_COLUMNS}
           order={levelOrder}
@@ -151,21 +257,36 @@ export function DashboardExplorer({
       <MonthlyBreakdownTable
         rows={monthlyBreakdown}
         monthTotals={monthTotals}
-        visibleMonths={visibleMonths}
+        visibleMonths={isMobile ? [phoneMonth] : visibleMonths}
         selected={selection}
         onSelect={handleSelect}
         expanded={expanded}
         onToggle={toggleRow}
       />
 
-      {selection && (
-        <DashboardTransactionsTable
-          transactions={filteredTransactions}
-          accounts={accounts}
-          categories={categories}
-          classes={classes}
-        />
+      {/* Phones: the filtered transactions open in a bottom sheet, since
+          inline they'd land below the fold and the tap would seem to do
+          nothing. Closing the sheet clears the selection. */}
+      {selection && isMobile && (
+        <Dialog open onOpenChange={(open) => !open && setSelection(undefined)}>
+          <DialogContent className="top-auto bottom-0 left-0 max-h-[85dvh] max-w-none translate-x-0 translate-y-0 content-start overflow-y-auto rounded-none rounded-t-xl pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <DialogHeader className="pr-8">
+              <DialogTitle>
+                <SelectionLabel selection={selection} categoriesById={categoriesById} classesById={classesById} />
+              </DialogTitle>
+              <p className="text-sm text-muted-foreground">
+                {filteredTransactions.length === 1 ? "1 transaction" : `${filteredTransactions.length} transactions`}
+                {" · "}
+                <span className={cn("font-medium", filteredTotal >= 0 ? "text-emerald-600" : "text-foreground")}>
+                  {formatCurrency(filteredTotal)}
+                </span>
+              </p>
+            </DialogHeader>
+            {transactionsTable}
+          </DialogContent>
+        </Dialog>
       )}
+      {selection && !isMobile && transactionsTable}
     </div>
   );
 }

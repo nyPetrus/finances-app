@@ -76,6 +76,16 @@ back.
   that also covered two now-deleted charts). The "Click a cell..." muted
   hint text that used to sit here was removed per explicit user request —
   don't re-add it without a fresh ask.
+- **On phones the filtered transactions open in a bottom sheet** instead
+  of inline below the tree (where they'd land off-screen): a `Dialog` whose
+  `DialogContent` is restyled to `bottom-0 … rounded-t-xl max-h-[85dvh]`.
+  Its title is `SelectionLabel` — the selection in the dynamic table's own
+  symbols (type arrow, padlock, category/class icon, names as tooltips)
+  plus the month or "Year" — with "N transactions · total" under it
+  (signed sum, emerald only when ≥ 0, like Search's summary). Closing the
+  sheet clears the selection. Inside, the embedded table renders its
+  shared `TransactionCardList` (tap a card to edit) below `sm`. Per
+  explicit user request.
 - **The embedded table is a separate component from `SearchTable`
   (`search/search-table.tsx`, the main transaction table since the old
   Transactions page and its `TransactionsTable` were removed), not a

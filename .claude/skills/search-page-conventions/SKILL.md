@@ -211,7 +211,8 @@ Added per explicit user request.
   copy too, same as the
   Dashboard's copy.
 - **On phones (below `sm`) the results are a card list, not the table**
-  (`search-table.tsx`, both rendered, toggled with `sm:hidden` /
+  (the shared `TransactionCardList`, `src/components/transaction-card-list.tsx`,
+  also used by the Dashboard's embedded table; both layouts rendered, toggled with `sm:hidden` /
   `hidden sm:block` so there's no hydration flash). Each card: checkbox
   (always visible), then a button with description + Amount on line one
   and date · category icon · class icon · account name (+ Inactive badge)
@@ -220,8 +221,8 @@ Added per explicit user request.
   user request; ⋮ still works from the checkbox selection. Sorting there is
   a "Sort: <column>" `Select` plus an asc/desc arrow link (both via
   `sortHref(column, dir)`), and `ColumnsMenu` is hidden below `sm` since
-  cards ignore columns. Added per explicit user request; the Dashboard's
-  copy doesn't have it (yet).
+  cards ignore columns. Added per explicit user request. Card markup lives
+  only in `TransactionCardList` — change it there, not per page.
 - **Filter editors become a bottom sheet on phones**: when `editing` is
   set, the panel switches to `max-sm:fixed … bottom-0` with a dimmed
   backdrop (inside `containerRef`, closing via its own `onClick`); the

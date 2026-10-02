@@ -225,6 +225,13 @@ table is meant if it's ever unclear again.
   footer *row* label is still "Total".) Wherever this doc says "Total
   column/cell", read it as this Year column.
 
+- **Phones (below `sm`, `useIsMobile()`) show one month column at a
+  time**: `dashboard-explorer.tsx` swaps the Months menu for a ‹ month ›
+  stepper (`phoneMonth`, defaults to the current month, wraps around) and
+  passes `visibleMonths={[phoneMonth]}`. The desktop Months-menu choice is
+  untouched. Also on phones: label cell `max-sm:max-w-36`, month cells
+  `max-sm:px-2`, the scroll box grows to `max-sm:max-h-[calc(100dvh-9rem)]`;
+  on touch, body cells get `pointer-coarse:py-3`. Per explicit user request.
 - **Expand/collapse-all button** (per explicit user request): an icon-only
   `variant="outline" size="icon-sm"` button just left of the "Levels" menu
   in `dashboard-explorer.tsx` — `ChevronsUpDownIcon` "Expand all levels"

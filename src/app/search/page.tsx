@@ -213,7 +213,7 @@ export default async function SearchPage({
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-4 sm:p-6">
-      <h1 className="text-2xl font-semibold">Search</h1>
+      <h1 className="text-2xl font-semibold max-md:sr-only">Search</h1>
 
       <SearchFilterBar accounts={allAccounts} categories={allCategories} classes={allClasses} filters={filters} />
 

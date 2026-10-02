@@ -54,7 +54,7 @@ export default async function BudgetPage({
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Budget</h1>
+        <h1 className="text-2xl font-semibold max-md:sr-only">Budget</h1>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"

@@ -62,7 +62,7 @@ export type MonthlySelection = {
   month?: number;
 };
 
-const TYPE_LABELS: Record<Category["kind"], string> = {
+export const TYPE_LABELS: Record<Category["kind"], string> = {
   income: "Income",
   expense: "Expenses",
   transfer: "Transfers",

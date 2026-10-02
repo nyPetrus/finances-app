@@ -237,7 +237,10 @@ list page instead of inventing a fresh layout.
   Classes/Autonomy. (Search passes none: below `sm` it swaps the table for
   a card list — see `search-page-conventions`.) Use this rather
   than `hidden sm:table-cell` classes, which the Columns menu couldn't
-  override. Page wrappers use `p-4 sm:p-6`.
+  override. Page wrappers use `p-4 sm:p-6`. Every page's `<h1>` is
+  `max-md:sr-only` — below `md` the sidebar's phone top bar already shows
+  the page name. `useIsMobile()` (`src/hooks/use-is-mobile.ts`) is the
+  shared JS-side phone check (same `sm` breakpoint).
   **Touch sizing lives in the shared `ui/` components, gated on
   `pointer-coarse:`** (so mouse users see no change): `Button` sizes
   default/sm/icon/icon-sm grow to h-10/h-9/size-10/size-10, `TableCell`

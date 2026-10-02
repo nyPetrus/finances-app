@@ -38,7 +38,7 @@ export default async function Home({
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
+        <h1 className="text-2xl font-semibold max-md:sr-only">Dashboard</h1>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"

@@ -46,6 +46,7 @@ import { CategoryIcon } from "@/components/category-icon";
 import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
 import { useInactiveFilter } from "@/hooks/use-inactive-filter";
+import { TransactionCardList } from "@/components/transaction-card-list";
 import { ClassificationFields } from "@/components/classification-fields";
 import type { Account, Category, Class, Autonomy, Transaction } from "@/lib/supabase/types";
 import { setTransactionsActive, syncDescriptionsFromTransactions, updateTransaction } from "./transactions/actions";
@@ -314,7 +315,7 @@ export function DashboardTransactionsTable({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           {selected.size > 0 ? (
             <span className="text-sm text-muted-foreground">{selected.size} selected</span>
@@ -349,7 +350,10 @@ export function DashboardTransactionsTable({
               {showInactive ? "Hide inactive" : `Show inactive (${inactiveCount})`}
             </Button>
           )}
-          <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />
+          {/* Phones get the card list below, which has no columns to pick. */}
+          <div className="hidden sm:block">
+            <ColumnsMenu columns={COLUMNS} order={columnOrder} hidden={hiddenColumns} onToggle={toggleColumn} onMove={moveColumn} />
+          </div>
         </div>
       </div>
       {actionError && <p className="text-sm text-destructive">{actionError}</p>}
@@ -357,54 +361,81 @@ export function DashboardTransactionsTable({
       {sortedTransactions.length === 0 ? (
         <p className="text-sm text-muted-foreground">No transactions match this filter.</p>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-0">
-                <Checkbox
-                  checked={allSelected}
-                  indeterminate={someSelected}
-                  onCheckedChange={toggleAll}
-                  aria-label="Select all transactions"
-                />
-              </TableHead>
-              {visibleColumns.map((column) => (
-                <SortableTableHead
-                  key={column.key}
-                  onSort={() => handleSort(column.key)}
-                  active={sortKey === column.key}
-                  dir={sortDir}
-                  align={column.align}
-                >
-                  {column.headerIcon ? (
-                    <ColumnHeaderIcon icon={column.headerIcon} label={column.label} iconOnly={column.headerIconOnly} />
-                  ) : (
-                    column.label
-                  )}
-                </SortableTableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody className="text-xs">
-            {sortedTransactions.map((transaction) => (
-              <TableRow key={transaction.id} className={transaction.is_hidden ? "group text-muted-foreground" : "group"}>
-                <TableCell>
-                  <Checkbox
-                    checked={selected.has(transaction.id)}
-                    onCheckedChange={() => toggleOne(transaction.id)}
-                    aria-label={`Select ${transaction.description}`}
-                    className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[checked]:opacity-100 pointer-coarse:opacity-100"
-                  />
-                </TableCell>
-                {visibleColumns.map((column) => (
-                  <TableCell key={column.key} className={column.cellClassName}>
-                    {renderCell(transaction, column.key)}
-                  </TableCell>
+        <>
+          {/* Phone: one two-line card per transaction instead of the table. */}
+          <TransactionCardList
+            className="sm:hidden"
+            transactions={sortedTransactions}
+            accountsById={accountsById}
+            categoriesById={categoriesById}
+            classesById={classesById}
+            formatDate={formatDate}
+            renderAmount={(transaction) => renderCell(transaction, "amount")}
+            selected={selected}
+            allSelected={allSelected}
+            someSelected={someSelected}
+            onToggleAll={toggleAll}
+            onToggleOne={toggleOne}
+            onOpen={openEditDialog}
+            sortOptions={COLUMNS}
+            sortKey={sortKey}
+            sortDir={sortDir}
+            onSortChange={(key, dir) => {
+              setSortKey(key);
+              setSortDir(dir);
+            }}
+          />
+          <div className="hidden sm:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-0">
+                    <Checkbox
+                      checked={allSelected}
+                      indeterminate={someSelected}
+                      onCheckedChange={toggleAll}
+                      aria-label="Select all transactions"
+                    />
+                  </TableHead>
+                  {visibleColumns.map((column) => (
+                    <SortableTableHead
+                      key={column.key}
+                      onSort={() => handleSort(column.key)}
+                      active={sortKey === column.key}
+                      dir={sortDir}
+                      align={column.align}
+                    >
+                      {column.headerIcon ? (
+                        <ColumnHeaderIcon icon={column.headerIcon} label={column.label} iconOnly={column.headerIconOnly} />
+                      ) : (
+                        column.label
+                      )}
+                    </SortableTableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody className="text-xs">
+                {sortedTransactions.map((transaction) => (
+                  <TableRow key={transaction.id} className={transaction.is_hidden ? "group text-muted-foreground" : "group"}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selected.has(transaction.id)}
+                        onCheckedChange={() => toggleOne(transaction.id)}
+                        aria-label={`Select ${transaction.description}`}
+                        className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[checked]:opacity-100 pointer-coarse:opacity-100"
+                      />
+                    </TableCell>
+                    {visibleColumns.map((column) => (
+                      <TableCell key={column.key} className={column.cellClassName}>
+                        {renderCell(transaction, column.key)}
+                      </TableCell>
+                    ))}
+                  </TableRow>
                 ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+              </TableBody>
+            </Table>
+          </div>
+        </>
       )}
 
       {editingTransaction && (

@@ -1,15 +1,7 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
-
-// Matches Tailwind's `sm` breakpoint: below it counts as a phone.
-const MOBILE_QUERY = "(max-width: 639px)";
-
-function subscribeToMobile(onChange: () => void) {
-  const query = window.matchMedia(MOBILE_QUERY);
-  query.addEventListener("change", onChange);
-  return () => query.removeEventListener("change", onChange);
-}
+import { useEffect, useState } from "react";
+import { useIsMobile } from "@/hooks/use-is-mobile";
 
 /**
  * Per-browser column visibility + order, persisted to localStorage under
@@ -26,11 +18,7 @@ export function useColumnPreferences<K extends string>(
   defaultOrder: readonly K[],
   mobileHidden: readonly K[] = [],
 ) {
-  const isMobile = useSyncExternalStore(
-    subscribeToMobile,
-    () => window.matchMedia(MOBILE_QUERY).matches,
-    () => false,
-  );
+  const isMobile = useIsMobile();
   const hiddenStorageKey = isMobile ? `${storageKey}-mobile-hidden-columns` : `${storageKey}-hidden-columns`;
   const orderStorageKey = `${storageKey}-column-order`;
 

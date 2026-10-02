@@ -5,8 +5,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
-  ArrowDownIcon,
-  ArrowUpIcon,
   BanknoteIcon,
   BoxIcon,
   CalendarIcon,
@@ -49,7 +47,7 @@ import { CategoryIcon } from "@/components/category-icon";
 import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
 import { useInactiveFilter } from "@/hooks/use-inactive-filter";
-import { cn } from "@/lib/utils";
+import { TransactionCardList } from "@/components/transaction-card-list";
 import { ClassificationFields } from "@/components/classification-fields";
 import type { Account, Category, Class, Autonomy, Transaction } from "@/lib/supabase/types";
 import {
@@ -346,85 +344,25 @@ export function SearchTable({
       ) : (
         <>
           {/* Phone: one two-line card per transaction instead of the table. */}
-          <div className="flex flex-col gap-2 sm:hidden">
-            <div className="flex items-center gap-3 px-3">
-              <Checkbox
-                checked={allSelected}
-                indeterminate={someSelected}
-                onCheckedChange={toggleAll}
-                aria-label="Select all transactions"
-              />
-              <div className="ml-auto flex items-center gap-1">
-                <Select
-                  value={sortKey}
-                  onValueChange={(value) => value && router.push(sortHref(value as SortKey, sortDir))}
-                >
-                  <SelectTrigger size="sm" aria-label="Sort by" title="Sort by">
-                    <SelectValue>{(value: SortKey) => `Sort: ${columnsByKey.get(value)?.label ?? value}`}</SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {COLUMNS.map((column) => (
-                      <SelectItem key={column.key} value={column.key}>
-                        {column.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  render={<Link href={sortHref(sortKey, sortDir === "asc" ? "desc" : "asc")} />}
-                  aria-label={sortDir === "asc" ? "Sort descending" : "Sort ascending"}
-                  title={sortDir === "asc" ? "Sort descending" : "Sort ascending"}
-                >
-                  {sortDir === "asc" ? <ArrowUpIcon /> : <ArrowDownIcon />}
-                </Button>
-              </div>
-            </div>
-            <ul className="flex flex-col divide-y rounded-lg border">
-              {visibleTransactions.map((transaction) => {
-                const account = accountsById.get(transaction.account_id);
-                return (
-                  <li
-                    key={transaction.id}
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-2.5",
-                      transaction.is_hidden && "text-muted-foreground",
-                      selected.has(transaction.id) && "bg-muted",
-                    )}
-                  >
-                    <Checkbox
-                      checked={selected.has(transaction.id)}
-                      onCheckedChange={() => toggleOne(transaction.id)}
-                      aria-label={`Select ${transaction.description}`}
-                    />
-                    {/* Tapping the card opens its edit dialog directly. */}
-                    <button
-                      type="button"
-                      onClick={() => openEditDialog(transaction)}
-                      className="flex min-w-0 flex-1 flex-col gap-1 text-left"
-                    >
-                      <span className="flex items-baseline gap-2">
-                        <span className="min-w-0 flex-1 truncate font-medium">{transaction.description}</span>
-                        <span className="shrink-0 font-medium">{renderCell(transaction, "amount")}</span>
-                      </span>
-                      <span className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-                        <span className="shrink-0">{formatDate(transaction.date)}</span>
-                        {transaction.category_id && renderCell(transaction, "category")}
-                        {transaction.class_id && renderCell(transaction, "class")}
-                        {account && <span className="min-w-0 truncate">{account.name}</span>}
-                        {transaction.is_hidden && (
-                          <Badge variant="outline" className="shrink-0">
-                            Inactive
-                          </Badge>
-                        )}
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
+          <TransactionCardList
+            className="sm:hidden"
+            transactions={visibleTransactions}
+            accountsById={accountsById}
+            categoriesById={categoriesById}
+            classesById={classesById}
+            formatDate={formatDate}
+            renderAmount={(transaction) => renderCell(transaction, "amount")}
+            selected={selected}
+            allSelected={allSelected}
+            someSelected={someSelected}
+            onToggleAll={toggleAll}
+            onToggleOne={toggleOne}
+            onOpen={openEditDialog}
+            sortOptions={COLUMNS}
+            sortKey={sortKey}
+            sortDir={sortDir}
+            onSortChange={(key, dir) => router.push(sortHref(key, dir))}
+          />
           <div className="hidden sm:block">
             <Table>
               <TableHeader>
