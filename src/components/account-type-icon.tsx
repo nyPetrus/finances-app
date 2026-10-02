@@ -1,6 +1,6 @@
 import {
-  BanknoteIcon,
   CircleEllipsisIcon,
+  CoinsIcon,
   CreditCardIcon,
   FileUpIcon,
   PiggyBankIcon,
@@ -23,7 +23,7 @@ export const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
 };
 
 const ACCOUNT_TYPE_ICONS: Record<AccountType, LucideIcon> = {
-  checking: BanknoteIcon,
+  checking: CoinsIcon,
   investment: PiggyBankIcon,
   credit_card: CreditCardIcon,
   manual: CircleEllipsisIcon,
