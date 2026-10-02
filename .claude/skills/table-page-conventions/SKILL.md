@@ -67,8 +67,8 @@ list page instead of inventing a fresh layout.
   Currently applied: Transactions' `description` (`max-w-64`), `account`
   (`max-w-40`, wrapped in a `Badge`); Categories' `name`
   (`max-w-72` on the cell, `min-w-0 truncate` on the inner span next to the
-  `CategoryIcon`); Descriptions' `description` (`max-w-64`); Accounts' `account` (`max-w-40`), `name` (`max-w-56`), and
-  `source` (`max-w-32`, also `Badge`-wrapped) — see
+  `CategoryIcon`); Descriptions' `description` (`max-w-64`); Accounts' `name` (`max-w-56` on the cell, `min-w-0 truncate`
+  on the inner span next to the type icon) — see
   `accounts-column-formatting`. Classes' `name` column doesn't use
   `truncate` at all (no `cellClassName` beyond `font-medium`) and is
   unaffected — it relies on the shared `TableCell`'s default `break-words`

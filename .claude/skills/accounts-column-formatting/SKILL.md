@@ -35,9 +35,10 @@ description: Use when touching how the Accounts table (src/app/accounts/accounts
   Unlike the Transactions Date column, the year is kept (2-digit) since
   Accounts has no page-level month/year header to make it redundant.
 - **Every column keeps its row to a single line, and the table avoids
-  horizontal scroll by letting Name shrink instead of
-  wrapping.** `COLUMNS` gives Name `cellClassName:
-  "max-w-56 truncate font-medium"` (free text that can be arbitrarily
+  horizontal scroll by letting the Account name shrink instead of
+  wrapping.** `COLUMNS` gives Account `cellClassName: "max-w-56
+  font-medium"` (the `truncate` lives on the inner name span, with
+  `min-w-0`, so the icon and Inactive badge stay visible) (free text that can be arbitrarily
   long; Source used to get `max-w-32 truncate` too, until it became an
   icon) and
   Last update/Balance `whitespace-nowrap` (structured values that should
@@ -50,9 +51,15 @@ description: Use when touching how the Accounts table (src/app/accounts/accounts
   `max-w-5xl` (matching Transactions, the widest list page) rather than a
   narrower container, to give these columns enough room that typical
   values render in full without needing to lean on the ellipsis at all.
-- **Type is icon-only** (centered column, the app-wide symbol-display
-  rule — see `table-page-conventions`): `AccountTypeIcon`, name as
-  `title` tooltip.
+- **There is no Type column — the type icon follows the name in one
+  "Account" column** (column key still `name`; header `LandmarkIcon` +
+  "Account"): `<span className="inline-flex max-w-full items-center
+  gap-2">` holding the name in `<span className="min-w-0 truncate">`,
+  then `AccountTypeIcon` (type name as `title` tooltip), then the
+  Inactive badge. Name first, icon last — the same composition as the
+  transaction tables' Account chip. Merged per explicit user request;
+  `"type"` was dropped from `SORT_KEYS` (sorting is by name). The phone
+  card shows the icon right after the name too.
 - **There is no Source column any more — the source icon leads the Last
   update value instead** (muted, then the time or `—`), since the source
   is what says what that time means (plug = synced at, file = imported

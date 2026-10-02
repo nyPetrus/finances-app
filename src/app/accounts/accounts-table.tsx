@@ -37,7 +37,6 @@ import { RowActionsMenu } from "@/components/row-actions-menu";
 import { CardListHeader } from "@/components/card-list-header";
 import {
   ACCOUNT_TYPES,
-  ACCOUNT_TYPE_LABELS,
   AccountSourceIcon,
   AccountTypeIcon,
   AccountTypeOptionLabel,
@@ -83,8 +82,7 @@ const COLUMNS: {
   headerIcon?: LucideIcon;
   headerIconOnly?: boolean;
 }[] = [
-  { key: "name", label: "Name", cellClassName: "max-w-56 truncate font-medium", headerIcon: LandmarkIcon },
-  { key: "type", label: "Type", align: "center", cellClassName: "text-center" },
+  { key: "name", label: "Account", cellClassName: "max-w-56 font-medium", headerIcon: LandmarkIcon },
   { key: "lastSync", label: "Last update", align: "center", cellClassName: "text-center whitespace-nowrap" },
   { key: "transactions", label: "Transactions", cellClassName: "text-right whitespace-nowrap" },
   { key: "balance", label: "Balance", cellClassName: "text-right whitespace-nowrap" },
@@ -94,15 +92,16 @@ const DEFAULT_COLUMN_ORDER = COLUMNS.map((column) => column.key);
 
 function renderCell(account: Account, key: SortKey, transactionsTotalByAccount: Record<string, number>) {
   switch (key) {
+    // Name first, type icon last — the same composition as the transaction
+    // tables' Account chip. Replaces what used to be a separate Type column.
     case "name":
       return (
-        <span className="inline-flex items-center gap-2">
-          {account.name}
+        <span className="inline-flex max-w-full items-center gap-2">
+          <span className="min-w-0 truncate">{account.name}</span>
+          <AccountTypeIcon type={account.type} />
           {!account.is_active && <Badge variant="outline">Inactive</Badge>}
         </span>
       );
-    case "type":
-      return <AccountTypeIcon type={account.type} />;
     // The source icon (plug = synced, file = imported) leads the value, so
     // it says what kind of update the time is — and replaces what used to
     // be a separate Source column.
@@ -160,9 +159,6 @@ export function AccountsTable({
       switch (sortKey) {
         case "name":
           cmp = a.name.localeCompare(b.name);
-          break;
-        case "type":
-          cmp = ACCOUNT_TYPE_LABELS[a.type].localeCompare(ACCOUNT_TYPE_LABELS[b.type]);
           break;
         case "lastSync":
           cmp = (lastUpdateOf(a) ?? "").localeCompare(lastUpdateOf(b) ?? "");
@@ -296,7 +292,7 @@ export function AccountsTable({
         </p>
       ) : (
         <>
-          {/* Phone: one card per account — name, then type icon, source
+          {/* Phone: one card per account — name + type icon, then source
               icon + last update; balance on the right with the transactions total (Σ)
               under it. Tapping a card opens its edit dialog. */}
           <div className="flex flex-col gap-2 sm:hidden">
@@ -333,6 +329,7 @@ export function AccountsTable({
                     <span className="flex min-w-0 flex-1 flex-col gap-1">
                       <span className="flex min-w-0 items-center gap-2">
                         <span className="min-w-0 truncate font-medium">{account.name}</span>
+                        <AccountTypeIcon type={account.type} className="size-3.5" />
                         {!account.is_active && (
                           <Badge variant="outline" className="shrink-0">
                             Inactive
@@ -340,7 +337,6 @@ export function AccountsTable({
                         )}
                       </span>
                       <span className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-                        <AccountTypeIcon type={account.type} className="size-3.5" />
                         <span className="inline-flex shrink-0 items-center gap-1">
                           <AccountSourceIcon account={account} className="size-3.5" />
                           {lastUpdateOf(account) && formatDateTime(lastUpdateOf(account)!)}
