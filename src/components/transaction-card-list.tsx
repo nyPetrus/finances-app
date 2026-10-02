@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CardListHeader } from "@/components/card-list-header";
+import { AccountTypeIcon } from "@/components/account-type-icon";
 import { CategoryIcon } from "@/components/category-icon";
 import type { Account, Category, Class, Transaction } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
@@ -104,7 +105,12 @@ export function TransactionCardList<K extends string>({
                       <CategoryIcon icon={transactionClass.icon} className="size-4" />
                     </span>
                   )}
-                  {account && <span className="min-w-0 truncate">{account.name}</span>}
+                  {account && (
+                    <span className="flex min-w-0 items-center gap-1">
+                      <AccountTypeIcon type={account.type} className="size-3" />
+                      <span className="min-w-0 truncate">{account.name}</span>
+                    </span>
+                  )}
                   {transaction.is_hidden && (
                     <Badge variant="outline" className="shrink-0">
                       Inactive

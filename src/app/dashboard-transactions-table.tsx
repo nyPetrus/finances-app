@@ -12,6 +12,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { AccountTypeIcon } from "@/components/account-type-icon";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -205,8 +206,9 @@ export function DashboardTransactionsTable({
       case "account": {
         const account = accountsById.get(transaction.account_id);
         return account ? (
-          <Badge variant="secondary" className="max-w-full gap-1 truncate">
-            {account.name}
+          <Badge variant="secondary" className="max-w-full gap-1">
+            <AccountTypeIcon type={account.type} className="size-3" />
+            <span className="min-w-0 truncate">{account.name}</span>
           </Badge>
         ) : (
           <span className="text-sm text-muted-foreground">—</span>

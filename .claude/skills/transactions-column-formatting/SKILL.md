@@ -42,9 +42,15 @@ shared with the other list pages.
   (2026-10-01), since its filters can span years while the Dashboard's
   table is always a single year. Don't sync the two formats without
   asking.
-- **Account renders as a `Badge` chip**
-  (`variant="secondary" className="max-w-full gap-1 truncate"`), instead
-  of plain text, with no leading icon (`Account` has no `icon` field).
+- **Account renders as a `Badge` chip with the account's type icon before
+  its name** (`variant="secondary" className="max-w-full gap-1"`, then
+  `<AccountTypeIcon type={account.type} className="size-3" />` and the
+  name in `<span className="min-w-0 truncate">` — the `min-w-0` lets the
+  name, not the icon, give way when the column is narrow). `Account` has
+  no `icon` field of its own; the type icon (banknote/piggy bank/card/⋯,
+  see `table-page-conventions`' symbol table) is the closest thing, added
+  per explicit user request. The phone `TransactionCardList` shows the
+  same icon + name.
   **Class is icon-only, like Category** (`CategoryIcon` of `classes.icon`,
   name as `title` tooltip, centered, no `Badge`) — see
   `table-page-conventions`'s "Category-as-foreign-column" bullet.
@@ -56,7 +62,7 @@ shared with the other list pages.
 - **Account, Category, and Class headers are icon-only** (`LandmarkIcon`,
   `BoxIcon`, `TagIcon` respectively — see `table-page-conventions`'s
   "Column header icons" bullet). Category's and Class's *cells* are
-  icon-only too, but Account still renders its cell as a `Badge` chip per
-  the bullet above. The header icon and the cell rendering are
+  icon-only too, but Account still renders its cell as a `Badge` chip
+  (type icon + name) per the bullet above. The header icon and the cell rendering are
   independent choices; don't assume a column's header icon implies its
   cell dropped the `Badge`.
