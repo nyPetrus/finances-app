@@ -58,6 +58,13 @@ function formatCurrency(value: number) {
   return new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
 }
 
+// "Last update": the last Pluggy sync for automatic accounts (sync stamps
+// updated_at; nothing else does), the last statement file import for manual
+// ones — null until the first import.
+function lastUpdateOf(account: Account) {
+  return account.is_automatic ? account.updated_at : account.last_imported_at;
+}
+
 function formatDateTime(value: string) {
   const date = new Date(value);
   const day = String(date.getDate()).padStart(2, "0");
@@ -79,7 +86,7 @@ const COLUMNS: {
   { key: "name", label: "Name", cellClassName: "max-w-56 truncate font-medium", headerIcon: LandmarkIcon },
   { key: "source", label: "Source", cellClassName: "max-w-32 truncate" },
   { key: "type", label: "Type" },
-  { key: "lastSync", label: "Last sync", align: "center", cellClassName: "text-center whitespace-nowrap" },
+  { key: "lastSync", label: "Last update", align: "center", cellClassName: "text-center whitespace-nowrap" },
   { key: "transactions", label: "Transactions", cellClassName: "text-right whitespace-nowrap" },
   { key: "balance", label: "Balance", cellClassName: "text-right whitespace-nowrap" },
 ];
@@ -105,12 +112,10 @@ function renderCell(account: Account, key: SortKey, transactionsTotalByAccount: 
       );
     case "type":
       return <Badge variant="secondary">{typeLabels[account.type]}</Badge>;
-    case "lastSync":
-      return account.is_automatic ? (
-        formatDateTime(account.updated_at)
-      ) : (
-        <span className="text-sm text-muted-foreground">—</span>
-      );
+    case "lastSync": {
+      const lastUpdate = lastUpdateOf(account);
+      return lastUpdate ? formatDateTime(lastUpdate) : <span className="text-sm text-muted-foreground">—</span>;
+    }
     case "balance":
       return formatCurrency(account.current_balance);
     case "transactions":
@@ -164,7 +169,7 @@ export function AccountsTable({
           cmp = typeLabels[a.type].localeCompare(typeLabels[b.type]);
           break;
         case "lastSync":
-          cmp = a.updated_at.localeCompare(b.updated_at);
+          cmp = (lastUpdateOf(a) ?? "").localeCompare(lastUpdateOf(b) ?? "");
           break;
         case "balance":
           cmp = a.current_balance - b.current_balance;
@@ -341,10 +346,10 @@ export function AccountsTable({
                       <span className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
                         <span className="shrink-0">{typeLabels[account.type]}</span>
                         {account.source && <span className="min-w-0 truncate">{account.source}</span>}
-                        {account.is_automatic && (
-                          <span className="inline-flex shrink-0 items-center gap-1" title="Last sync">
-                            <RefreshCwIcon className="size-3" aria-label="Last sync" />
-                            {formatDateTime(account.updated_at)}
+                        {lastUpdateOf(account) && (
+                          <span className="inline-flex shrink-0 items-center gap-1" title="Last update">
+                            <RefreshCwIcon className="size-3" aria-label="Last update" />
+                            {formatDateTime(lastUpdateOf(account)!)}
                           </span>
                         )}
                       </span>

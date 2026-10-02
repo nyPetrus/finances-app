@@ -12,7 +12,7 @@ import {
   type DriveFile,
 } from "@/lib/google-drive/client";
 import { parseContabilizeiCsv } from "@/lib/import/parse-contabilizei-csv";
-import { insertNewStatementRows, loadKnownImportHashes } from "@/lib/import/statement-import";
+import { insertNewStatementRows, loadKnownImportHashes, markAccountImported } from "@/lib/import/statement-import";
 
 // 60s safety margin so a token that's about to expire mid-request still
 // gets refreshed rather than failing the Drive call that follows.
@@ -155,6 +155,8 @@ async function runDriveImport(accountId: string, folderInput: string): Promise<D
       });
     }
   }
+
+  if (files.some((file) => !file.error)) await markAccountImported(supabase, account.id);
 
   revalidatePath("/accounts");
   revalidatePath("/search");

@@ -90,3 +90,15 @@ export async function insertNewStatementRows(
 
   return { inserted: newRows.length, skipped: rows.length - newRows.length };
 }
+
+// Stamps the account's "Last update" (shown for manual accounts on the
+// Accounts page). Called once per import run that read at least one file
+// without error — even if every row was already known, the file was still
+// imported up to that point.
+export async function markAccountImported(supabase: SupabaseClient, accountId: string) {
+  const { error } = await supabase
+    .from("accounts")
+    .update({ last_imported_at: new Date().toISOString() })
+    .eq("id", accountId);
+  if (error) throw new Error(error.message);
+}

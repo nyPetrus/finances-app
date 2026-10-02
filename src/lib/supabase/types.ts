@@ -47,6 +47,8 @@ export type Account = {
   pluggy_account_id: string | null;
   current_balance: number;
   google_drive_folder_id: string | null;
+  // Last statement file import (manual accounts); null if never imported.
+  last_imported_at: string | null;
   updated_at: string;
   created_at: string;
 };

@@ -18,7 +18,16 @@ description: Use when touching how the Accounts table (src/app/accounts/accounts
   but they were removed (see `dashboard-conventions`'s "removed-cards"
   history); everything left there is chart- or table-shaped and no-symbol
   like this file (see `dashboard-conventions`/`dashboard-monthly-table`).
-- **Last sync is compact and never wraps**: `formatDateTime` builds
+- **"Last update" (column key still `lastSync`, so saved sort/column
+  prefs keep working) means different things per account kind**, via
+  `lastUpdateOf`: automatic accounts show `updated_at` (stamped only by
+  Pluggy sync — `updateAccount` deliberately leaves it alone), manual
+  accounts show `last_imported_at` (migration 0024), stamped by
+  `markAccountImported` (`src/lib/import/statement-import.ts`) whenever a
+  CSV upload or Drive folder import reads at least one file without
+  error — even if every row was a duplicate. Null (never imported) → `—`.
+  Renamed from "Last sync" per explicit user request.
+- **Last update is compact and never wraps**: `formatDateTime` builds
   `DD/MM/YY HH:mm` (e.g. `11/09/25 14:30`) manually from `Date` getters
   (local time, not UTC — this is a real timestamp, not a date-only
   string) instead of `Intl.DateTimeFormat(..., { dateStyle: "short",
@@ -29,7 +38,7 @@ description: Use when touching how the Accounts table (src/app/accounts/accounts
   horizontal scroll by letting Name/Source shrink instead of
   wrapping.** `COLUMNS` gives Name/Source `cellClassName:
   "max-w-56 truncate font-medium"` / `"max-w-32 truncate"` (free-text fields that can be arbitrarily long) and
-  Last sync/Balance `whitespace-nowrap` (structured values that should
+  Last update/Balance `whitespace-nowrap` (structured values that should
   never break across two lines). This overrides the shared `TableCell`'s
   default wrapping (see `table-page-conventions`) specifically for this
   table. **The `max-w-*` paired with each `truncate` is load-bearing, not
@@ -68,8 +77,8 @@ description: Use when touching how the Accounts table (src/app/accounts/accounts
 - **On phones (below `sm`) the table becomes a card list** (inline in
   `accounts-table.tsx`, table and cards both rendered, toggled with
   `sm:hidden` / `hidden sm:block`). Each card: checkbox, then name (+
-  Inactive badge) over `Type · Source · ↻ last sync` (the sync time only
-  for automatic accounts), with Balance on the right and the transactions
+  Inactive badge) over `Type · Source · ↻ last update` (omitted when
+  there's none, i.e. a manual account never imported), with Balance on the right and the transactions
   total under it, prefixed `Σ` (tooltips don't exist on touch, so the
   symbol is the label). Same value formatting as the columns. **Tapping a
   card opens the edit dialog**, the same phone-only exception Search's

@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { normalizeHeader } from "@/lib/import/csv-utils";
 import { parseContabilizeiCsv } from "@/lib/import/parse-contabilizei-csv";
 import { parseNubankCsv } from "@/lib/import/parse-nubank-csv";
-import { insertNewStatementRows, loadKnownImportHashes } from "@/lib/import/statement-import";
+import { insertNewStatementRows, loadKnownImportHashes, markAccountImported } from "@/lib/import/statement-import";
 import type { ParsedStatementRow } from "@/lib/import/parsed-statement-row";
 
 // Auto-detects which bank's format a file is in from its header row alone,
@@ -85,6 +85,8 @@ async function runImport(formData: FormData): Promise<ImportResult> {
       });
     }
   }
+
+  if (files.some((file) => !file.error)) await markAccountImported(supabase, account.id);
 
   revalidatePath("/accounts");
   revalidatePath("/search");
