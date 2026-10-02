@@ -1,4 +1,4 @@
-import { Input } from "@/components/ui/input";
+import { AmountInput } from "@/components/locale-inputs";
 import { Button } from "@/components/ui/button";
 import { CategoryIcon } from "@/components/category-icon";
 import type { Category } from "@/lib/supabase/types";
@@ -66,12 +66,12 @@ export function YearlyGrid({
                   </td>
                   {months.map((amount, month) => (
                     <td key={month} className="px-0.5 py-1">
-                      <Input
-                        type="number"
-                        step="0.01"
+                      <AmountInput
                         name={`amount__${category.id}__${month + 1}`}
-                        defaultValue={amount || ""}
+                        defaultValue={amount || null}
+                        fixed={false}
                         placeholder="0"
+                        aria-label={`${category.name}, ${MONTH_LABELS[month]}`}
                         className="h-8 w-full px-1 text-right text-xs"
                       />
                     </td>

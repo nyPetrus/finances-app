@@ -5,6 +5,7 @@ import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, type LucideIcon } from "l
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
+import { parseBRNumber } from "@/lib/locale-format";
 import { cn } from "@/lib/utils";
 import { MONTH_LABELS, type DateGranularity, type DateOp } from "./filters";
 
@@ -198,10 +199,12 @@ export function OperatorEditor<Op extends string>({
   onBack: () => void;
 }) {
   const [op, setOp] = useState<Op>(initial.op);
-  const [value, setValue] = useState(initial.value);
+  // Numeric values live in the URL as "-50.5" but are shown/typed as "-50,5".
+  const [value, setValue] = useState(numeric ? initial.value.replace(".", ",") : initial.value);
 
-  const trimmed = numeric ? value.trim().replace(",", ".") : value.trim();
-  const invalid = numeric && trimmed !== "" && !Number.isFinite(Number(trimmed));
+  const parsed = numeric ? parseBRNumber(value) : null;
+  const trimmed = numeric ? (parsed === null ? "" : String(parsed)) : value.trim();
+  const invalid = numeric && value.trim() !== "" && parsed === null;
   const apply = () => {
     if (invalid) return;
     onApply(trimmed === "" ? null : { op, value: trimmed });
@@ -213,8 +216,8 @@ export function OperatorEditor<Op extends string>({
       <Segmented label={`${title} comparison`} options={ops} value={op} onChange={setOp} />
       <Input
         autoFocus
-        type={numeric ? "number" : "text"}
-        step={numeric ? "0.01" : undefined}
+        type="text"
+        inputMode={numeric ? "decimal" : undefined}
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => {

@@ -39,6 +39,13 @@ see `src/lib/google-drive/`, `src/app/accounts/google-drive-*`).
   digits always align in columns — don't remove it, and don't override it
   with `proportional-nums` in a table/dashboard context.
 
+- **Brazilian number/date formats everywhere, including form fields** —
+  comma decimals, day-first dates. Never use native `<input type="number">`
+  or `type="date"` (browsers format those from their own UI language, which
+  a page can't override); use `AmountInput`/`DateInput` from
+  `src/components/locale-inputs.tsx`, which post canonical values
+  (`-1234.56`, `2026-10-05`) so server actions parse them unchanged.
+
 ## Skills
 
 A few narrower, task-shaped conventions live in Skills

@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { AmountInput, DateInput } from "@/components/locale-inputs";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -452,24 +453,11 @@ export function SearchTable({
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="date">Date</Label>
-                  <Input
-                    id="date"
-                    name="date"
-                    type="date"
-                    defaultValue={splitDateTime(editingTransaction.date).date}
-                    required
-                  />
+                  <DateInput id="date" name="date" defaultValue={splitDateTime(editingTransaction.date).date} required />
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="amount">Amount</Label>
-                  <Input
-                    id="amount"
-                    name="amount"
-                    type="number"
-                    step="0.01"
-                    defaultValue={editingTransaction.amount}
-                    required
-                  />
+                  <AmountInput id="amount" name="amount" defaultValue={editingTransaction.amount} required />
                 </div>
               </div>
               <div className="flex flex-col gap-2">

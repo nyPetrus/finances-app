@@ -6,6 +6,7 @@ import { Loader2Icon, SearchIcon, XIcon } from "lucide-react";
 import type { Account, Category, Class } from "@/lib/supabase/types";
 import { CategoryIcon } from "@/components/category-icon";
 import { AUTONOMY_ICONS, AUTONOMY_LABELS } from "@/lib/classification";
+import { parseBRNumber } from "@/lib/locale-format";
 import { cn } from "@/lib/utils";
 import {
   EMPTY_FILTERS,
@@ -229,7 +230,7 @@ export function SearchFilterBar({
     }
     if (field === "amount" && filters.amount) {
       const op = AMOUNT_OPS.find((o) => o.value === filters.amount!.op)?.chip;
-      return `${op} ${filters.amount.value}`;
+      return `${op} ${filters.amount.value.replace(".", ",")}`;
     }
     if (field === "date" && filters.date) {
       const formatted = formatDateValue(filters.date.granularity, filters.date.value);
@@ -259,9 +260,8 @@ export function SearchFilterBar({
     if (!query) return fieldMatches;
 
     const quick: Suggestion[] = [];
-    const asNumber = raw.replace(",", ".");
-    const numeric = Number.isFinite(Number(asNumber));
-    if (numeric) quick.push({ kind: "amount", value: asNumber });
+    const asNumber = parseBRNumber(raw);
+    if (asNumber !== null) quick.push({ kind: "amount", value: String(asNumber) });
     quick.push({ kind: "description", value: raw });
 
     const valueMatches: Suggestion[] = [];
@@ -335,7 +335,7 @@ export function SearchFilterBar({
           ops={AMOUNT_OPS}
           initial={filters.amount ?? { op: "equal_to", value: "" }}
           numeric
-          placeholder="-50.00"
+          placeholder="-50,00"
           onApply={(amount) => apply({ ...filters, amount })}
           onBack={backToList}
         />
@@ -377,7 +377,7 @@ export function SearchFilterBar({
       return (
         <span className="truncate">
           <span className="text-muted-foreground">Amount = </span>
-          <span className="font-medium">{suggestion.value}</span>
+          <span className="font-medium">{suggestion.value.replace(".", ",")}</span>
         </span>
       );
     }

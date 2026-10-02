@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { PencilIcon, PlugZapIcon, PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AmountInput } from "@/components/locale-inputs";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -117,14 +118,7 @@ export function AddAccountMenu({
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="current_balance">Current balance</Label>
-              <Input
-                id="current_balance"
-                name="current_balance"
-                type="number"
-                step="0.01"
-                defaultValue="0"
-                required
-              />
+              <AmountInput id="current_balance" name="current_balance" defaultValue={0} required />
             </div>
             <DialogFooter>
               <Button type="submit" form="add-account-form">

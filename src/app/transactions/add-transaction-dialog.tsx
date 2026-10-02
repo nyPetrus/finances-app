@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ClassificationFields } from "@/components/classification-fields";
+import { AmountInput, DateInput } from "@/components/locale-inputs";
 import type { Account, Category, Class, Autonomy } from "@/lib/supabase/types";
 import { addTransaction } from "./actions";
 
@@ -77,18 +78,11 @@ export function AddTransactionDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="date">Date</Label>
-              <Input id="date" name="date" type="date" defaultValue={todayISO()} required />
+              <DateInput id="date" name="date" defaultValue={todayISO()} required />
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="amount">Amount</Label>
-              <Input
-                id="amount"
-                name="amount"
-                type="number"
-                step="0.01"
-                placeholder="-50.00"
-                required
-              />
+              <AmountInput id="amount" name="amount" placeholder="-50,00" required />
             </div>
           </div>
           <div className="flex flex-col gap-2">
