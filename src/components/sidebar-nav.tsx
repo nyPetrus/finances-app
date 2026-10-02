@@ -23,15 +23,16 @@ const links = [
   { href: "/", label: "Dashboard", icon: LayoutDashboardIcon },
   { href: "/budget", label: "Budget", icon: WalletIcon },
   { href: "/search", label: "Search", icon: SearchIcon },
-  { href: "/categories", label: "Categories & Classes", icon: BoxIcon },
+  { href: "/categories", label: "Groups", icon: BoxIcon },
   { href: "/descriptions", label: "Descriptions", icon: FileTextIcon },
   { href: "/accounts", label: "Accounts", icon: LandmarkIcon },
 ];
 
 // Phone bottom bar: the day-to-day pages (Accounts included — it's where
-// Sync lives) get a slot each; the setup pages go behind "More", along with
-// Sign out. Five slots is the most a ~400px-wide phone fits legibly.
-const BOTTOM_BAR_HREFS = ["/", "/budget", "/search", "/accounts"];
+// Sync lives) get a slot each, plus Groups; Budget and the other setup pages
+// go behind "More" (per explicit user request), along with Sign out. Five
+// slots is the most a ~400px-wide phone fits legibly.
+const BOTTOM_BAR_HREFS = ["/", "/search", "/categories", "/accounts"];
 const bottomBarLinks = links.filter((link) => BOTTOM_BAR_HREFS.includes(link.href));
 const moreLinks = links.filter((link) => !BOTTOM_BAR_HREFS.includes(link.href));
 

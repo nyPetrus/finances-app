@@ -14,7 +14,7 @@ column preferences, and all row interaction. Match this when adding a new
 list page instead of inventing a fresh layout.
 
 - **Categories and Classes share one page: a tree table at `/categories`**
-  (`categories/categories-table.tsx`, "Categories & Classes"; `/classes`
+  (`categories/categories-table.tsx`, titled "Groups" — formerly "Categories & Classes", renamed per explicit user request; `/classes`
   only redirects there). Built per explicit user request, as a trial —
   it's one self-contained commit so it can be reverted cleanly. Category
   rows expand/collapse by clicking the name (like the Dashboard dynamic
@@ -240,10 +240,10 @@ list page instead of inventing a fresh layout.
   direction toggle, the card stand-in for clickable column headers.) Use this rather
   than `hidden sm:table-cell` classes, which the Columns menu couldn't
   override. Page wrappers use `p-4 sm:p-6`. Below `md`, pages that
-  have their own slot in the phone bottom nav bar (Dashboard, Budget,
-  Search, Accounts — see `src/components/sidebar-nav.tsx`) make their
+  have their own slot in the phone bottom nav bar (Dashboard, Search,
+  Groups, Accounts — see `src/components/sidebar-nav.tsx`) make their
   `<h1>` `max-md:sr-only`, since the highlighted tab already names the page;
-  pages behind its "More" sheet (Categories & Classes, Descriptions) keep
+  pages behind its "More" sheet (Budget, Descriptions) keep
   the `<h1>` visible as `max-md:text-lg`, since "More" alone doesn't say
   which page you're on. `useIsMobile()` (`src/hooks/use-is-mobile.ts`) is the
   shared JS-side phone check (same `sm` breakpoint).
