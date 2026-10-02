@@ -84,7 +84,6 @@ const COLUMNS: {
   headerIconOnly?: boolean;
 }[] = [
   { key: "name", label: "Name", cellClassName: "max-w-56 truncate font-medium", headerIcon: LandmarkIcon },
-  { key: "source", label: "Source", align: "center", cellClassName: "text-center" },
   { key: "type", label: "Type", align: "center", cellClassName: "text-center" },
   { key: "lastSync", label: "Last update", align: "center", cellClassName: "text-center whitespace-nowrap" },
   { key: "transactions", label: "Transactions", cellClassName: "text-right whitespace-nowrap" },
@@ -102,13 +101,19 @@ function renderCell(account: Account, key: SortKey, transactionsTotalByAccount: 
           {!account.is_active && <Badge variant="outline">Inactive</Badge>}
         </span>
       );
-    case "source":
-      return <AccountSourceIcon account={account} />;
     case "type":
       return <AccountTypeIcon type={account.type} />;
+    // The source icon (plug = synced, file = imported) leads the value, so
+    // it says what kind of update the time is — and replaces what used to
+    // be a separate Source column.
     case "lastSync": {
       const lastUpdate = lastUpdateOf(account);
-      return lastUpdate ? formatDateTime(lastUpdate) : <span className="text-sm text-muted-foreground">—</span>;
+      return (
+        <span className="inline-flex items-center gap-1.5">
+          <AccountSourceIcon account={account} className="text-muted-foreground" />
+          {lastUpdate ? formatDateTime(lastUpdate) : <span className="text-sm text-muted-foreground">—</span>}
+        </span>
+      );
     }
     case "balance":
       return formatCurrency(account.current_balance);
@@ -155,9 +160,6 @@ export function AccountsTable({
       switch (sortKey) {
         case "name":
           cmp = a.name.localeCompare(b.name);
-          break;
-        case "source":
-          cmp = (a.source ?? "").localeCompare(b.source ?? "");
           break;
         case "type":
           cmp = ACCOUNT_TYPE_LABELS[a.type].localeCompare(ACCOUNT_TYPE_LABELS[b.type]);
@@ -295,7 +297,7 @@ export function AccountsTable({
       ) : (
         <>
           {/* Phone: one card per account — name, then type icon, source
-              icon, last update; balance on the right with the transactions total (Σ)
+              icon + last update; balance on the right with the transactions total (Σ)
               under it. Tapping a card opens its edit dialog. */}
           <div className="flex flex-col gap-2 sm:hidden">
             <CardListHeader
@@ -339,13 +341,10 @@ export function AccountsTable({
                       </span>
                       <span className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
                         <AccountTypeIcon type={account.type} className="size-3.5" />
-                        <AccountSourceIcon account={account} className="size-3.5" />
-                        {lastUpdateOf(account) && (
-                          <span className="inline-flex shrink-0 items-center gap-1" title="Last update">
-                            <RefreshCwIcon className="size-3" aria-label="Last update" />
-                            {formatDateTime(lastUpdateOf(account)!)}
-                          </span>
-                        )}
+                        <span className="inline-flex shrink-0 items-center gap-1">
+                          <AccountSourceIcon account={account} className="size-3.5" />
+                          {lastUpdateOf(account) && formatDateTime(lastUpdateOf(account)!)}
+                        </span>
                       </span>
                     </span>
                     <span className="flex shrink-0 flex-col items-end gap-1">

@@ -50,10 +50,17 @@ description: Use when touching how the Accounts table (src/app/accounts/accounts
   `max-w-5xl` (matching Transactions, the widest list page) rather than a
   narrower container, to give these columns enough room that typical
   values render in full without needing to lean on the ellipsis at all.
-- **Type and Source are icon-only** (centered columns, the app-wide
-  symbol-display rule — see `table-page-conventions`); the phone card
-  shows the same icons. Type: `AccountTypeIcon`, name as `title` tooltip.
-  Source: `AccountSourceIcon` (`src/components/account-type-icon.tsx`),
+- **Type is icon-only** (centered column, the app-wide symbol-display
+  rule — see `table-page-conventions`): `AccountTypeIcon`, name as
+  `title` tooltip.
+- **There is no Source column any more — the source icon leads the Last
+  update value instead** (muted, then the time or `—`), since the source
+  is what says what that time means (plug = synced at, file = imported
+  at). Merged per explicit user request; `"source"` was dropped from
+  `SORT_KEYS` too (a stale `?sort=source` just falls back, and
+  `useColumnPreferences` drops the unknown key from stored orders). The
+  phone card shows `<type icon> <source icon> <time>` (no separate ↻
+  icon). `AccountSourceIcon` (`src/components/account-type-icon.tsx`),
   keyed on `is_automatic`, **not** on the free-text `source` — Pluggy
   writes its connector's name there ("MeuPluggy"), so any future
   connector still gets the plug. Automatic → `PlugZapIcon` (same as the
@@ -82,7 +89,7 @@ description: Use when touching how the Accounts table (src/app/accounts/accounts
 - **On phones (below `sm`) the table becomes a card list** (inline in
   `accounts-table.tsx`, table and cards both rendered, toggled with
   `sm:hidden` / `hidden sm:block`). Each card: checkbox, then name (+
-  Inactive badge) over `<type icon> <source icon> ↻ last update` (omitted when
+  Inactive badge) over `<type icon> <source icon> last update` (omitted when
   there's none, i.e. a manual account never imported), with Balance on the right and the transactions
   total under it, prefixed `Σ` (tooltips don't exist on touch, so the
   symbol is the label). Same value formatting as the columns. **Tapping a
