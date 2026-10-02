@@ -6,6 +6,7 @@ import { PencilIcon, PlugZapIcon, PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AmountInput } from "@/components/locale-inputs";
+import { ACCOUNT_TYPES, AccountTypeOptionLabel } from "@/components/account-type-icon";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -108,10 +109,11 @@ export function AddAccountMenu({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="checking">Checking</SelectItem>
-                  <SelectItem value="investment">Investment</SelectItem>
-                  <SelectItem value="credit_card">Credit card</SelectItem>
-                  <SelectItem value="manual">Other</SelectItem>
+                  {ACCOUNT_TYPES.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      <AccountTypeOptionLabel type={type} />
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

@@ -48,13 +48,15 @@ description: Use when touching how the Accounts table (src/app/accounts/accounts
   `max-w-5xl` (matching Transactions, the widest list page) rather than a
   narrower container, to give these columns enough room that typical
   values render in full without needing to lean on the ellipsis at all.
-- **Source and Type render as a `Badge` chip**
-  (`variant="secondary"`). Source additionally gets
+- **Type is icon-only** (`AccountTypeIcon`, name as `title` tooltip,
+  centered column — the app-wide symbol-display rule, see
+  `table-page-conventions`); the phone card shows the same icon.
+- **Source renders as a `Badge` chip**
+  (`variant="secondary"`). It additionally gets
   `className="max-w-full gap-1 truncate"` on the `Badge` itself — it's free
   text (`account.source`) that could in principle be long, and `Badge`'s own `w-fit shrink-0` would otherwise let a long value
-  stretch the table wider than its container. Type doesn't need this since
-  `typeLabels` are always short. Source falls back to a plain muted
-  `"—"` span when the value is null (Type is never null).
+  stretch the table wider than its container. Source falls back to a plain
+  muted `"—"` span when the value is null.
 - **Name is the origin-table identity column, so its header is icon+text**
   (`LandmarkIcon`, via `headerIcon` — see `table-page-conventions`'s
   "Column header icons" bullet).
@@ -77,7 +79,7 @@ description: Use when touching how the Accounts table (src/app/accounts/accounts
 - **On phones (below `sm`) the table becomes a card list** (inline in
   `accounts-table.tsx`, table and cards both rendered, toggled with
   `sm:hidden` / `hidden sm:block`). Each card: checkbox, then name (+
-  Inactive badge) over `Type · Source · ↻ last update` (omitted when
+  Inactive badge) over `<type icon> Source · ↻ last update` (omitted when
   there's none, i.e. a manual account never imported), with Balance on the right and the transactions
   total under it, prefixed `Σ` (tooltips don't exist on touch, so the
   symbol is the label). Same value formatting as the columns. **Tapping a

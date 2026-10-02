@@ -35,6 +35,7 @@ import { ColumnsMenu } from "@/components/columns-menu";
 import { ColumnHeaderIcon } from "@/components/column-header-icon";
 import { RowActionsMenu } from "@/components/row-actions-menu";
 import { CardListHeader } from "@/components/card-list-header";
+import { ACCOUNT_TYPES, ACCOUNT_TYPE_LABELS, AccountTypeIcon, AccountTypeOptionLabel } from "@/components/account-type-icon";
 import { cn } from "@/lib/utils";
 import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
@@ -46,12 +47,6 @@ import { ImportTransactionsDialog } from "./import-transactions-dialog";
 import { syncPluggyItem } from "./pluggy-actions";
 import { type SortKey } from "./sort";
 
-const typeLabels: Record<Account["type"], string> = {
-  checking: "Checking",
-  investment: "Investment",
-  manual: "Other",
-  credit_card: "Credit card",
-};
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
@@ -84,7 +79,7 @@ const COLUMNS: {
 }[] = [
   { key: "name", label: "Name", cellClassName: "max-w-56 truncate font-medium", headerIcon: LandmarkIcon },
   { key: "source", label: "Source", cellClassName: "max-w-32 truncate" },
-  { key: "type", label: "Type" },
+  { key: "type", label: "Type", align: "center", cellClassName: "text-center" },
   { key: "lastSync", label: "Last update", align: "center", cellClassName: "text-center whitespace-nowrap" },
   { key: "transactions", label: "Transactions", cellClassName: "text-right whitespace-nowrap" },
   { key: "balance", label: "Balance", cellClassName: "text-right whitespace-nowrap" },
@@ -110,7 +105,7 @@ function renderCell(account: Account, key: SortKey, transactionsTotalByAccount: 
         <span className="text-sm text-muted-foreground">—</span>
       );
     case "type":
-      return <Badge variant="secondary">{typeLabels[account.type]}</Badge>;
+      return <AccountTypeIcon type={account.type} />;
     case "lastSync": {
       const lastUpdate = lastUpdateOf(account);
       return lastUpdate ? formatDateTime(lastUpdate) : <span className="text-sm text-muted-foreground">—</span>;
@@ -165,7 +160,7 @@ export function AccountsTable({
           cmp = (a.source ?? "").localeCompare(b.source ?? "");
           break;
         case "type":
-          cmp = typeLabels[a.type].localeCompare(typeLabels[b.type]);
+          cmp = ACCOUNT_TYPE_LABELS[a.type].localeCompare(ACCOUNT_TYPE_LABELS[b.type]);
           break;
         case "lastSync":
           cmp = (lastUpdateOf(a) ?? "").localeCompare(lastUpdateOf(b) ?? "");
@@ -343,7 +338,7 @@ export function AccountsTable({
                         )}
                       </span>
                       <span className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-                        <span className="shrink-0">{typeLabels[account.type]}</span>
+                        <AccountTypeIcon type={account.type} className="size-3.5" />
                         {account.source && <span className="min-w-0 truncate">{account.source}</span>}
                         {lastUpdateOf(account) && (
                           <span className="inline-flex shrink-0 items-center gap-1" title="Last update">
@@ -454,10 +449,11 @@ export function AccountsTable({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="checking">Checking</SelectItem>
-                    <SelectItem value="investment">Investment</SelectItem>
-                    <SelectItem value="credit_card">Credit card</SelectItem>
-                    <SelectItem value="manual">Other</SelectItem>
+                    {ACCOUNT_TYPES.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        <AccountTypeOptionLabel type={type} />
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
