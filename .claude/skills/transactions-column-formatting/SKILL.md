@@ -48,7 +48,7 @@ shared with the other list pages.
   `<span className="min-w-0 truncate">` and
   `<AccountTypeIcon type={account.type} className="size-3" />` — the `min-w-0` lets the
   name, not the icon, give way when the column is narrow). `Account` has
-  no `icon` field of its own; the type icon (coins/piggy bank/card/⋯,
+  no `icon` field of its own; the type icon (bank building/piggy bank/card/⋯,
   see `table-page-conventions`' symbol table) is the closest thing, added
   per explicit user request. The phone `TransactionCardList` shows the
   same name + icon. The column is centered (`align: "center"`,
