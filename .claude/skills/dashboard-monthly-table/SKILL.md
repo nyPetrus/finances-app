@@ -219,7 +219,9 @@ table is meant if it's ever unclear again.
   ["0".."11"])` (only its `hidden` set is used). `MonthlyBreakdownTable`
   takes `visibleMonths: number[]` and renders only those month columns
   (header, body, footer). The trailing column formerly labeled "Total" is
-  now labeled **"Year"**, and **its values always sum all 12 months** —
+  now labeled with **the year number itself** (e.g. "2026", the `year`
+  prop from `page.tsx` — it said "Year" until changed per explicit user
+  request), and **its values always sum all 12 months** —
   `row.total` and the footer `grandTotal` are never recomputed from the
   visible months, so hiding a month doesn't change the Year value. (The
   footer *row* label is still "Total".) Wherever this doc says "Total

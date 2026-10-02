@@ -56,12 +56,14 @@ function formatCurrency(value: number) {
 
 // What a selection covers, in the dynamic table's own vocabulary: symbols
 // only (type arrow, padlock, category/class icon), names as tooltips, then
-// the month — or "Year" for a whole-year selection.
+// the month — or the year number for a whole-year selection.
 function SelectionLabel({
+  year,
   selection,
   categoriesById,
   classesById,
 }: {
+  year: number;
   selection: MonthlySelection;
   categoriesById: Map<string, Category>;
   classesById: Map<string, Class>;
@@ -97,7 +99,7 @@ function SelectionLabel({
           <CategoryIcon icon={selectedClass.icon} className="size-4" />
         </span>
       )}
-      <span className="capitalize">{selection.month === undefined ? "Year" : MONTH_LABELS[selection.month]}</span>
+      <span className="capitalize">{selection.month === undefined ? year : MONTH_LABELS[selection.month]}</span>
     </span>
   );
 }
@@ -290,6 +292,7 @@ export function DashboardExplorer({
         />
       </div>
       <MonthlyBreakdownTable
+        year={year}
         rows={monthlyBreakdown}
         monthTotals={monthTotals}
         visibleMonths={isMobile ? [phoneMonth] : visibleMonths}
@@ -307,7 +310,7 @@ export function DashboardExplorer({
           <DialogContent className="top-auto bottom-0 left-0 max-h-[85dvh] max-w-none translate-x-0 translate-y-0 content-start overflow-y-auto rounded-none rounded-t-xl pb-[max(1rem,env(safe-area-inset-bottom))]">
             <DialogHeader className="pr-8">
               <DialogTitle>
-                <SelectionLabel selection={selection} categoriesById={categoriesById} classesById={classesById} />
+                <SelectionLabel year={year} selection={selection} categoriesById={categoriesById} classesById={classesById} />
               </DialogTitle>
               <p className="text-sm text-muted-foreground">
                 {filteredTransactions.length === 1 ? "1 transaction" : `${filteredTransactions.length} transactions`}

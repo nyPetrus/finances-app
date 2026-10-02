@@ -217,6 +217,7 @@ function TreeRows({
 // Expand state is owned by dashboard-explorer.tsx, so its toolbar's
 // expand/collapse-all button can drive it too.
 export function MonthlyBreakdownTable({
+  year,
   rows,
   monthTotals,
   visibleMonths,
@@ -225,6 +226,8 @@ export function MonthlyBreakdownTable({
   expanded,
   onToggle,
 }: {
+  // Labels the trailing year-total column (e.g. "2026").
+  year: number;
   rows: MonthlyRow[];
   // Computed from all the year's transactions (buildMonthTotals), not from
   // `rows` — a Category/Class top level drops transactions without one.
@@ -275,7 +278,7 @@ export function MonthlyBreakdownTable({
                 totalSelected && SELECTED_CELL,
               )}
             >
-              Year
+              {year}
             </th>
           </tr>
         </thead>

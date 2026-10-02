@@ -82,7 +82,7 @@ back.
   `DialogContent` is restyled to `bottom-0 … rounded-t-xl max-h-[85dvh]`.
   Its title is `SelectionLabel` — the selection in the dynamic table's own
   symbols (type arrow, padlock, category/class icon, names as tooltips)
-  plus the month or "Year" — with "N transactions · total" under it
+  plus the month or the year number — with "N transactions · total" under it
   (signed sum, emerald only when ≥ 0, like Search's summary). Closing the
   sheet clears the selection. Inside, the embedded table renders its
   shared `TransactionCardList` (tap a card to edit) below `sm`. Per
