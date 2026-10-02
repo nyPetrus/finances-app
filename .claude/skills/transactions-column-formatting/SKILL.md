@@ -51,7 +51,9 @@ shared with the other list pages.
   no `icon` field of its own; the type icon (coins/piggy bank/card/⋯,
   see `table-page-conventions`' symbol table) is the closest thing, added
   per explicit user request. The phone `TransactionCardList` shows the
-  same name + icon.
+  same name + icon. The column is centered (`align: "center"`,
+  `text-center` — the `Badge` is inline-flex, so `text-center` positions
+  it), like every other icon-bearing column, per explicit user request.
   **Class is icon-only, like Category** (`CategoryIcon` of `classes.icon`,
   name as `title` tooltip, centered, no `Badge`) — see
   `table-page-conventions`'s "Category-as-foreign-column" bullet.

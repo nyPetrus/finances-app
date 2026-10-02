@@ -96,7 +96,14 @@ const COLUMNS: {
 }[] = [
   { key: "date", label: "Date", cellClassName: "whitespace-nowrap", headerIcon: CalendarIcon, headerIconOnly: true },
   { key: "description", label: "Description", cellClassName: "max-w-64 truncate font-medium" },
-  { key: "account", label: "Account", cellClassName: "max-w-40 truncate", headerIcon: LandmarkIcon, headerIconOnly: true },
+  {
+    key: "account",
+    label: "Account",
+    align: "center",
+    cellClassName: "max-w-40 truncate text-center",
+    headerIcon: LandmarkIcon,
+    headerIconOnly: true,
+  },
   {
     key: "category",
     label: "Category",
