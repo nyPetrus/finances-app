@@ -35,9 +35,11 @@ description: Use when touching how the Accounts table (src/app/accounts/accounts
   Unlike the Transactions Date column, the year is kept (2-digit) since
   Accounts has no page-level month/year header to make it redundant.
 - **Every column keeps its row to a single line, and the table avoids
-  horizontal scroll by letting Name/Source shrink instead of
-  wrapping.** `COLUMNS` gives Name/Source `cellClassName:
-  "max-w-56 truncate font-medium"` / `"max-w-32 truncate"` (free-text fields that can be arbitrarily long) and
+  horizontal scroll by letting Name shrink instead of
+  wrapping.** `COLUMNS` gives Name `cellClassName:
+  "max-w-56 truncate font-medium"` (free text that can be arbitrarily
+  long; Source used to get `max-w-32 truncate` too, until it became an
+  icon) and
   Last update/Balance `whitespace-nowrap` (structured values that should
   never break across two lines). This overrides the shared `TableCell`'s
   default wrapping (see `table-page-conventions`) specifically for this
@@ -48,15 +50,16 @@ description: Use when touching how the Accounts table (src/app/accounts/accounts
   `max-w-5xl` (matching Transactions, the widest list page) rather than a
   narrower container, to give these columns enough room that typical
   values render in full without needing to lean on the ellipsis at all.
-- **Type is icon-only** (`AccountTypeIcon`, name as `title` tooltip,
-  centered column — the app-wide symbol-display rule, see
-  `table-page-conventions`); the phone card shows the same icon.
-- **Source renders as a `Badge` chip**
-  (`variant="secondary"`). It additionally gets
-  `className="max-w-full gap-1 truncate"` on the `Badge` itself — it's free
-  text (`account.source`) that could in principle be long, and `Badge`'s own `w-fit shrink-0` would otherwise let a long value
-  stretch the table wider than its container. Source falls back to a plain
-  muted `"—"` span when the value is null.
+- **Type and Source are icon-only** (centered columns, the app-wide
+  symbol-display rule — see `table-page-conventions`); the phone card
+  shows the same icons. Type: `AccountTypeIcon`, name as `title` tooltip.
+  Source: `AccountSourceIcon` (`src/components/account-type-icon.tsx`),
+  keyed on `is_automatic`, **not** on the free-text `source` — Pluggy
+  writes its connector's name there ("MeuPluggy"), so any future
+  connector still gets the plug. Automatic → `PlugZapIcon` (same as the
+  "Connect bank" menu item), manual → `FileUpIcon` (manual accounts are
+  fed by statement file imports); the tooltip is the actual `source`
+  text. Both per explicit user request.
 - **Name is the origin-table identity column, so its header is icon+text**
   (`LandmarkIcon`, via `headerIcon` — see `table-page-conventions`'s
   "Column header icons" bullet).
@@ -79,7 +82,7 @@ description: Use when touching how the Accounts table (src/app/accounts/accounts
 - **On phones (below `sm`) the table becomes a card list** (inline in
   `accounts-table.tsx`, table and cards both rendered, toggled with
   `sm:hidden` / `hidden sm:block`). Each card: checkbox, then name (+
-  Inactive badge) over `<type icon> Source · ↻ last update` (omitted when
+  Inactive badge) over `<type icon> <source icon> ↻ last update` (omitted when
   there's none, i.e. a manual account never imported), with Balance on the right and the transactions
   total under it, prefixed `Σ` (tooltips don't exist on touch, so the
   symbol is the label). Same value formatting as the columns. **Tapping a

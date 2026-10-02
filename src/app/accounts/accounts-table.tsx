@@ -35,7 +35,13 @@ import { ColumnsMenu } from "@/components/columns-menu";
 import { ColumnHeaderIcon } from "@/components/column-header-icon";
 import { RowActionsMenu } from "@/components/row-actions-menu";
 import { CardListHeader } from "@/components/card-list-header";
-import { ACCOUNT_TYPES, ACCOUNT_TYPE_LABELS, AccountTypeIcon, AccountTypeOptionLabel } from "@/components/account-type-icon";
+import {
+  ACCOUNT_TYPES,
+  ACCOUNT_TYPE_LABELS,
+  AccountSourceIcon,
+  AccountTypeIcon,
+  AccountTypeOptionLabel,
+} from "@/components/account-type-icon";
 import { cn } from "@/lib/utils";
 import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
@@ -78,7 +84,7 @@ const COLUMNS: {
   headerIconOnly?: boolean;
 }[] = [
   { key: "name", label: "Name", cellClassName: "max-w-56 truncate font-medium", headerIcon: LandmarkIcon },
-  { key: "source", label: "Source", cellClassName: "max-w-32 truncate" },
+  { key: "source", label: "Source", align: "center", cellClassName: "text-center" },
   { key: "type", label: "Type", align: "center", cellClassName: "text-center" },
   { key: "lastSync", label: "Last update", align: "center", cellClassName: "text-center whitespace-nowrap" },
   { key: "transactions", label: "Transactions", cellClassName: "text-right whitespace-nowrap" },
@@ -97,13 +103,7 @@ function renderCell(account: Account, key: SortKey, transactionsTotalByAccount: 
         </span>
       );
     case "source":
-      return account.source ? (
-        <Badge variant="secondary" className="max-w-full gap-1 truncate">
-          {account.source}
-        </Badge>
-      ) : (
-        <span className="text-sm text-muted-foreground">—</span>
-      );
+      return <AccountSourceIcon account={account} />;
     case "type":
       return <AccountTypeIcon type={account.type} />;
     case "lastSync": {
@@ -294,8 +294,8 @@ export function AccountsTable({
         </p>
       ) : (
         <>
-          {/* Phone: one card per account — name, then type · source · last
-              sync; balance on the right with the transactions total (Σ)
+          {/* Phone: one card per account — name, then type icon, source
+              icon, last update; balance on the right with the transactions total (Σ)
               under it. Tapping a card opens its edit dialog. */}
           <div className="flex flex-col gap-2 sm:hidden">
             <CardListHeader
@@ -339,7 +339,7 @@ export function AccountsTable({
                       </span>
                       <span className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
                         <AccountTypeIcon type={account.type} className="size-3.5" />
-                        {account.source && <span className="min-w-0 truncate">{account.source}</span>}
+                        <AccountSourceIcon account={account} className="size-3.5" />
                         {lastUpdateOf(account) && (
                           <span className="inline-flex shrink-0 items-center gap-1" title="Last update">
                             <RefreshCwIcon className="size-3" aria-label="Last update" />

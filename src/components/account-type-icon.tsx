@@ -1,4 +1,12 @@
-import { BanknoteIcon, CircleEllipsisIcon, CreditCardIcon, PiggyBankIcon, type LucideIcon } from "lucide-react";
+import {
+  BanknoteIcon,
+  CircleEllipsisIcon,
+  CreditCardIcon,
+  FileUpIcon,
+  PiggyBankIcon,
+  PlugZapIcon,
+  type LucideIcon,
+} from "lucide-react";
 import type { Account } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +47,21 @@ export function AccountTypeOptionLabel({ type }: { type: AccountType }) {
     <span className="inline-flex items-center gap-1.5">
       <Icon className="size-3.5 shrink-0" />
       {ACCOUNT_TYPE_LABELS[type]}
+    </span>
+  );
+}
+
+// Source symbol: keyed on is_automatic rather than the free-text `source`
+// (Pluggy writes its connector's name there, e.g. "MeuPluggy"), so any
+// future connector gets the plug too. Plug matches the "Connect bank" menu
+// item; file-up because manual accounts are fed by statement file imports.
+// The tooltip keeps the actual source text.
+export function AccountSourceIcon({ account, className }: { account: Account; className?: string }) {
+  const Icon = account.is_automatic ? PlugZapIcon : FileUpIcon;
+  const label = account.source ?? (account.is_automatic ? "Connected" : "Manual");
+  return (
+    <span title={label} className="inline-flex">
+      <Icon className={cn("size-4", className)} aria-label={label} />
     </span>
   );
 }
