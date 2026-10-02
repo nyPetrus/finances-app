@@ -1,24 +1,57 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+
+// Matches Tailwind's `sm` breakpoint: below it counts as a phone.
+const MOBILE_QUERY = "(max-width: 639px)";
+
+function subscribeToMobile(onChange: () => void) {
+  const query = window.matchMedia(MOBILE_QUERY);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
 
 /**
  * Per-browser column visibility + order, persisted to localStorage under
  * `${storageKey}-hidden` / `${storageKey}-order`. `storageKey` should be
  * unique per table (e.g. "accounts-table", "transactions-table").
+ *
+ * On phone-width screens the hidden set is tracked separately (under
+ * `${storageKey}-mobile-hidden-columns`) and defaults to `mobileHidden`, so
+ * low-priority columns start hidden there without touching the desktop
+ * preferences. Order is shared between the two.
  */
-export function useColumnPreferences<K extends string>(storageKey: string, defaultOrder: readonly K[]) {
-  const hiddenStorageKey = `${storageKey}-hidden-columns`;
+export function useColumnPreferences<K extends string>(
+  storageKey: string,
+  defaultOrder: readonly K[],
+  mobileHidden: readonly K[] = [],
+) {
+  const isMobile = useSyncExternalStore(
+    subscribeToMobile,
+    () => window.matchMedia(MOBILE_QUERY).matches,
+    () => false,
+  );
+  const hiddenStorageKey = isMobile ? `${storageKey}-mobile-hidden-columns` : `${storageKey}-hidden-columns`;
   const orderStorageKey = `${storageKey}-column-order`;
 
   const [hidden, setHidden] = useState<Set<K>>(new Set());
   const [order, setOrder] = useState<K[]>([...defaultOrder]);
 
   useEffect(() => {
+    const fallback = new Set<K>(isMobile ? mobileHidden : []);
     try {
       const storedHidden = localStorage.getItem(hiddenStorageKey);
-      if (storedHidden) setHidden(new Set(JSON.parse(storedHidden)));
+      setHidden(storedHidden ? new Set(JSON.parse(storedHidden)) : fallback);
+    } catch {
+      setHidden(fallback);
+    }
+    // Reload whenever the viewport crosses the phone breakpoint;
+    // mobileHidden is static per page.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hiddenStorageKey]);
 
+  useEffect(() => {
+    try {
       const storedOrder = localStorage.getItem(orderStorageKey);
       if (storedOrder) {
         const parsed = JSON.parse(storedOrder) as K[];

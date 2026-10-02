@@ -83,6 +83,8 @@ const COLUMNS: {
 ];
 
 const DEFAULT_COLUMN_ORDER = COLUMNS.map((column) => column.key);
+// Hidden by default on phone-width screens (still toggleable via Columns).
+const MOBILE_HIDDEN_COLUMNS: SortKey[] = ["source", "type", "lastSync", "transactions"];
 
 function renderCell(account: Account, key: SortKey, transactionsTotalByAccount: Record<string, number>) {
   switch (key) {
@@ -135,7 +137,7 @@ export function AccountsTable({
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [importingAccount, setImportingAccount] = useState<Account | null>(null);
   const { hidden: hiddenColumns, order: columnOrder, toggle: toggleColumn, move: moveColumn } =
-    useColumnPreferences<SortKey>("accounts-table", DEFAULT_COLUMN_ORDER);
+    useColumnPreferences<SortKey>("accounts-table", DEFAULT_COLUMN_ORDER, MOBILE_HIDDEN_COLUMNS);
   const {
     showInactive,
     setShowInactive,

@@ -114,6 +114,8 @@ const COLUMNS: {
 ];
 
 const DEFAULT_COLUMN_ORDER = COLUMNS.map((column) => column.key);
+// Hidden by default on phone-width screens (still toggleable via Columns).
+const MOBILE_HIDDEN_COLUMNS: SortKey[] = ["account", "category", "class"];
 
 export function SearchTable({
   transactions,
@@ -143,7 +145,7 @@ export function SearchTable({
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
   const editFormRef = useRef<HTMLFormElement>(null);
   const { hidden: hiddenColumns, order: columnOrder, toggle: toggleColumn, move: moveColumn } =
-    useColumnPreferences<SortKey>("search-table", DEFAULT_COLUMN_ORDER);
+    useColumnPreferences<SortKey>("search-table", DEFAULT_COLUMN_ORDER, MOBILE_HIDDEN_COLUMNS);
   const {
     showInactive,
     setShowInactive,

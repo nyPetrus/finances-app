@@ -226,6 +226,17 @@ list page instead of inventing a fresh layout.
   `${storageKey}-column-order` (pick a `storageKey` unique per table, e.g.
   `"search-table"`) and reconciles a stored order against the current
   column set on load, so adding/removing a column later doesn't strand it.
+  **Phone widths**: its optional third argument is the table's
+  `MOBILE_HIDDEN_COLUMNS` — columns hidden by default below Tailwind's `sm`
+  breakpoint (`(max-width: 639px)`, via `useSyncExternalStore` +
+  `matchMedia`). Below `sm` the hidden set lives under a separate
+  `${storageKey}-mobile-hidden-columns` key, so toggling columns on the
+  phone never changes the desktop preference (order is shared). Current
+  defaults, per explicit user request: Accounts hides Source/Type/Last
+  sync/Transactions; Search hides Account/Category/Class; Descriptions
+  hides Operator/Class; Categories hides Classes/Autonomy. Use this rather
+  than `hidden sm:table-cell` classes, which the Columns menu couldn't
+  override. Page wrappers use `p-4 sm:p-6`.
   Render the `ColumnsMenu` component (`src/components/columns-menu.tsx`) in
   the toolbar, passing it the page's `COLUMNS` config and the hook's
   `order`/`hidden`/`toggle`/`move`. Each page defines `COLUMNS` as an array

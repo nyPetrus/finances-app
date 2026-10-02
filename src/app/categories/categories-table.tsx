@@ -93,6 +93,8 @@ const COLUMNS: {
 ];
 
 const DEFAULT_COLUMN_ORDER = COLUMNS.map((column) => column.key);
+// Hidden by default on phone-width screens (still toggleable via Columns).
+const MOBILE_HIDDEN_COLUMNS: SortKey[] = ["classes", "autonomy"];
 
 function groupKey(group: CategoryGroup) {
   return group.category?.id ?? NO_CATEGORY_KEY;
@@ -129,7 +131,7 @@ export function CategoriesTable({
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [showInactive, setShowInactive] = useState(false);
   const { hidden: hiddenColumns, order: columnOrder, toggle: toggleColumn, move: moveColumn } =
-    useColumnPreferences<SortKey>("categories-table", DEFAULT_COLUMN_ORDER);
+    useColumnPreferences<SortKey>("categories-table", DEFAULT_COLUMN_ORDER, MOBILE_HIDDEN_COLUMNS);
 
   const categoriesById = new Map(categories.map((category) => [category.id, category]));
 

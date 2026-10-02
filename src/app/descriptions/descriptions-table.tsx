@@ -83,6 +83,8 @@ const COLUMNS: {
 ];
 
 const DEFAULT_COLUMN_ORDER = COLUMNS.map((column) => column.key);
+// Hidden by default on phone-width screens (still toggleable via Columns).
+const MOBILE_HIDDEN_COLUMNS: SortKey[] = ["check_type", "class"];
 
 export function DescriptionsTable({
   mappings,
@@ -107,7 +109,7 @@ export function DescriptionsTable({
   const editFormRef = useRef<HTMLFormElement>(null);
   const isEditBusy = isSavingEdit || isSyncingUnmapped;
   const { hidden: hiddenColumns, order: columnOrder, toggle: toggleColumn, move: moveColumn } =
-    useColumnPreferences<SortKey>("descriptions-table", DEFAULT_COLUMN_ORDER);
+    useColumnPreferences<SortKey>("descriptions-table", DEFAULT_COLUMN_ORDER, MOBILE_HIDDEN_COLUMNS);
 
   const categoriesById = new Map(categories.map((c) => [c.id, c]));
   const classesById = new Map(classes.map((c) => [c.id, c]));
