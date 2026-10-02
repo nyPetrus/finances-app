@@ -155,7 +155,6 @@ export function DashboardExplorer({
   }
 
   const stepperMonth = pendingStep?.month ?? phoneMonth;
-  const stepperYear = pendingStep?.year ?? year;
   const { hidden: hiddenLevels, order: levelOrder, toggle: toggleLevel, move: moveLevel } =
     useColumnPreferences<ClassificationLevel>("dashboard-monthly-table-levels-v2", DEFAULT_CLASSIFICATION_LEVELS);
   const levels = useMemo(
@@ -250,11 +249,12 @@ export function DashboardExplorer({
             </Button>
             <span
               className={cn(
-                "w-24 text-center text-base font-medium capitalize",
+                "w-12 text-center text-base font-medium capitalize",
                 pendingStep && "text-muted-foreground",
               )}
             >
-              {MONTH_LABELS[stepperMonth]} {stepperYear}
+              {/* Month only — the table's year-total column header names the year. */}
+              {MONTH_LABELS[stepperMonth]}
             </span>
             <Button
               variant="outline"

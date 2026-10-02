@@ -84,7 +84,9 @@ back.
   symbols (type arrow, padlock, category/class icon, names as tooltips)
   plus the month or the year number — with "N transactions · total" under it
   (signed sum, emerald only when ≥ 0, like Search's summary). Closing the
-  sheet clears the selection. Inside, the embedded table renders its
+  sheet clears the selection. An empty selection shows no "No transactions"
+  message (removed per explicit user request) — the "0 transactions"
+  header covers it; on desktop just the toolbar shows. Inside, the embedded table renders its
   shared `TransactionCardList` (tap a card to edit) below `sm`. Per
   explicit user request.
 - **The embedded table is a separate component from `SearchTable`

@@ -358,9 +358,9 @@ export function DashboardTransactionsTable({
       </div>
       {actionError && <p className="text-sm text-destructive">{actionError}</p>}
 
-      {sortedTransactions.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No transactions match this filter.</p>
-      ) : (
+      {/* An empty selection renders nothing here — the phone sheet's
+          "0 transactions" header already says so (per explicit user request). */}
+      {sortedTransactions.length > 0 && (
         <>
           {/* Phone: one two-line card per transaction instead of the table. */}
           <TransactionCardList

@@ -229,7 +229,9 @@ table is meant if it's ever unclear again.
 
 - **Phones (below `sm`, `useIsMobile()`) show one month column at a
   time**: `dashboard-explorer.tsx` swaps the Months menu for a combined
-  ‹ Out 2026 › stepper (`phoneMonth`, defaults to the current month) and
+  ‹ Out › stepper (month only — the year-total column header already names
+  the year, per explicit user request; `phoneMonth`, defaults to the
+  current month) and
   passes `visibleMonths={[phoneMonth]}`. The stepper crosses years: past
   Dez/Jan it `router.push`es `/?year=…` and parks the target month in
   `pendingStep` until the new `year` prop arrives (applied during render;
