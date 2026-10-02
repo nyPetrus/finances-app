@@ -142,14 +142,16 @@ function NavContent({
             onClick={onNavigate}
             title={collapsed ? link.label : undefined}
             className={cn(
-              "flex items-center gap-2 rounded-md px-2 text-sm",
-              touch ? "py-3" : "py-1.5",
+              "flex items-center rounded-md px-2",
+              // The phone drawer gets bigger text and icons to match its
+              // taller, finger-sized rows.
+              touch ? "gap-3 py-3 text-base" : "gap-2 py-1.5 text-sm",
               isActiveLink(link.href, pathname)
                 ? "bg-muted text-foreground"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
-            <link.icon className="size-4 shrink-0" />
+            <link.icon className={cn("shrink-0", touch ? "size-5" : "size-4")} />
             {!collapsed && <span className="truncate">{link.label}</span>}
           </Link>
         ))}
@@ -160,10 +162,10 @@ function NavContent({
           type="submit"
           variant="ghost"
           size={touch ? "default" : "sm"}
-          className={cn("w-full", collapsed ? "justify-center px-0" : "justify-start")}
+          className={cn("w-full", collapsed ? "justify-center px-0" : "justify-start", touch && "gap-3 px-2 text-base")}
           title={collapsed ? "Sign out" : undefined}
         >
-          <LogOutIcon className="size-4" />
+          <LogOutIcon className={touch ? "size-5" : "size-4"} />
           {!collapsed && "Sign out"}
         </Button>
       </form>
