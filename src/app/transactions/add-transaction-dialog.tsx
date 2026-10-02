@@ -91,9 +91,6 @@ export function AddTransactionDialog({
               />
             </div>
           </div>
-          <p className="text-xs text-muted-foreground -mt-2">
-            Use a negative amount for expenses, positive for income.
-          </p>
           <div className="flex flex-col gap-2">
             <Label htmlFor="account_id">Account</Label>
             <Select name="account_id" required>
