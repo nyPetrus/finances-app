@@ -49,8 +49,7 @@ import { type SortKey } from "./sort";
 const typeLabels: Record<Account["type"], string> = {
   checking: "Checking",
   investment: "Investment",
-  fgts: "FGTS",
-  manual: "Manual",
+  manual: "Other",
   credit_card: "Credit card",
 };
 
@@ -457,9 +456,8 @@ export function AccountsTable({
                   <SelectContent>
                     <SelectItem value="checking">Checking</SelectItem>
                     <SelectItem value="investment">Investment</SelectItem>
-                    <SelectItem value="fgts">FGTS</SelectItem>
                     <SelectItem value="credit_card">Credit card</SelectItem>
-                    <SelectItem value="manual">Manual / Other</SelectItem>
+                    <SelectItem value="manual">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

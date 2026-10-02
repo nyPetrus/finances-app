@@ -40,7 +40,8 @@ export type Account = {
   user_id: string;
   name: string;
   source: string | null;
-  type: "checking" | "investment" | "fgts" | "manual" | "credit_card";
+  // "manual" is labeled "Other" in the UI.
+  type: "checking" | "investment" | "manual" | "credit_card";
   is_automatic: boolean;
   is_active: boolean;
   pluggy_item_id: string | null;

@@ -110,9 +110,8 @@ export function AddAccountMenu({
                 <SelectContent>
                   <SelectItem value="checking">Checking</SelectItem>
                   <SelectItem value="investment">Investment</SelectItem>
-                  <SelectItem value="fgts">FGTS</SelectItem>
                   <SelectItem value="credit_card">Credit card</SelectItem>
-                  <SelectItem value="manual">Manual / Other</SelectItem>
+                  <SelectItem value="manual">Other</SelectItem>
                 </SelectContent>
               </Select>
             </div>
