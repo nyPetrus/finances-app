@@ -421,11 +421,21 @@ list page instead of inventing a fresh layout.
   Type symbol); the Classes table's Autonomy column; and the Search filter
   bar's chips (`Category: 🛒 🚌`, `Autonomy: 🔓` — `search-page-conventions`).
   **Two deliberate exceptions, both confirmed by the user:**
-  - **Pickers** (dropdowns, checkbox lists, filter suggestions) keep the
-    name, since choosing from bare icons is error-prone — category
-    dropdowns show the name, Autonomy options show `<AutonomyOptionLabel>`
-    (padlock + "Alta"), the category-type `Select` shows "Income"/"Expense"/
-    "Transfer".
+  - **Pickers** (dropdowns, checkbox lists, filter suggestions) show the
+    **symbol and the name** — never the bare name, never the bare icon
+    (choosing from bare icons is error-prone; per explicit user request,
+    every option that has a symbol shows it). Use the shared labels:
+    `<CategoryOptionLabel icon name />` (`category-icon.tsx`) for categories
+    and classes, `<AccountOptionLabel account />` (`account-type-icon.tsx`;
+    name then type icon) for accounts, `<AccountTypeOptionLabel>` for
+    account types, `<AutonomyOptionLabel>` for autonomy, and
+    `<TransactionTypeOptionLabel kind />`
+    (`transaction-type-option-label.tsx`) for the category-type `Select`.
+    The Search filter's checkbox list and typed suggestions render the same
+    pieces from its `Option` fields (`icon`, `symbol`, `accountType`).
+    `ui/select.tsx` derives the closed trigger's label from the item's
+    children, so the picked value shows its icon too. Placeholder-style
+    options with no symbol ("Uncategorized", "No change", "None") stay text.
   - **Budget** (`yearly-grid.tsx`, `monthly-execution.tsx`) keeps icon +
     name: each row there is identified by its category alone, with no
     other text, so icons alone would make rows hard to tell apart.

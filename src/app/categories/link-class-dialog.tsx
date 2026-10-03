@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import type { Category, Class } from "@/lib/supabase/types";
 import { linkClassToCategory } from "@/app/classes/actions";
+import { CategoryOptionLabel } from "@/components/category-icon";
 
 // Adds an already-existing class under one more category — the alternative to
 // "Add class" (which creates a new one) on a category row's "⋮" menu.
@@ -74,7 +75,7 @@ export function LinkClassDialog({
                 <SelectContent>
                   {options.map((classItem) => (
                     <SelectItem key={classItem.id} value={classItem.id}>
-                      {classItem.name}
+                      <CategoryOptionLabel icon={classItem.icon} name={classItem.name} />
                     </SelectItem>
                   ))}
                 </SelectContent>

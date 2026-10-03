@@ -21,6 +21,7 @@ import {
 import { IconSwatchPicker } from "@/components/icon-swatch-picker";
 import { CATEGORY_ICONS } from "@/lib/category-icons";
 import { addCategory } from "./actions";
+import { TransactionTypeOptionLabel } from "@/components/transaction-type-option-label";
 
 // Opened from the Categories & Classes page's "+" menu, which owns `open`.
 export function AddCategoryDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
@@ -65,9 +66,9 @@ export function AddCategoryDialog({ open, onOpenChange }: { open: boolean; onOpe
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="expense">Expense</SelectItem>
-                <SelectItem value="income">Income</SelectItem>
-                <SelectItem value="transfer">Transfer</SelectItem>
+                <SelectItem value="expense"><TransactionTypeOptionLabel kind="expense" /></SelectItem>
+                <SelectItem value="income"><TransactionTypeOptionLabel kind="income" /></SelectItem>
+                <SelectItem value="transfer"><TransactionTypeOptionLabel kind="transfer" /></SelectItem>
               </SelectContent>
             </Select>
           </div>

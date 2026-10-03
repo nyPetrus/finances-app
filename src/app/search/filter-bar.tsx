@@ -389,6 +389,7 @@ export function SearchFilterBar({
       <span className="truncate">
         <span className="text-muted-foreground">{FIELD_LABELS[suggestion.field]}: </span>
         <span className="inline-flex items-center gap-1 font-medium">
+          {suggestion.option.icon && <CategoryIcon icon={suggestion.option.icon} className="size-3.5 shrink-0" />}
           {suggestion.option.symbol && <suggestion.option.symbol className="size-3.5 shrink-0" />}
           {suggestion.option.label}
           {suggestion.option.accountType && (

@@ -34,7 +34,7 @@ import { SortableTableHead } from "@/components/sortable-table-head";
 import { ColumnsMenu } from "@/components/columns-menu";
 import { ColumnHeaderIcon } from "@/components/column-header-icon";
 import { RowActionsMenu } from "@/components/row-actions-menu";
-import { CategoryIcon } from "@/components/category-icon";
+import { CategoryIcon, CategoryOptionLabel } from "@/components/category-icon";
 import { useRowSelection } from "@/hooks/use-row-selection";
 import { useColumnPreferences } from "@/hooks/use-column-preferences";
 import { pickableCategories, pickableClasses } from "@/lib/classification";
@@ -339,7 +339,7 @@ export function DescriptionsTable({
                   <SelectContent>
                     {pickableCategories(categories, editCategoryId).map((category) => (
                       <SelectItem key={category.id} value={category.id}>
-                        {category.name}
+                        <CategoryOptionLabel icon={category.icon} name={category.name} />
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -367,7 +367,7 @@ export function DescriptionsTable({
                   <SelectContent>
                     {editClassesForCategory.map((classItem) => (
                       <SelectItem key={classItem.id} value={classItem.id}>
-                        {classItem.name}
+                        <CategoryOptionLabel icon={classItem.icon} name={classItem.name} />
                       </SelectItem>
                     ))}
                   </SelectContent>

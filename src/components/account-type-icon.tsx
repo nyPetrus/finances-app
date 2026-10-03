@@ -51,6 +51,18 @@ export function AccountTypeOptionLabel({ type }: { type: AccountType }) {
   );
 }
 
+// Pickers show an account as it renders everywhere else: name, then its
+// type icon (name first, icon last).
+export function AccountOptionLabel({ account }: { account: Pick<Account, "name" | "type"> }) {
+  const Icon = ACCOUNT_TYPE_ICONS[account.type];
+  return (
+    <span className="inline-flex min-w-0 items-center gap-1.5">
+      <span className="truncate">{account.name}</span>
+      <Icon className="size-3.5 shrink-0" aria-label={ACCOUNT_TYPE_LABELS[account.type]} />
+    </span>
+  );
+}
+
 // Source symbol: keyed on is_automatic rather than the free-text `source`
 // (Pluggy writes its connector's name there, e.g. "MeuPluggy"), so any
 // future connector gets the plug too. Plug matches the "Connect bank" menu

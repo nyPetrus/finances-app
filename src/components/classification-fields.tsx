@@ -11,6 +11,7 @@ import {
 import { DEFAULT_AUTONOMY, pickableCategories, pickableClasses } from "@/lib/classification";
 import { AutonomyOptionLabel } from "@/components/autonomy-icon";
 import type { Category, Class, Autonomy } from "@/lib/supabase/types";
+import { CategoryOptionLabel } from "@/components/category-icon";
 
 // The Category + Class (+ optional Autonomy override) pickers shared by every
 // transaction and description-mapping dialog. Posts `category_id`,
@@ -59,7 +60,7 @@ export function ClassificationFields({
             <SelectContent>
               {categoryOptions.map((category) => (
                 <SelectItem key={category.id} value={category.id}>
-                  {category.name}
+                  <CategoryOptionLabel icon={category.icon} name={category.name} />
                 </SelectItem>
               ))}
             </SelectContent>
@@ -81,7 +82,7 @@ export function ClassificationFields({
             <SelectContent>
               {classOptions.map((classItem) => (
                 <SelectItem key={classItem.id} value={classItem.id}>
-                  {classItem.name}
+                  <CategoryOptionLabel icon={classItem.icon} name={classItem.name} />
                 </SelectItem>
               ))}
             </SelectContent>

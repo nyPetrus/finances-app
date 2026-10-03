@@ -10,6 +10,7 @@ import { parseBRNumber } from "@/lib/locale-format";
 import type { Account } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
 import { MONTH_LABELS, type DateGranularity, type DateOp } from "./filters";
+import { CategoryIcon } from "@/components/category-icon";
 
 // The step-two panels of SearchFilterBar: once a field is picked (or its
 // chip clicked), one of these edits that field's value. Each calls onApply
@@ -168,6 +169,7 @@ export function CheckboxEditor({
               >
                 {checked && <CheckIcon className="size-3" />}
               </span>
+              {option.icon && <CategoryIcon icon={option.icon} className="size-3.5 shrink-0" />}
               {option.symbol && <option.symbol className="size-3.5 shrink-0" />}
               <span className="min-w-0 truncate">{option.label}</span>
               {option.accountType && <AccountTypeIcon type={option.accountType} className="size-3.5 shrink-0" />}

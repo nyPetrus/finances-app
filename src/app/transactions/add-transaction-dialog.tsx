@@ -24,6 +24,7 @@ import { ClassificationFields } from "@/components/classification-fields";
 import { AmountInput, DateInput } from "@/components/locale-inputs";
 import type { Account, Category, Class, Autonomy } from "@/lib/supabase/types";
 import { addTransaction } from "./actions";
+import { AccountOptionLabel } from "@/components/account-type-icon";
 
 // Local date, not UTC — toISOString() rolls over to tomorrow in the evening in Brazil.
 function todayISO() {
@@ -94,7 +95,7 @@ export function AddTransactionDialog({
               <SelectContent>
                 {accounts.map((account) => (
                   <SelectItem key={account.id} value={account.id}>
-                    {account.name}
+                    <AccountOptionLabel account={account} />
                   </SelectItem>
                 ))}
               </SelectContent>

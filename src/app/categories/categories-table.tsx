@@ -60,6 +60,7 @@ import { deleteCategories, setCategoriesActive, updateCategory } from "./actions
 import { AddCategoryDialog } from "./add-category-dialog";
 import { LinkClassDialog } from "./link-class-dialog";
 import { type SortKey } from "./sort";
+import { TransactionTypeOptionLabel } from "@/components/transaction-type-option-label";
 
 // One category and the classes linked to it, in display order. `category` is
 // null for the trailing "(No category)" group of unlinked classes.
@@ -619,9 +620,9 @@ export function CategoriesTable({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="expense">Expense</SelectItem>
-                    <SelectItem value="income">Income</SelectItem>
-                    <SelectItem value="transfer">Transfer</SelectItem>
+                    <SelectItem value="expense"><TransactionTypeOptionLabel kind="expense" /></SelectItem>
+                    <SelectItem value="income"><TransactionTypeOptionLabel kind="income" /></SelectItem>
+                    <SelectItem value="transfer"><TransactionTypeOptionLabel kind="transfer" /></SelectItem>
                   </SelectContent>
                 </Select>
               </div>

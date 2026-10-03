@@ -12,7 +12,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { AccountTypeIcon } from "@/components/account-type-icon";
+import { AccountOptionLabel, AccountTypeIcon } from "@/components/account-type-icon";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -507,7 +507,7 @@ export function TransactionsTable({
                   <SelectContent>
                     {accounts.map((account) => (
                       <SelectItem key={account.id} value={account.id}>
-                        {account.name}
+                        <AccountOptionLabel account={account} />
                       </SelectItem>
                     ))}
                   </SelectContent>

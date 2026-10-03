@@ -24,6 +24,7 @@ import {
 import { pickableCategories, pickableClasses } from "@/lib/classification";
 import type { Category, Class } from "@/lib/supabase/types";
 import { addMappedDescription, syncMappedDescriptions } from "./actions";
+import { CategoryOptionLabel } from "@/components/category-icon";
 
 export function AddMappingDialog({
   categories,
@@ -149,7 +150,7 @@ export function AddMappingDialog({
               <SelectContent>
                 {pickableCategories(categories, categoryId).map((category) => (
                   <SelectItem key={category.id} value={category.id}>
-                    {category.name}
+                    <CategoryOptionLabel icon={category.icon} name={category.name} />
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -177,7 +178,7 @@ export function AddMappingDialog({
               <SelectContent>
                 {classesForCategory.map((classItem) => (
                   <SelectItem key={classItem.id} value={classItem.id}>
-                    {classItem.name}
+                    <CategoryOptionLabel icon={classItem.icon} name={classItem.name} />
                   </SelectItem>
                 ))}
               </SelectContent>

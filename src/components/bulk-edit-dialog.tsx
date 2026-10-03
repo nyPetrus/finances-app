@@ -22,6 +22,7 @@ import { pickableCategories, pickableClasses } from "@/lib/classification";
 import { AutonomyOptionLabel } from "@/components/autonomy-icon";
 import type { Category, Class, Autonomy } from "@/lib/supabase/types";
 import { bulkUpdateClassification } from "@/app/transactions/actions";
+import { CategoryOptionLabel } from "@/components/category-icon";
 
 // Sentinels distinct from any real id/Autonomy value — see their use below.
 const NO_CHANGE = "__no_change__";
@@ -140,7 +141,7 @@ export function BulkEditDialog({
                 <SelectItem value={CLEAR}>Uncategorized</SelectItem>
                 {categoryOptions.map((category) => (
                   <SelectItem key={category.id} value={category.id}>
-                    {category.name}
+                    <CategoryOptionLabel icon={category.icon} name={category.name} />
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -157,7 +158,7 @@ export function BulkEditDialog({
                 <SelectItem value={CLEAR}>No class</SelectItem>
                 {classOptions.map((classItem) => (
                   <SelectItem key={classItem.id} value={classItem.id}>
-                    {classItem.name}
+                    <CategoryOptionLabel icon={classItem.icon} name={classItem.name} />
                   </SelectItem>
                 ))}
               </SelectContent>
