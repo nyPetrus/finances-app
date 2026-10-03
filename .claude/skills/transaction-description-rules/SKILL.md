@@ -62,11 +62,9 @@ description: Use when writing or touching code that inserts/updates a transactio
   values for the Category/Class `Select`s, else both start unset), and
   `showTrigger` (set `false` to suppress its own "+" `DialogTrigger` when
   something else is opening it). The external callers are Search's
-  edit dialog's "Save and map description" button (`search/search-table.tsx`)
-  and the Dashboard's embedded transactions table's identical button
-  (`dashboard-transactions-table.tsx` — a separate copy of the same edit
-  dialog, see `dashboard-conventions`; the two are kept in sync by hand, not
-  by sharing code): each saves the row like the normal "Save" button (same
+  edit dialog's "Save and map description" button in the shared
+  `components/transactions-table.tsx` (used by both Search and the
+  Dashboard's embedded table, see `dashboard-conventions`): it saves the row like the normal "Save" button (same
   `updateTransaction` call, same `startSaveEdit` transition), then reads the
   *saved* description straight off the just-submitted `FormData`
   (`.trim().toLowerCase()`, matching what `updateTransaction` itself just

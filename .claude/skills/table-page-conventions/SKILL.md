@@ -9,7 +9,8 @@ All list-style pages (Transactions, Categories, Classes, Descriptions,
 Accounts) follow the same structure: a server `page.tsx` that fetches and
 sorts the rows, handing them to a client `<X>Table` component
 (`accounts-table.tsx`, `categories-table.tsx`, `classes-table.tsx`,
-`descriptions-table.tsx`, `search/search-table.tsx`) that owns selection,
+`descriptions-table.tsx`, and Search's shared `components/transactions-table.tsx`
+via its `search/search-table.tsx` wrapper) that owns selection,
 column preferences, and all row interaction. Match this when adding a new
 list page instead of inventing a fresh layout.
 
@@ -122,7 +123,7 @@ list page instead of inventing a fresh layout.
   selection:
   - `onEdit` — single row only (`soleSelectedRow ? ... : undefined`),
     sets an `editing<X>: <Row> | null` state from `soleSelectedRow`.
-    **Exception: Search** passes `onEdit` for any selection — one row opens
+    **Exception: the transaction table** (Search and the Dashboard) passes `onEdit` for any selection — one row opens
     the full edit dialog, several open the batch Category/Class/Autonomy
     editor (`bulk-edit-dialog.tsx`, `setBulkEditOpen(true)`). There used to
     be a separate toolbar "Edit selected" pencil for that; it was folded in
@@ -203,11 +204,11 @@ list page instead of inventing a fresh layout.
      **Why no separate "Connect bank" button:** reachable only via the
      Accounts "+" menu, see the "Accounts' '+' is a menu" bullet below.
   3. **The "⋮" `RowActionsMenu`**, last, whenever `selected.size > 0`.
-  The Dashboard's embedded table (`dashboard-transactions-table.tsx`)
-  follows this same layout — `ColumnsMenu` at the far right on every
-  table, per explicit user request (it used to sit first on the left there,
-  with "N selected" on the right) — and has the same "⋮" contents as
-  `search-table.tsx` minus batch edit (its Edit is single-row only). The
+  The Dashboard's embedded table is the same shared
+  `components/transactions-table.tsx` as Search's, so it has the same
+  layout and "⋮" contents (batch edit included) — `ColumnsMenu` at the far
+  right on every table, per explicit user request (it used to sit first on
+  the left there, with "N selected" on the right). The
   Dashboard's "Levels" menu (`dashboard-explorer.tsx`, a `ColumnsMenu` for
   the monthly table) is right-aligned too.
   Icon-only toolbar buttons need `aria-label` *and* `title` set to the
@@ -319,7 +320,8 @@ list page instead of inventing a fresh layout.
   union (exactly one of the two) — this renders a `<button>` instead of a
   `Link`, for a table that sorts in place via local state rather than
   navigating. The only current user is the Dashboard's embedded filtered
-  table (`dashboard-transactions-table.tsx`, see `dashboard-conventions`) —
+  table (`dashboard-transactions-table.tsx` passes the shared transactions
+  table `onSortChange` without `sortHref`, see `dashboard-conventions`) —
   a page-level table should still prefer `href`/URL sort unless it has the
   same reason not to (the Dashboard table's sort state would otherwise be
   lost by navigating to `/search`, which also wouldn't reflect its

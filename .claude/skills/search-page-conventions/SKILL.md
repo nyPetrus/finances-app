@@ -1,6 +1,6 @@
 ---
 name: search-page-conventions
-description: Use when touching the Search page (src/app/search/ — page.tsx, filter-bar.tsx, filter-editors.tsx, search-table.tsx, filters.ts, sort.ts, bulk-edit-dialog.tsx) — its Supabase-style single-line filter bar (chips + typed suggestions) over 7 optional filters (Account/Category/Class/Autonomy as checkbox multi-selects, Description/Amount as operator+value, Date as operator + Year/Month/Day picker), how filter state round-trips through the URL, the Supabase query-building/paging behind it, the count+total results-summary block, its results table (the app's main transaction table, incl. the Sync descriptions button), the current-month default, the /transactions redirect, or the Search-only batch Category/Class/Autonomy editor on selected rows. Not part of the shared table-page-conventions architecture (this page doesn't own/create rows the way a canonical list page does), though its results table borrows heavily from it.
+description: Use when touching the Search page (src/app/search/ — page.tsx, filter-bar.tsx, filter-editors.tsx, search-table.tsx, filters.ts; plus the shared components/transactions-table.tsx and components/bulk-edit-dialog.tsx it renders, and lib/transaction-sort.ts) — its Supabase-style single-line filter bar (chips + typed suggestions) over 7 optional filters (Account/Category/Class/Autonomy as checkbox multi-selects, Description/Amount as operator+value, Date as operator + Year/Month/Day picker), how filter state round-trips through the URL, the Supabase query-building/paging behind it, the count+total results-summary block, its results table (the app's main transaction table, incl. the Sync descriptions button), the current-month default, the /transactions redirect, or the batch Category/Class/Autonomy editor on selected rows (shared with the Dashboard). Not part of the shared table-page-conventions architecture (this page doesn't own/create rows the way a canonical list page does), though its results table borrows heavily from it.
 ---
 
 # Search page conventions
@@ -165,7 +165,8 @@ Added per explicit user request.
     comparison. `buildQuery()` maps the ops to `.eq`/`.gt`/`.lt` on
     `amount`.
   - `sort`/`dir` ride along unchanged from `table-page-conventions`'s
-    URL-driven-sort pattern — `search-table.tsx`'s `sortHref()` clones the
+    URL-driven-sort pattern — `search-table.tsx`'s `sortHref()` (passed to
+    the shared table as its `sortHref` prop) clones the
     *entire current* `useSearchParams()` (so every active filter param
     survives a column-header click) and only overwrites `sort`/`dir`, and
     every filter change carries forward whatever `sort`/`dir` were
@@ -194,24 +195,21 @@ Added per explicit user request.
   so it never shows with zero filters applied, and does show "0
   transactions · Total: 0,00" when a filter matches nothing. Added per
   explicit user request.
-- **The results table (`search-table.tsx`) is the app's main transaction
-  table** — it started as a near-verbatim copy of the old Transactions
-  page's `TransactionsTable` (since removed along with that page), and the
-  Dashboard's `dashboard-transactions-table.tsx` is a separate hand-synced
-  copy of the same design (see `dashboard-conventions`) — same
-  `COLUMNS`/`renderCell`, same `RowActionsMenu`/`ColumnsMenu`/
-  `useRowSelection`/`useColumnPreferences` (own `storageKey`:
-  `"search-table"`), same edit dialog (including the "Save and map
-  description" → `AddMappingDialog` handoff, see
-  `transaction-description-rules`), same toolbar shape and
-  `AddTransactionDialog`/"Create an account first" left-slot swap from
-  `table-page-conventions`, plus the "Apply rules" `SyncButton`
-  (`descriptions/sync-button.tsx`) next to Add — moved here from the old
-  Transactions page per explicit user request. `sortHref()` preserves
-  the full current query string (all filters). When a transaction-table
-  feature is added here, check whether it belongs in the Dashboard's
-  copy too, same as the
-  Dashboard's copy.
+- **The results table is the shared `TransactionsTable`
+  (`src/components/transactions-table.tsx`), the same component the
+  Dashboard's click-to-filter panel uses** (see `dashboard-conventions`).
+  `search/search-table.tsx` is a thin wrapper that passes Search's
+  settings: URL sort via `sortHref` (preserving the full current query
+  string — all filters), `showYear`, column prefs key `"search-table"`,
+  the "No transactions match these filters." empty message, and the
+  "Apply rules" `SyncButton` (`descriptions/sync-button.tsx`) as
+  `toolbarExtra` next to Add (moved here from the old Transactions page
+  per explicit user request). Everything else — `COLUMNS`/`renderCell`,
+  `RowActionsMenu`/`ColumnsMenu`/`useRowSelection`/`useColumnPreferences`,
+  the edit dialog (incl. the "Save and map description" →
+  `AddMappingDialog` handoff, see `transaction-description-rules`), bulk
+  edit, and the toolbar shape from `table-page-conventions` — lives in the
+  shared component and so applies to both pages at once.
 - **On phones (below `sm`) the results are a card list, not the table**
   (the shared `TransactionCardList`, `src/components/transaction-card-list.tsx`,
   also used by the Dashboard's embedded table; both layouts rendered, toggled with `sm:hidden` /
@@ -236,14 +234,13 @@ Added per explicit user request.
   `viewport.interactiveWidget: "resizes-content"` keeps the sheet above the
   Android keyboard. `CheckboxEditor` only autofocuses with a fine pointer,
   so the keyboard doesn't pop over a tap-to-pick list.
-- **Batch-editing selected transactions' Category/Class/Autonomy is a
-  Search-only feature** — not added to the
-  Dashboard's embedded table, unlike most of this table's other
-  functionality (see the previous bullet). The "⋮" menu's Edit item, when
+- **Batch-editing selected transactions' Category/Class/Autonomy** lives
+  in the shared transactions table, so the Dashboard's panel has it too
+  (it used to be Search-only, until the two tables were merged). The "⋮" menu's Edit item, when
   two or more rows are selected (one row opens the full edit dialog
   instead — see `table-page-conventions`'s `RowActionsMenu` bullet; there
   is no separate toolbar "Edit selected" button any more), opens `BulkEditDialog`
-  (`search/bulk-edit-dialog.tsx`), which posts to `bulkUpdateClassification`
+  (`components/bulk-edit-dialog.tsx`), which posts to `bulkUpdateClassification`
   in `transactions/actions.ts`. **Each of the three fields defaults to "No
   change" and is a real, separately-selectable option** (not implied by
   leaving a `Select` untouched) — `bulkUpdateClassification(ids, updates)`

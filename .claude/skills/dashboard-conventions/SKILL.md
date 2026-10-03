@@ -1,6 +1,6 @@
 ---
 name: dashboard-conventions
-description: Use when touching the Dashboard's page-level structure (src/app/page.tsx, src/app/dashboard-explorer.tsx) or its embedded click-to-filter transactions table (dashboard-transactions-table.tsx) — the page wrapper width, the removed-charts/removed-cards history, the click-to-filter MonthlySelection/predicate logic, or the embedded table's own conventions. For the monthly breakdown tree table ("the dynamic table") that now drives all of the above, see dashboard-monthly-table.
+description: Use when touching the Dashboard's page-level structure (src/app/page.tsx, src/app/dashboard-explorer.tsx) or its embedded click-to-filter transactions table (dashboard-transactions-table.tsx, a thin wrapper over the shared components/transactions-table.tsx) — the page wrapper width, the removed-charts/removed-cards history, the click-to-filter MonthlySelection/predicate logic, or the embedded table's own conventions. For the monthly breakdown tree table ("the dynamic table") that now drives all of the above, see dashboard-monthly-table.
 ---
 
 # Dashboard conventions
@@ -89,30 +89,27 @@ back.
   header covers it; on desktop just the toolbar shows. Inside, the embedded table renders its
   shared `TransactionCardList` (tap a card to edit) below `sm`. Per
   explicit user request.
-- **The embedded table is a separate component from `SearchTable`
-  (`search/search-table.tsx`, the main transaction table since the old
-  Transactions page and its `TransactionsTable` were removed), not a
-  reuse — deliberately.** `dashboard-transactions-table.tsx` copies
-  `SearchTable`'s structure (same `COLUMNS`, same `RowActionsMenu`/
-  `ColumnsMenu`/`useRowSelection`/`useColumnPreferences` — own
-  `storageKey`: `"dashboard-transactions-table"` — same edit dialog, same
-  two-zone toolbar, same server actions from `transactions/actions.ts` and
-  `transactions/add-transaction-dialog.tsx`, all already generic) but sorts
-  via local `useState<{key,dir}>` and `SortableTableHead`'s `onSort` prop
-  instead of `href` — see `table-page-conventions`'s "Sorting" bullet for
-  the `onSort`/`href` split. It takes an already-filtered `transactions`
-  array as a prop; the explorer does the filtering, this component only
-  renders and sorts it. **Being a copy, not a shared component, means a
-  `SearchTable` feature doesn't automatically show up here** — the
-  edit dialog's "Save and map description" button and the
-  `AddMappingDialog` handoff (see `transaction-description-rules`) had to
-  be added to this file too, separately. When touching one edit dialog,
-  check whether the same change belongs in the other.
-  **Why:** `SearchTable`'s sort links to `/search?...&sort=...`, which
-  would navigate away from the filtered Dashboard view on every sort
-  click — a plain reuse wasn't viable.
+- **The embedded table is the same shared `TransactionsTable`
+  (`src/components/transactions-table.tsx`) that Search uses** —
+  `dashboard-transactions-table.tsx` is just a thin wrapper. Everything
+  (columns, cells, selection, toolbar and "⋮" incl. bulk edit, edit /
+  "Save and map description" / bulk-edit dialogs, phone cards) lives in
+  the shared component, so a change there shows up on both pages. The
+  wrapper owns only the Dashboard's deliberate differences: it sorts
+  in local `useState` (passing `onSortChange`, no `sortHref`, so headers
+  are `SortableTableHead` `onSort` buttons — see `table-page-conventions`'s
+  "Sorting" bullet), dates without the year (`showYear={false}`), smaller
+  rows (`compactRows`), its own column prefs key
+  (`"dashboard-transactions-table"`), no empty-state message, and no
+  "Apply rules" button. It takes an already-filtered `transactions` array;
+  the explorer filters, the wrapper sorts, the shared table renders.
+  **Why:** a URL sort (Search's) would navigate away from the filtered
+  Dashboard view on every click. The Dashboard used to have its own
+  hand-synced copy of the whole table for that reason; it was merged
+  into the shared component (2026-10-03) per explicit user request,
+  gaining bulk edit at the same time.
 - **Nothing on the Dashboard shows a `R$` currency symbol any more.**
-  This table's own `formatCurrency` is plain-decimal,
+  The shared transactions table's `formatCurrency` is plain-decimal,
   `minimumFractionDigits: 2, maximumFractionDigits: 2` — the same
   no-symbol style Transactions'/Accounts' own tables use (see
   `transactions-column-formatting`). This is **not** the same setting as

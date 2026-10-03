@@ -5,8 +5,8 @@ description: Use when displaying a raw income/expense amount anywhere in the app
 
 # Amount color conventions
 
-**Transaction tables (`search/search-table.tsx`, the Dashboard's
-`dashboard-transactions-table.tsx`) and Search's results-summary total:
+**Transaction tables (the shared `components/transactions-table.tsx`,
+used by Search and the Dashboard) and Search's results-summary total:
 negative/expense amounts don't get a special color — only positive
 (income) amounts do.** (The old Transactions page and its month header
 were removed; Search replaced them.) A positive amount is

@@ -21,7 +21,7 @@ import {
 import { pickableCategories, pickableClasses } from "@/lib/classification";
 import { AutonomyOptionLabel } from "@/components/autonomy-icon";
 import type { Category, Class, Autonomy } from "@/lib/supabase/types";
-import { bulkUpdateClassification } from "../transactions/actions";
+import { bulkUpdateClassification } from "@/app/transactions/actions";
 
 // Sentinels distinct from any real id/Autonomy value — see their use below.
 const NO_CHANGE = "__no_change__";

@@ -16,7 +16,7 @@ import {
   type ParsedFilters,
   type SearchParams,
 } from "./filters";
-import { isSortKey, type SortKey } from "./sort";
+import { isSortKey, type SortKey } from "@/lib/transaction-sort";
 
 // ilike treats `%`/`_` as wildcards — escape any the user typed literally so
 // e.g. searching for "50%" doesn't turn into a wildcard match.

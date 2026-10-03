@@ -1,15 +1,15 @@
 ---
 name: transactions-column-formatting
-description: Use when touching how the transaction tables (src/app/search/search-table.tsx and its Dashboard copy dashboard-transactions-table.tsx) format or render their own Date, Amount, Account, or Class column values — these are bespoke to these tables' renderCell, not part of the shared table-page-conventions architecture or the cross-page amount-color-conventions rule.
+description: Use when touching how the transaction tables (the shared src/components/transactions-table.tsx, used by Search and the Dashboard) format or render their own Date, Amount, Account, or Class column values — these are bespoke to these tables' renderCell, not part of the shared table-page-conventions architecture or the cross-page amount-color-conventions rule.
 ---
 
 # Transactions table column formatting
 
 These are presentation choices specific to the transaction tables'
-`renderCell` — `search/search-table.tsx` (the main one since the old
-Transactions page and its `transactions-table.tsx` were removed) and the
-Dashboard's hand-synced copy `dashboard-transactions-table.tsx` — not
-shared with the other list pages.
+`renderCell` — the shared `components/transactions-table.tsx`, rendered
+by both Search (`search/search-table.tsx`) and the Dashboard
+(`dashboard-transactions-table.tsx`) through thin wrappers — not shared
+with the other list pages.
 
 - **Amount has no currency symbol.** `formatCurrency` uses
   `Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2,
@@ -27,10 +27,9 @@ shared with the other list pages.
   "removed-cards" history) and nothing on the Dashboard shows `R$` any
   more now.
 - **Date is `dd mmm yy` on Search, `dd mmm` (no year) on the Dashboard,
-  and never wraps**: `formatDate` renders e.g. `11 set 26` in
-  `search/search-table.tsx` (`11 set` in `dashboard-transactions-table.tsx`
-  — a separate copy, otherwise kept in sync by hand, see
-  `dashboard-conventions`) via a local `MONTH_ABBREVIATIONS` array
+  and never wraps**: `formatDate` renders e.g. `11 set 26` on Search
+  (`11 set` on the Dashboard — the wrappers' `showYear` prop picks which)
+  via a local `MONTH_ABBREVIATIONS` array
   (`["jan", "fev", ..., "dez"]`, no periods), reading `getUTCDate()` /
   `getUTCMonth()` / `getUTCFullYear()` off the transaction's date string.
   The Date column also sets `cellClassName: "whitespace-nowrap"` in
