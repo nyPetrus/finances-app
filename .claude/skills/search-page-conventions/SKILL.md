@@ -31,7 +31,9 @@ Added per explicit user request.
     (`table-page-conventions`): values with a symbol show only it, name as
     tooltip — `Category: 🛒 🚌` (category icons via `Option.icon`),
     `Autonomy: 🔓` (a lucide padlock component in `Option.symbol`), up to 5 symbols before `+N`; values
-    without one show names — `Account: Nubank, XP` (3+ values: `Nubank, XP +1`),
+    without one show names — `Account: Nubank 🏦, XP 💳` (3+ values: `Nubank 🏦, XP 💳 +1`;
+    accounts are name + type icon, via `Option.accountType`, in the chip,
+    the checkbox list, and typed suggestions alike — per explicit user request),
     `Description contains "uber"`, `Amount > -50`, `Date: Sep 2026` /
     `Date before Sep 2026` — field name muted, value bold; a colon only
     for list-style values (`readsAsSentence()`). Clicking a chip reopens

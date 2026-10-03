@@ -2,10 +2,12 @@
 
 import { useState, type ReactNode } from "react";
 import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, type LucideIcon } from "lucide-react";
+import { AccountTypeIcon } from "@/components/account-type-icon";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { parseBRNumber } from "@/lib/locale-format";
+import type { Account } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
 import { MONTH_LABELS, type DateGranularity, type DateOp } from "./filters";
 
@@ -16,8 +18,16 @@ import { MONTH_LABELS, type DateGranularity, type DateOp } from "./filters";
 // The bar's chip shows a value's symbol instead of its name when it has one
 // (see the symbol-display rule in table-page-conventions): `icon` is a
 // category icon key, `symbol` an icon component (autonomy's padlocks).
-// `label` is the name; pickers show it after the symbol.
-export type Option = { value: string; label: string; symbol?: LucideIcon; icon?: string | null };
+// `label` is the name; pickers show it after the symbol. `accountType` is an
+// account's type, whose icon trails the name (name first, icon last — the
+// same name + icon an account renders as everywhere else).
+export type Option = {
+  value: string;
+  label: string;
+  symbol?: LucideIcon;
+  icon?: string | null;
+  accountType?: Account["type"];
+};
 
 function pad(n: number) {
   return String(n).padStart(2, "0");
@@ -159,7 +169,8 @@ export function CheckboxEditor({
                 {checked && <CheckIcon className="size-3" />}
               </span>
               {option.symbol && <option.symbol className="size-3.5 shrink-0" />}
-              <span className="flex-1 truncate">{option.label}</span>
+              <span className="min-w-0 truncate">{option.label}</span>
+              {option.accountType && <AccountTypeIcon type={option.accountType} className="size-3.5 shrink-0" />}
             </div>
           );
         })}

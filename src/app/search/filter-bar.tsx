@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, useTransition, type KeyboardEvent
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2Icon, SearchIcon, XIcon } from "lucide-react";
 import type { Account, Category, Class } from "@/lib/supabase/types";
+import { AccountTypeIcon } from "@/components/account-type-icon";
 import { CategoryIcon } from "@/components/category-icon";
 import { AUTONOMY_ICONS, AUTONOMY_LABELS } from "@/lib/classification";
 import { parseBRNumber } from "@/lib/locale-format";
@@ -128,7 +129,7 @@ export function SearchFilterBar({
 
   const optionsByField = useMemo<Record<CheckboxField, Option[]>>(
     () => ({
-      account: accounts.map((account) => ({ value: account.id, label: account.name })),
+      account: accounts.map((account) => ({ value: account.id, label: account.name, accountType: account.type })),
       category: [
         { value: UNCATEGORIZED_VALUE, label: "Uncategorized" },
         ...categories.map((category) => ({ value: category.id, label: category.name, icon: category.icon })),
@@ -212,7 +213,10 @@ export function SearchFilterBar({
             ) : option?.symbol ? (
               <option.symbol className="size-3.5" />
             ) : (
-              (option?.label ?? "?")
+              <>
+                {option?.label ?? "?"}
+                {option?.accountType && <AccountTypeIcon type={option.accountType} className="ml-1 size-3.5" />}
+              </>
             )}
             {!compact && index < shown.length - 1 && ","}
           </span>
@@ -387,6 +391,9 @@ export function SearchFilterBar({
         <span className="inline-flex items-center gap-1 font-medium">
           {suggestion.option.symbol && <suggestion.option.symbol className="size-3.5 shrink-0" />}
           {suggestion.option.label}
+          {suggestion.option.accountType && (
+            <AccountTypeIcon type={suggestion.option.accountType} className="size-3.5 shrink-0" />
+          )}
         </span>
       </span>
     );
