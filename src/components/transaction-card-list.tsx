@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 /**
  * Phone layout for the transaction tables (Search and the Dashboard's
  * embedded table): one two-line card per transaction — left, description
- * over date · account (name + type icon); right, amount over category
+ * over date · account (type icon + name); right, amount over category
  * icon (or an orange "Uncategorized") · class icon. Tapping a card
  * opens it (the caller's edit dialog); the checkbox selects it for the
  * toolbar's "⋮". Sorting goes through CardListHeader.
@@ -99,8 +99,8 @@ export function TransactionCardList<K extends string>({
                     <span className="shrink-0">{formatDate(transaction.date)}</span>
                     {account && (
                       <span className="flex min-w-0 items-center gap-1">
-                        <span className="min-w-0 truncate">{account.name}</span>
                         <AccountTypeIcon type={account.type} className="size-3 shrink-0" />
+                        <span className="min-w-0 truncate">{account.name}</span>
                       </span>
                     )}
                     {transaction.is_hidden && (

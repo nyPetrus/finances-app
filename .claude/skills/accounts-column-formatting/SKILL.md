@@ -51,15 +51,16 @@ description: Use when touching how the Accounts table (src/app/accounts/accounts
   `max-w-5xl` (matching Transactions, the widest list page) rather than a
   narrower container, to give these columns enough room that typical
   values render in full without needing to lean on the ellipsis at all.
-- **There is no Type column — the type icon follows the name in one
+- **There is no Type column — the type icon leads the name in one
   "Account" column** (column key still `name`; header `LandmarkIcon` +
   "Account"): `<span className="inline-flex max-w-full items-center
-  gap-2">` holding the name in `<span className="min-w-0 truncate">`,
-  then `AccountTypeIcon` (type name as `title` tooltip), then the
-  Inactive badge. Name first, icon last — the same composition as the
-  transaction tables' Account chip. Merged per explicit user request;
-  `"type"` was dropped from `SORT_KEYS` (sorting is by name). The phone
-  card shows the icon right after the name too.
+  gap-2">` holding `AccountTypeIcon` (type name as `title` tooltip), then
+  the name in `<span className="min-w-0 truncate">`, then the Inactive
+  badge. Icon first, then name — the same composition as every account
+  display and picker in the app (icons always sit left of names, per
+  explicit user request, 2026-10-03; it used to be name first, icon last).
+  Merged per explicit user request; `"type"` was dropped from `SORT_KEYS`
+  (sorting is by name). The phone card shows the icon before the name too.
 - **There is no Source column any more — the source icon leads the Last
   update value instead** (muted, then the time or `—`), since the source
   is what says what that time means (plug = synced at, file = imported

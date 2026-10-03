@@ -20,8 +20,8 @@ import { CategoryIcon } from "@/components/category-icon";
 // (see the symbol-display rule in table-page-conventions): `icon` is a
 // category icon key, `symbol` an icon component (autonomy's padlocks).
 // `label` is the name; pickers show it after the symbol. `accountType` is an
-// account's type, whose icon trails the name (name first, icon last — the
-// same name + icon an account renders as everywhere else).
+// account's type, whose icon likewise leads the name (icon, then name — as
+// an account renders everywhere else).
 export type Option = {
   value: string;
   label: string;
@@ -171,8 +171,8 @@ export function CheckboxEditor({
               </span>
               {option.icon && <CategoryIcon icon={option.icon} className="size-3.5 shrink-0" />}
               {option.symbol && <option.symbol className="size-3.5 shrink-0" />}
-              <span className="min-w-0 truncate">{option.label}</span>
               {option.accountType && <AccountTypeIcon type={option.accountType} className="size-3.5 shrink-0" />}
+              <span className="min-w-0 truncate">{option.label}</span>
             </div>
           );
         })}

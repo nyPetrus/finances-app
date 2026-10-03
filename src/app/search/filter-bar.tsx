@@ -214,8 +214,8 @@ export function SearchFilterBar({
               <option.symbol className="size-3.5" />
             ) : (
               <>
+                {option?.accountType && <AccountTypeIcon type={option.accountType} className="mr-1 size-3.5" />}
                 {option?.label ?? "?"}
-                {option?.accountType && <AccountTypeIcon type={option.accountType} className="ml-1 size-3.5" />}
               </>
             )}
             {!compact && index < shown.length - 1 && ","}
@@ -391,10 +391,10 @@ export function SearchFilterBar({
         <span className="inline-flex items-center gap-1 font-medium">
           {suggestion.option.icon && <CategoryIcon icon={suggestion.option.icon} className="size-3.5 shrink-0" />}
           {suggestion.option.symbol && <suggestion.option.symbol className="size-3.5 shrink-0" />}
-          {suggestion.option.label}
           {suggestion.option.accountType && (
             <AccountTypeIcon type={suggestion.option.accountType} className="size-3.5 shrink-0" />
           )}
+          {suggestion.option.label}
         </span>
       </span>
     );

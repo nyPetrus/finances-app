@@ -31,8 +31,8 @@ Added per explicit user request.
     (`table-page-conventions`): values with a symbol show only it, name as
     tooltip — `Category: 🛒 🚌` (category icons via `Option.icon`),
     `Autonomy: 🔓` (a lucide padlock component in `Option.symbol`), up to 5 symbols before `+N`; values
-    without one show names — `Account: Nubank 🏦, XP 💳` (3+ values: `Nubank 🏦, XP 💳 +1`;
-    accounts are name + type icon, via `Option.accountType`, in the chip,
+    without one show names — `Account: 🏦 Nubank, 💳 XP` (3+ values: `🏦 Nubank, 💳 XP +1`;
+    accounts are type icon + name, via `Option.accountType`, in the chip,
     the checkbox list, and typed suggestions alike — per explicit user request),
     `Description contains "uber"`, `Amount > -50`, `Date: Sep 2026` /
     `Date before Sep 2026` — field name muted, value bold; a colon only
@@ -215,7 +215,7 @@ Added per explicit user request.
   also used by the Dashboard's embedded table; both layouts rendered, toggled with `sm:hidden` /
   `hidden sm:block` so there's no hydration flash). Each card: checkbox
   (always visible), then a button in two columns: left, description over
-  date · account (name + type icon, name truncates) (+ Inactive badge);
+  date · account (type icon + name, name truncates) (+ Inactive badge);
   right, Amount over category icon · class icon (no category → an orange
   "Uncategorized" in its place, matching the desktop cell's orange text —
   both per explicit user request). Per explicit user

@@ -427,7 +427,7 @@ list page instead of inventing a fresh layout.
     every option that has a symbol shows it). Use the shared labels:
     `<CategoryOptionLabel icon name />` (`category-icon.tsx`) for categories
     and classes, `<AccountOptionLabel account />` (`account-type-icon.tsx`;
-    name then type icon) for accounts, `<AccountTypeOptionLabel>` for
+    type icon then name — icons always sit left of names) for accounts, `<AccountTypeOptionLabel>` for
     account types, `<AutonomyOptionLabel>` for autonomy, and
     `<TransactionTypeOptionLabel kind />`
     (`transaction-type-option-label.tsx`) for the category-type `Select`.

@@ -97,8 +97,8 @@ function renderCell(account: Account, key: SortKey, transactionsTotalByAccount: 
     case "name":
       return (
         <span className="inline-flex max-w-full items-center gap-2">
-          <span className="min-w-0 truncate">{account.name}</span>
           <AccountTypeIcon type={account.type} />
+          <span className="min-w-0 truncate">{account.name}</span>
           {!account.is_active && <Badge variant="outline">Inactive</Badge>}
         </span>
       );
@@ -328,8 +328,8 @@ export function AccountsTable({
                   >
                     <span className="flex min-w-0 flex-1 flex-col gap-1">
                       <span className="flex min-w-0 items-center gap-2">
-                        <span className="min-w-0 truncate font-medium">{account.name}</span>
                         <AccountTypeIcon type={account.type} className="size-3.5" />
+                        <span className="min-w-0 truncate font-medium">{account.name}</span>
                         {!account.is_active && (
                           <Badge variant="outline" className="shrink-0">
                             Inactive
