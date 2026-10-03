@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
  * Phone layout for the transaction tables (Search and the Dashboard's
  * embedded table): one two-line card per transaction — left, description
  * over date · account (name + type icon); right, amount over category
- * icon · class icon. Tapping a card
+ * icon (or an orange "Uncategorized") · class icon. Tapping a card
  * opens it (the caller's edit dialog); the checkbox selects it for the
  * toolbar's "⋮". Sorting goes through CardListHeader.
  */
@@ -112,20 +112,20 @@ export function TransactionCardList<K extends string>({
                 </span>
                 <span className="flex shrink-0 flex-col items-end gap-1">
                   <span className="font-medium whitespace-nowrap">{renderAmount(transaction)}</span>
-                  {(category || transactionClass) && (
-                    <span className="flex items-center gap-2 text-muted-foreground">
-                      {category && (
-                        <span title={category.name} className="inline-flex">
-                          <CategoryIcon icon={category.icon} className="size-4" />
-                        </span>
-                      )}
-                      {transactionClass && (
-                        <span title={transactionClass.name} className="inline-flex">
-                          <CategoryIcon icon={transactionClass.icon} className="size-4" />
-                        </span>
-                      )}
-                    </span>
-                  )}
+                  <span className="flex items-center gap-2 text-muted-foreground">
+                    {category ? (
+                      <span title={category.name} className="inline-flex">
+                        <CategoryIcon icon={category.icon} className="size-4" />
+                      </span>
+                    ) : (
+                      <span className="text-xs text-orange-600 dark:text-orange-400">Uncategorized</span>
+                    )}
+                    {transactionClass && (
+                      <span title={transactionClass.name} className="inline-flex">
+                        <CategoryIcon icon={transactionClass.icon} className="size-4" />
+                      </span>
+                    )}
+                  </span>
                 </span>
               </button>
             </li>

@@ -216,7 +216,9 @@ Added per explicit user request.
   `hidden sm:block` so there's no hydration flash). Each card: checkbox
   (always visible), then a button in two columns: left, description over
   date · account (name + type icon, name truncates) (+ Inactive badge);
-  right, Amount over category icon · class icon. Per explicit user
+  right, Amount over category icon · class icon (no category → an orange
+  "Uncategorized" in its place, matching the desktop cell's orange text —
+  both per explicit user request). Per explicit user
   request (2026-10-03) account and category/class swapped places — the
   account used to sit under the amount, with the icons on line two. **Tapping a card opens its edit dialog directly** — a
   deliberate phone-only exception to "Edit lives only in ⋮", per explicit

@@ -228,7 +228,7 @@ export function DashboardTransactionsTable({
             <CategoryIcon icon={category.icon} className="size-4" />
           </span>
         ) : (
-          <span className="text-sm text-muted-foreground">Uncategorized</span>
+          <span className="text-sm text-orange-600 dark:text-orange-400">Uncategorized</span>
         );
       }
       case "class": {
