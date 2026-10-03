@@ -215,13 +215,10 @@ Added per explicit user request.
   also used by the Dashboard's embedded table; both layouts rendered, toggled with `sm:hidden` /
   `hidden sm:block` so there's no hydration flash). Each card: checkbox
   (always visible), then a button in two columns: left, description over
-  date · category icon · class icon (+ Inactive badge); right, Amount over
-  the account (name + type icon) — "what and when" vs "how much and from
-  where", same shape as the Accounts cards' balance-over-Σ. The right
-  column is capped at `max-w-[45%]` so a long account name truncates
-  instead of squeezing the description. Account moved under the amount
-  per explicit user request (it used to trail line two, where it was the
-  first thing to get cut off). **Tapping a card opens its edit dialog directly** — a
+  date · account (name + type icon, name truncates) (+ Inactive badge);
+  right, Amount over category icon · class icon. Per explicit user
+  request (2026-10-03) account and category/class swapped places — the
+  account used to sit under the amount, with the icons on line two. **Tapping a card opens its edit dialog directly** — a
   deliberate phone-only exception to "Edit lives only in ⋮", per explicit
   user request; ⋮ still works from the checkbox selection. Sorting there is
   a "Sort: <column>" `Select` plus an asc/desc arrow link (both via
