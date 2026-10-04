@@ -11,6 +11,21 @@ by both Search (`search/search-table.tsx`) and the Dashboard
 (`dashboard-transactions-table.tsx`) through thin wrappers — not shared
 with the other list pages.
 
+- **Balance column** (`balance`, after Amount, text header, right-aligned,
+  muted, empty when null; hideable like any column): the account's balance
+  from `transactions.balance`. Statement imports fill it per transaction
+  when the file reports it (Contabilizei CSV; FGTS was entered from its PDF).
+  The Pluggy sync fills it for bank accounts as the **end-of-day** balance,
+  the same value on every transaction of that day — Pluggy's own
+  per-transaction balance is empty for Nubank/XP, so `endOfDayBalances()`
+  in `accounts/pluggy-actions.ts` derives it backwards from the account's
+  current balance. Per day because `transactions.date` is a plain `date`
+  (no time), so within-day order is unknown and per-transaction values
+  swung wildly (−49k/+154k on Nubank). Skipped for cards and for accounts
+  whose current balance is 0 (XP reports 0 everywhere). Added per explicit
+  user request (2026-10-04). Sorting (all columns) goes through
+  `sortTransactions()` in `lib/transaction-sort.ts`, shared by Search's
+  server-side sort and the Dashboard panel's in-browser sort.
 - **Amount has no currency symbol.** `formatCurrency` uses
   `Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2,
   maximumFractionDigits: 2 })` (plain decimal style) instead of `style:

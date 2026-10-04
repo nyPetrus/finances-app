@@ -16,7 +16,7 @@ import {
   type ParsedFilters,
   type SearchParams,
 } from "./filters";
-import { isSortKey, type SortKey } from "@/lib/transaction-sort";
+import { isSortKey, sortTransactions, type SortKey } from "@/lib/transaction-sort";
 
 // ilike treats `%`/`_` as wildcards — escape any the user typed literally so
 // e.g. searching for "50%" doesn't turn into a wildcard match.
@@ -157,8 +157,6 @@ export default async function SearchPage({
   const allAccounts = (accounts ?? []) as Account[];
   const allCategories = (categories ?? []) as Category[];
 
-  const accountsById = new Map(allAccounts.map((a) => [a.id, a]));
-  const categoriesById = new Map(allCategories.map((c) => [c.id, c]));
   const classesById = new Map(allClasses.map((c) => [c.id, c]));
 
   // Autonomy can't be pushed into the Supabase query — it's a transaction's
@@ -172,37 +170,10 @@ export default async function SearchPage({
       ? results.filter((t) => filters.autonomies.includes(effectiveAutonomyValue(t, classesById)))
       : results;
 
-  const sortedResults = [...autonomyFiltered].sort((a, b) => {
-    let cmp = 0;
-    switch (sortKey) {
-      case "date":
-        cmp = a.date.localeCompare(b.date) || a.created_at.localeCompare(b.created_at);
-        break;
-      case "description":
-        cmp = a.description.localeCompare(b.description);
-        break;
-      case "account":
-        cmp = (accountsById.get(a.account_id)?.name ?? "").localeCompare(
-          accountsById.get(b.account_id)?.name ?? "",
-        );
-        break;
-      case "category": {
-        const aName = (a.category_id ? categoriesById.get(a.category_id)?.name : undefined) ?? "";
-        const bName = (b.category_id ? categoriesById.get(b.category_id)?.name : undefined) ?? "";
-        cmp = aName.localeCompare(bName);
-        break;
-      }
-      case "class": {
-        const aName = (a.class_id ? classesById.get(a.class_id)?.name : undefined) ?? "";
-        const bName = (b.class_id ? classesById.get(b.class_id)?.name : undefined) ?? "";
-        cmp = aName.localeCompare(bName);
-        break;
-      }
-      case "amount":
-        cmp = a.amount - b.amount;
-        break;
-    }
-    return sortDir === "asc" ? cmp : -cmp;
+  const sortedResults = sortTransactions(autonomyFiltered, sortKey, sortDir, {
+    accounts: allAccounts,
+    categories: allCategories,
+    classes: allClasses,
   });
 
   // Signed sum, same as the Amount column and every other aggregate in the

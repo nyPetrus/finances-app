@@ -83,6 +83,43 @@ function dropBillLineDuplicates(transactions: Transaction[]): Transaction[] {
   return transactions.filter((t) => !(isBillLineOnly(t) && liveKeys.has(key(t))));
 }
 
+// The account's end-of-day balance, set on every transaction of that day.
+// Pluggy leaves its own per-transaction `balance` empty for these banks
+// (Nubank, XP), so it's derived: start from the account's current balance
+// and walk back day by day, undoing each day's transactions. Per day, not
+// per transaction: `transactions.date` stores only the day, so the order
+// within a day is unknown, and a day with a big transfer in and out would
+// get made-up balances in between (seen on Nubank, -49k one day). Only for
+// bank accounts (a card's "balance" is the bill, not a running total) whose
+// current balance isn't 0 — XP reports 0 for every account, which would
+// make every derived balance wrong. A transaction missing from Pluggy's
+// history skews every earlier day.
+function endOfDayBalances(
+  transactions: Transaction[],
+  currentBalance: number,
+  signedAmount: (transaction: Transaction) => number,
+  isBankAccount: boolean,
+): Map<string, number> {
+  const balances = new Map<string, number>();
+  if (!isBankAccount || currentBalance === 0) return balances;
+
+  // Same day key the row is stored under (the ISO string's date part).
+  const dayOf = (transaction: Transaction) => transaction.date.toISOString().slice(0, 10);
+  const byDay = new Map<string, Transaction[]>();
+  for (const transaction of transactions) {
+    const day = dayOf(transaction);
+    byDay.set(day, [...(byDay.get(day) ?? []), transaction]);
+  }
+
+  let balance = currentBalance;
+  for (const day of [...byDay.keys()].sort().reverse()) {
+    const dayTransactions = byDay.get(day)!;
+    for (const transaction of dayTransactions) balances.set(transaction.id, Math.round(balance * 100) / 100);
+    balance -= dayTransactions.reduce((sum, transaction) => sum + signedAmount(transaction), 0);
+  }
+  return balances;
+}
+
 export async function syncPluggyItem(itemId: string) {
   const supabase = await createClient();
   const {
@@ -173,16 +210,18 @@ export async function syncPluggyItem(itemId: string) {
       }),
     );
 
+    const signedAmount = (transaction: Transaction) =>
+      transaction.type === "DEBIT" ? -Math.abs(accountAmount(transaction)) : Math.abs(accountAmount(transaction));
+    const balances = endOfDayBalances(postedTransactions, pluggyAccount.balance, signedAmount, !isCreditCard);
+
     if (postedTransactions.length > 0) {
       const rows = postedTransactions.map((transaction) => ({
         user_id: user.id,
         account_id: account.id,
         date: transaction.date.toISOString(),
         description: transaction.description.toLowerCase(),
-        amount:
-          transaction.type === "DEBIT"
-            ? -Math.abs(accountAmount(transaction))
-            : Math.abs(accountAmount(transaction)),
+        amount: signedAmount(transaction),
+        balance: balances.get(transaction.id) ?? null,
         source: "pluggy" as const,
         pluggy_transaction_id: transaction.id,
       }));

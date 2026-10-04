@@ -120,6 +120,10 @@ const COLUMNS: {
     headerIconOnly: true,
   },
   { key: "amount", label: "Amount", cellClassName: "text-right", headerIcon: BanknoteIcon, headerIconOnly: true },
+  // The account's balance: filled in for statement imports that report it
+  // (per transaction), and by the Pluggy sync for bank accounts (end of day,
+  // the same value on every transaction of that day).
+  { key: "balance", label: "Balance", align: "right", cellClassName: "text-right whitespace-nowrap" },
 ];
 
 const DEFAULT_COLUMN_ORDER = COLUMNS.map((column) => column.key);
@@ -257,6 +261,10 @@ export function TransactionsTable({
               : undefined;
         return <span className={colorClassName}>{formatCurrency(transaction.amount)}</span>;
       }
+      case "balance":
+        return transaction.balance === null ? null : (
+          <span className="text-muted-foreground">{formatCurrency(transaction.balance)}</span>
+        );
     }
   }
 
